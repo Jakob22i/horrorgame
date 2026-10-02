@@ -30,6 +30,11 @@ local staminaBack: Frame
 local staminaFill: Frame
 local hintLabel: TextLabel
 local spectateLabel: TextLabel
+local finaleLabel: TextLabel
+local captionLabel: TextLabel
+local titleCard: Frame
+local titleMain: TextLabel
+local titleSub: TextLabel
 local notifyList: Frame
 local fadeFrame: Frame
 local fadeLabel: TextLabel
@@ -294,10 +299,22 @@ local function buildHud()
 		ZIndex = 3,
 	})
 
+	finaleLabel = text(gui, {
+		Name = "Finale",
+		AnchorPoint = Vector2.new(0.5, 0),
+		Position = UDim2.new(0.5, 0, 0, 96),
+		Size = UDim2.new(0.6, 0, 0, 34),
+		Text = "",
+		Font = Enum.Font.RobotoMono,
+		TextColor3 = Color3.fromRGB(255, 70, 60),
+		Visible = false,
+		ZIndex = 4,
+	})
+
 	notifyList = make("Frame", {
 		Name = "Notifications",
 		AnchorPoint = Vector2.new(0.5, 0),
-		Position = UDim2.new(0.5, 0, 0, 150),
+		Position = UDim2.new(0.5, 0, 0, 140),
 		Size = UDim2.new(0.7, 0, 0, 200),
 		BackgroundTransparency = 1,
 		ZIndex = 4,
@@ -473,6 +490,43 @@ local function buildOverlays()
 		TextTransparency = 1,
 		TextStrokeTransparency = 1,
 		ZIndex = 31,
+	})
+
+	captionLabel = text(gui, {
+		Name = "Caption",
+		AnchorPoint = Vector2.new(0.5, 1),
+		Position = UDim2.new(0.5, 0, 1, -90),
+		Size = UDim2.new(0.7, 0, 0, 36),
+		Text = "",
+		Font = FONT_VHS,
+		Visible = false,
+		ZIndex = 32,
+	})
+	titleCard = make("Frame", {
+		Name = "TitleCard",
+		BackgroundColor3 = Color3.new(0, 0, 0),
+		BorderSizePixel = 0,
+		Size = UDim2.fromScale(1, 1),
+		Visible = false,
+		ZIndex = 35,
+	}, gui)
+	titleMain = text(titleCard, {
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.fromScale(0.5, 0.44),
+		Size = UDim2.fromScale(0.7, 0.2),
+		Text = "",
+		TextColor3 = Color3.fromRGB(220, 30, 30),
+		Font = FONT_TEXT,
+		ZIndex = 36,
+	})
+	titleSub = text(titleCard, {
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.fromScale(0.5, 0.6),
+		Size = UDim2.fromScale(0.5, 0.07),
+		Text = "",
+		TextColor3 = Color3.fromRGB(235, 235, 225),
+		Font = FONT_VHS,
+		ZIndex = 36,
 	})
 
 	panelDim = make("Frame", {
@@ -729,6 +783,63 @@ function UI.setHint(message: string?)
 	hintLabel.Text = message or ""
 end
 
+function UI.setCaption(message: string?)
+	captionLabel.Visible = message ~= nil
+	captionLabel.Text = message or ""
+end
+
+-- Skriver tekst bokstav for bokstav på svart skjerm (uten å tone inn igjen etterpå)
+function UI.typeOnBlack(lines: { string }, holdTime: number, color: Color3?)
+	fadeFrame.BackgroundTransparency = 0
+	fadeLabel.TextTransparency = 0
+	fadeLabel.TextStrokeTransparency = 1
+	fadeLabel.Font = FONT_VHS
+	fadeLabel.TextColor3 = color or Color3.fromRGB(235, 235, 230)
+	local full = table.concat(lines, "\n")
+	local count = 0
+	for position in utf8.codes(full) do
+		count += 1
+		local nextPos = utf8.offset(full, 2, position) or (#full + 1)
+		fadeLabel.Text = string.sub(full, 1, nextPos - 1)
+		if count % 2 == 0 then
+			task.wait(0.03)
+		end
+	end
+	task.wait(holdTime)
+	fadeLabel.TextColor3 = Color3.fromRGB(235, 235, 230)
+	fadeLabel.Font = FONT_TEXT
+end
+
+function UI.showTitleCard(title: string, subtitle: string)
+	titleCard.Visible = true
+	titleMain.Text = title
+	titleSub.Text = subtitle
+	-- litt glitch: tittelen blinker og hopper de første sekundene
+	task.spawn(function()
+		local start = os.clock()
+		while titleCard.Visible and os.clock() - start < 4 do
+			local glitch = math.random() < 0.25
+			titleMain.Position = UDim2.fromScale(0.5 + (glitch and (math.random() - 0.5) * 0.02 or 0), 0.44)
+			titleMain.TextTransparency = glitch and 0.5 or 0
+			task.wait(0.06)
+		end
+		titleMain.Position = UDim2.fromScale(0.5, 0.44)
+		titleMain.TextTransparency = 0
+	end)
+end
+
+function UI.hideTitleCard()
+	titleCard.Visible = false
+end
+
+function UI.setFinaleTimer(message: string?)
+	finaleLabel.Visible = message ~= nil
+	if message then
+		finaleLabel.Text = message
+		finaleLabel.TextTransparency = (math.floor(os.clock() * 2) % 2 == 0) and 0 or 0.25
+	end
+end
+
 function UI.setLeaveButton(visible: boolean)
 	leaveButton.Visible = visible
 end
@@ -935,15 +1046,6 @@ function UI.showGameOver(seconds: number, onChoice: (string) -> (), onRevive: ()
 		choose("lobby")
 	end)
 	countdown(seconds, "Lobby in %d seconds")
-end
-
-function UI.showWin(escaper: string, seconds: number)
-	showPanel("YOU ESCAPED!", escaper .. " ran out the emergency exit.\nThe tape ends here... for now.", Color3.fromRGB(150, 235, 160))
-	-- en lukkeknapp, så musa også kan brukes her
-	button("OK", Color3.fromRGB(40, 40, 44), function()
-		UI.hidePanels()
-	end, 120)
-	countdown(seconds, "Back to the lobby in %d")
 end
 
 function UI.hidePanels()

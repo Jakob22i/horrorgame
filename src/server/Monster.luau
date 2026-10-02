@@ -70,6 +70,7 @@ function Monster.new(match: any, template: Model, parent: Instance)
 		stunnedUntil = 0,
 		senseTimer = 0,
 		lastGiggle = 0,
+		nextHunt = 0,
 		wasChasing = false,
 		seenHiding = {} :: { [Player]: boolean },
 		enraged = false,
@@ -121,11 +122,38 @@ function Monster:Destroy()
 end
 
 function Monster:_speed(): number
+	local keys = self.match.keysInserted or 0
 	if self.state == "chase" or self.state == "search" then
 		local extra = math.max(0, self.match:GetPlayerCount() - 1) * M.ExtraSpeedPerPlayer
-		return M.ChaseSpeed + extra + (self.enraged and 2 or 0)
+		return M.ChaseSpeed + extra + keys * M.SpeedPerKey + (self.enraged and 2 or 0)
 	end
-	return M.WanderSpeed + (self.enraged and 3 or 0)
+	return M.WanderSpeed + keys * M.SpeedPerKey * 0.5 + (self.enraged and 3 or 0)
+end
+
+-- I finalen vet monsteret hele tiden omtrent hvor nærmeste spiller er (ikke de som gjemmer seg)
+function Monster:_huntNearest(now: number)
+	if self.state == "chase" or now < (self.nextHunt or 0) then
+		return
+	end
+	self.nextHunt = now + 2.5
+	local best, bestDist = nil, math.huge
+	for player in self.match.players do
+		if self.match:CanBeHunted(player) and player:GetAttribute("Hidden") ~= true then
+			local root = Util.getRoot(player)
+			if root then
+				local d = (root.Position - self.position).Magnitude
+				if d < bestDist then
+					best, bestDist = root.Position, d
+				end
+			end
+		end
+	end
+	if best then
+		self.lastSeenPos = best
+		self.state = "search"
+		self.searchUntil = now + 4
+		self.goal = nil
+	end
 end
 
 function Monster:_applyCFrame()
@@ -392,6 +420,9 @@ function Monster:Step(dt: number)
 	if self.senseTimer <= 0 then
 		self.senseTimer = 0.15
 		self:_sense(now)
+	end
+	if self.enraged then
+		self:_huntNearest(now)
 	end
 
 	local speed = self:_speed()

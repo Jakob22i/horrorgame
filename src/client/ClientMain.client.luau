@@ -19,6 +19,7 @@ local Effects = require(script:WaitForChild("Effects"))
 local Controls = require(script:WaitForChild("Controls"))
 local Jumpscare = require(script:WaitForChild("Jumpscare"))
 local MonsterAnimator = require(script:WaitForChild("MonsterAnimator"))
+local Ending = require(script:WaitForChild("Ending"))
 
 local player = Players.LocalPlayer
 
@@ -27,6 +28,7 @@ Effects.init(UI)
 Controls.init(UI)
 Jumpscare.init(UI, Effects)
 MonsterAnimator.init()
+Ending.init(UI, Effects, Controls)
 
 -- Ingen "Reset character" i et skrekkspill
 task.spawn(function()
@@ -82,7 +84,7 @@ local function refreshMode()
 	local inMatch = player:GetAttribute("InMatch") == true
 	Effects.setMode(inMatch and "match" or "lobby")
 	Controls.setMode(inMatch)
-	UI.setMatchHud(inMatch)
+	UI.setMatchHud(inMatch and not Ending.isPlaying())
 	if inMatch then
 		watchMatchFolder()
 	else
@@ -101,7 +103,7 @@ player:GetAttributeChangedSignal("Out"):Connect(Controls.onOutChanged)
 local function refreshShop()
 	local inMatch = player:GetAttribute("InMatch") == true
 	local out = player:GetAttribute("Out") == true
-	UI.setActionBar(inMatch and not out)
+	UI.setActionBar(inMatch and not out and not Ending.isPlaying())
 	UI.setFlashlightOn(player:GetAttribute("Flashlight") == true)
 	UI.setPush(player:GetAttribute("HasPush") == true, Config.Shop.PushPrice)
 	UI.setJumpscare(player:GetAttribute("JumpscareCredits") or 0, Config.Shop.JumpscarePrice)
@@ -152,17 +154,7 @@ MatchStateRemote.OnClientEvent:Connect(function(state, data)
 			players == 1 and "You are alone." or ("There are " .. players .. " of you."),
 		}, 2.2)
 	elseif state == "won" then
-		UI.showWin(data and data.escaper or "Someone", data and data.seconds or 10)
-		if Config.Sounds.Win ~= "" then
-			local s = Instance.new("Sound")
-			s.SoundId = Config.Sounds.Win
-			s.Volume = 0.8
-			s.Parent = game:GetService("SoundService")
-			s:Play()
-			task.delay(10, function()
-				s:Destroy()
-			end)
-		end
+		task.spawn(Ending.play, data)
 	elseif state == "gameover" then
 		if Config.Sounds.GameOver ~= "" then
 			local s = Instance.new("Sound")
@@ -190,6 +182,7 @@ MatchStateRemote.OnClientEvent:Connect(function(state, data)
 			UI.fadeIn(0.8)
 		end
 	elseif state == "lobby" then
+		Ending.cleanup()
 		UI.hidePanels()
 		UI.fadeOut("", 0.01)
 		task.wait(0.6)

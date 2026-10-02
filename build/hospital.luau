@@ -7,7 +7,7 @@ local Vector3, CFrame, Enum = lib.Vector3, lib.CFrame, lib.Enum
 local rgb = lib.rgb
 
 local CELL = 4
-local W, H = 60, 40
+local W, H = 88, 56
 local WALL_H = 14
 local DOOR_H = 12
 
@@ -78,6 +78,22 @@ return function(parent: any)
 		{ "RECEPTION", "RECEPTION", 21, 29, 38, 38, rgb(120, 118, 108), Enum.Material.Marble },
 		{ "WAITING", "WAITING ROOM", 40, 29, 48, 38, rgb(90, 78, 64), Enum.Material.Carpet },
 		{ "STAFF", "STAFF ROOM", 50, 29, 58, 38, rgb(118, 100, 80), Enum.Material.WoodPlanks },
+		-- Østfløyen
+		{ "ICU", "ICU", 64, 1, 74, 10, rgb(150, 168, 168), Enum.Material.CeramicTiles },
+		{ "PHARMACY", "PHARMACY", 76, 1, 86, 10, rgb(132, 132, 120), Enum.Material.Marble },
+		{ "ISO1", "ISOLATION 1", 64, 16, 68, 23, rgb(196, 190, 170), Enum.Material.Fabric },
+		{ "ISO2", "ISOLATION 2", 70, 16, 74, 23, rgb(196, 190, 170), Enum.Material.Fabric },
+		{ "ISO3", "ISOLATION 3", 76, 16, 80, 23, rgb(196, 190, 170), Enum.Material.Fabric },
+		{ "ISO4", "ISOLATION 4", 82, 16, 86, 23, rgb(196, 190, 170), Enum.Material.Fabric },
+		{ "CAFETERIA", "CAFETERIA", 64, 29, 77, 38, rgb(128, 116, 92), Enum.Material.CeramicTiles },
+		{ "KITCHEN", "KITCHEN", 79, 29, 86, 38, rgb(150, 150, 146), Enum.Material.DiamondPlate },
+		-- Sørfløyen
+		{ "LAUNDRY", "LAUNDRY", 1, 44, 12, 54, rgb(150, 150, 140), Enum.Material.Concrete },
+		{ "CHAPEL", "CHAPEL", 14, 44, 26, 54, rgb(96, 40, 40), Enum.Material.Carpet },
+		{ "MAINT", "MAINTENANCE", 28, 44, 37, 54, rgb(96, 96, 92), Enum.Material.Concrete },
+		{ "LAB", "LABORATORY", 39, 44, 51, 54, rgb(170, 180, 178), Enum.Material.CeramicTiles },
+		{ "RECORDS", "RECORDS", 53, 44, 64, 54, rgb(110, 92, 74), Enum.Material.WoodPlanks },
+		{ "DOCK", "LOADING DOCK", 66, 44, 86, 54, rgb(90, 90, 88), Enum.Material.Concrete },
 	}
 	local corridors = {
 		{ 1, 12, 58, 14 }, -- nordre korridor
@@ -85,6 +101,11 @@ return function(parent: any)
 		{ 1, 15, 3, 24 }, -- vestre korridor
 		{ 56, 15, 58, 24 }, -- østre korridor
 		{ 28, 15, 30, 24 }, -- midtkorridor
+		{ 59, 12, 86, 14 }, -- nordre korridor, østfløyen
+		{ 59, 25, 86, 27 }, -- søndre korridor, østfløyen
+		{ 60, 15, 62, 24 }, -- østre korridor, nord
+		{ 60, 28, 62, 42 }, -- østre korridor, sør
+		{ 1, 40, 86, 42 }, -- sørfløyens korridor
 	}
 	for _, c in corridors do
 		carve(c[1], c[2], c[3], c[4])
@@ -117,13 +138,34 @@ return function(parent: any)
 		{ 43, 28, 44, 28, "WAITING", "N" },
 		{ 39, 33, 39, 34 },
 		{ 53, 28, 54, 28, "STAFF ONLY", "N" },
+		-- Østfløyen
+		{ 68, 11, 69, 11, "ICU", "S" },
+		{ 80, 11, 81, 11, "PHARMACY", "S" },
+		{ 75, 5, 75, 5 },
+		{ 66, 15, 66, 15, "ISO 1", "N" },
+		{ 72, 15, 72, 15, "ISO 2", "N" },
+		{ 78, 15, 78, 15, "ISO 3", "N" },
+		{ 84, 15, 84, 15, "ISO 4", "N" },
+		{ 70, 28, 71, 28, "CAFETERIA", "N" },
+		{ 63, 33, 63, 34, "CAFETERIA", "W" },
+		{ 82, 28, 82, 28, "KITCHEN", "N" },
+		{ 78, 33, 78, 33 },
+		-- Sørfløyen (den gamle utgangen er nå gangen dit)
+		{ 28, 39, 31, 39, "SOUTH WING", "S" },
+		{ 6, 43, 7, 43, "LAUNDRY", "N" },
+		{ 19, 43, 21, 43, "CHAPEL", "N" },
+		{ 32, 43, 32, 43, "MAINT.", "N" },
+		{ 44, 43, 45, 43, "LAB", "N" },
+		{ 52, 49, 52, 49 },
+		{ 58, 43, 59, 43, "RECORDS", "N" },
+		{ 70, 43, 72, 43, "LOADING DOCK", "N" },
 	}
 	for _, d in doors do
 		carve(d[1], d[2], d[3], d[4])
 	end
 
 	-- Utgangen (spesialbygd dør i ytterveggen)
-	local EXIT_X1, EXIT_X2, EXIT_Y = 28, 31, 39
+	local EXIT_X1, EXIT_X2, EXIT_Y = 77, 80, 55
 	for x = EXIT_X1, EXIT_X2 do
 		grid[EXIT_Y][x] = "E"
 	end
@@ -393,6 +435,68 @@ return function(parent: any)
 		lib.new("PointLight", { Range = 7, Brightness = 0.6, Color = rgb(170, 190, 255) }, screen)
 	end
 
+	-- Kirkebenk som spenner over flere ruter langs X, vendt mot sør (alteret)
+	local function pew(x: number, y: number, len: number)
+		for i = 0, len - 1 do
+			occupy(x + i, y)
+		end
+		local c = cellCenter(x, y) + Vector3.new((len - 1) * CELL / 2, 0, 0)
+		local cf = CFrame.new(c)
+		local m = lib.new("Model", { Name = "Pew" }, folders.Props)
+		local L = len * CELL - 0.6
+		lib.part(m, "Seat", Vector3.new(L, 0.3, 1.6), cf * CFrame.new(0, 1.8, 0.2), COLORS.wood, Enum.Material.Wood)
+		lib.part(m, "Back", Vector3.new(L, 2.2, 0.25), cf * CFrame.new(0, 3.0, -0.75), COLORS.wood, Enum.Material.Wood)
+		for _, sx in { -1, 1 } do
+			lib.part(m, "Side", Vector3.new(0.25, 2.8, 2.0), cf * CFrame.new(sx * L / 2, 1.4, 0), COLORS.wood, Enum.Material.Wood)
+		end
+	end
+
+	-- Kafeteriabord over to ruter med fire krakker
+	local function cafTable(x: number, y: number)
+		occupy(x, y)
+		occupy(x + 1, y)
+		local c = cellCenter(x, y) + Vector3.new(CELL / 2, 0, 0)
+		local cf = CFrame.new(c)
+		local m = lib.new("Model", { Name = "CafeteriaTable" }, folders.Props)
+		lib.part(m, "Top", Vector3.new(6.4, 0.25, 2.8), cf * CFrame.new(0, 3.0, 0), rgb(150, 140, 118), Enum.Material.SmoothPlastic)
+		for _, sx in { -1, 1 } do
+			lib.part(m, "Leg", Vector3.new(0.3, 2.9, 2.2), cf * CFrame.new(sx * 2.7, 1.45, 0), COLORS.darkMetal, Enum.Material.Metal)
+			for _, sz in { -1, 1 } do
+				local stool = cf * CFrame.new(sx * 1.6, 0, sz * 2.4)
+				lib.cylinderY(m, "Stool", 1.2, 0.25, stool * CFrame.new(0, 1.9, 0), rgb(120, 40, 36), Enum.Material.SmoothPlastic)
+				lib.cylinderY(m, "StoolLeg", 0.25, 1.8, stool * CFrame.new(0, 0.9, 0), COLORS.darkMetal, Enum.Material.Metal)
+			end
+		end
+		-- skitne brett og kopper
+		if rng() < 0.7 then
+			lib.part(m, "Tray", Vector3.new(1.8, 0.1, 1.2), cf * CFrame.new((rng() - 0.5) * 3, 3.17, (rng() - 0.5) * 1), rgb(90, 110, 120), Enum.Material.SmoothPlastic, { CanQuery = false })
+		end
+	end
+
+	-- Vaskemaskin mot veggen
+	local function machine(x: number, y: number, prefer: string?)
+		occupy(x, y)
+		local cf = againstWall(x, y, 2.8, prefer)
+		local m = lib.new("Model", { Name = "WashingMachine" }, folders.Props)
+		lib.part(m, "Body", Vector3.new(3.2, 3.6, 2.8), cf * CFrame.new(0, 1.8, 0), rgb(210, 208, 198), Enum.Material.SmoothPlastic)
+		lib.part(m, "Window", Vector3.new(0.12, 1.8, 1.8), cf * CFrame.new(0, 1.7, -1.42) * CFrame.Angles(0, math.pi / 2, 0), rgb(30, 34, 38), Enum.Material.Glass, { Shape = Enum.PartType.Cylinder })
+		lib.part(m, "Panel", Vector3.new(3.0, 0.5, 0.1), cf * CFrame.new(0, 3.3, -1.42), rgb(120, 120, 116), Enum.Material.SmoothPlastic)
+	end
+
+	-- Trekasser (en eller to i høyden)
+	local function crate(x: number, y: number)
+		occupy(x, y)
+		local c = cellCenter(x, y)
+		local m = lib.new("Model", { Name = "Crates" }, folders.Props)
+		local h = 0
+		for i = 1, rng(1, 2) do
+			local size = 2.6 + rng() * 0.8
+			lib.part(m, "Crate", Vector3.new(size, size, size), CFrame.new(c + Vector3.new((rng() - 0.5) * 0.4, h + size / 2, (rng() - 0.5) * 0.4)) * CFrame.Angles(0, rng() * 0.6, 0), rgb(124, 96, 62), Enum.Material.WoodPlanks)
+			h += size
+			local _ = i
+		end
+	end
+
 	------------------------------------------------------------------
 	-- Skap (gjemmesteder)
 	------------------------------------------------------------------
@@ -444,7 +548,8 @@ return function(parent: any)
 		local m = lib.new("Model", { Name = "Lamp", Tags = { "Lamp" }, Attributes = { Mode = "on" } }, folders.Lamps)
 		lib.part(m, "Housing", Vector3.new(3.6, 0.2, 1.6), CFrame.new(c - Vector3.new(0, 0.1, 0)), COLORS.darkMetal, Enum.Material.Metal, { CanQuery = false, CastShadow = false })
 		local panel = lib.part(m, "Panel", Vector3.new(3.2, 0.12, 1.2), CFrame.new(c - Vector3.new(0, 0.26, 0)), rgb(255, 238, 190), Enum.Material.Neon, { CanQuery = false, CastShadow = false })
-		lib.new("PointLight", { Name = "Light", Range = 18, Brightness = 1.15, Color = rgb(255, 226, 160), Shadows = true }, panel)
+		-- bare noen lamper kaster skygge (mye raskere med et stort kart)
+		lib.new("PointLight", { Name = "Light", Range = 18, Brightness = 1.15, Color = rgb(255, 226, 160), Shadows = rng() < 0.2 }, panel)
 	end
 
 	for _, r in rooms do
@@ -596,6 +701,127 @@ return function(parent: any)
 	bed(18, 12, true, true)
 	wheelchair(40, 26, 2.2)
 	bed(2, 16, false)
+
+	-- ÖSTFLØYEN ---------------------------------------------------
+	-- Intensiv
+	bed(65, 1, false)
+	bed(68, 1, false)
+	bed(71, 1, false)
+	desk(67, 1, true, "N")
+	keySpot(74, 9, "ICU")
+	closet(64, 9, "W")
+	wheelchair(72, 7, 1.0)
+	-- Apotek
+	for _, x in { 77, 79, 81, 83, 85 } do
+		shelf(x, 1, "N")
+	end
+	shelf(86, 4, "E")
+	shelf(86, 6, "E")
+	desk(76, 7, true, "W")
+	keySpot(86, 9, "PHARMACY")
+	closet(77, 10, "S")
+	-- Isolasjonsceller
+	bed(64, 22, true)
+	keySpot(68, 23, "ISO1")
+	bed(73, 22, true)
+	keySpot(70, 23, "ISO2")
+	bed(76, 22, true)
+	closet(80, 17, "E")
+	bed(85, 22, true)
+	keySpot(82, 23, "ISO4")
+	-- Korridorer i østfløyen
+	closet(62, 20, "E")
+	closet(86, 13, "E")
+	closet(86, 26, "E")
+	keySpot(60, 35, "EASTHALL2")
+	bed(74, 12, true, true)
+	wheelchair(70, 26, 0.4)
+	-- Kafeteria
+	for _, row in { 31, 35 } do
+		for _, x in { 65, 69, 73 } do
+			cafTable(x, row)
+		end
+	end
+	keySpot(77, 38, "CAFETERIA")
+	closet(64, 38, "S")
+	tv(77, 29, "E", "LUNCH IS\nSERVED")
+	-- Kjøkken
+	desk(79, 30, false, "W")
+	desk(86, 31, false, "E")
+	sink(86, 33, "E")
+	sink(86, 35, "E")
+	shelf(80, 38, "S")
+	shelf(82, 38, "S")
+	keySpot(85, 38, "KITCHEN")
+	closet(86, 29, "N")
+
+	-- SØRFLØYEN ---------------------------------------------------
+	closet(10, 40, "N")
+	closet(48, 40, "N")
+	closet(86, 41, "E")
+	closet(40, 42, "S")
+	keySpot(1, 41, "SOUTHHALL")
+	bed(20, 41, true, true)
+	wheelchair(56, 40, 0.5)
+	-- Vaskeri
+	for _, yy in { 46, 48, 50 } do
+		machine(1, yy, "W")
+	end
+	machine(12, 46, "E")
+	machine(12, 48, "E")
+	shelf(4, 54, "S")
+	shelf(9, 54, "S")
+	keySpot(12, 53, "LAUNDRY")
+	closet(1, 53, "W")
+	-- Kapell
+	for _, yy in { 46, 48, 50 } do
+		pew(15, yy, 4)
+		pew(22, yy, 4)
+	end
+	desk(20, 54, false, "S")
+	keySpot(26, 53, "CHAPEL")
+	closet(14, 45, "W")
+	-- Vedlikehold
+	shelf(28, 46, "W")
+	shelf(28, 48, "W")
+	shelf(37, 46, "E")
+	shelf(37, 50, "E")
+	desk(30, 54, false, "S")
+	crate(34, 52)
+	crate(33, 48)
+	keySpot(28, 53, "MAINT")
+	closet(37, 53, "E")
+	-- Laboratorium
+	desk(39, 46, true, "W")
+	desk(39, 50, true, "W")
+	opTable(42, 48)
+	opTable(46, 51)
+	sink(51, 46, "E")
+	shelf(51, 52, "E")
+	keySpot(48, 54, "LAB")
+	closet(51, 44, "N")
+	-- Arkiv
+	for _, yy in { 45, 47, 51 } do
+		shelf(53, yy, "W")
+	end
+	for _, yy in { 45, 47, 49, 51 } do
+		shelf(64, yy, "E")
+	end
+	for _, x in { 55, 57, 61 } do
+		shelf(x, 54, "S")
+	end
+	keySpot(63, 54, "RECORDS")
+	closet(53, 53, "W")
+	-- Lasterampe (utgangen er i sørveggen her)
+	for _, c in { { 68, 47 }, { 68, 48 }, { 74, 47 }, { 75, 47 }, { 83, 47 }, { 84, 50 }, { 70, 52 }, { 71, 52 }, { 85, 53 } } do
+		crate(c[1], c[2])
+	end
+	for _, x in { 75, 77, 79 } do
+		shelf(x, 44, "N")
+	end
+	keySpot(86, 45, "DOCK")
+	closet(66, 53, "W")
+	closet(86, 51, "E")
 
 	------------------------------------------------------------------
 	-- Startpunkter (resepsjonen) og utgangsdør
@@ -852,6 +1078,13 @@ return function(parent: any)
 		{ 14, 16, "N", "IT ALWAYS\nCOMES BACK" },
 		{ 34, 27, "S", "VISITING HOURS\nARE OVER" },
 		{ 50, 16, "N", "SMILE :)", 9.8 },
+		{ 66, 23, "S", "LET ME OUT" },
+		{ 84, 23, "S", "I CAN HEAR\nIT SMILING" },
+		{ 71, 38, "S", "EAT YOUR\nMEDICINE" },
+		{ 24, 54, "S", "IT DOESN'T\nPRAY" },
+		{ 47, 44, "N", "PROJECT\n#0413" },
+		{ 82, 44, "N", "ALMOST\nOUT :)" },
+		{ 30, 42, "S", "DON'T GO TO\nTHE DOCK" },
 	}
 	for i, wr in writings do
 		local plateCF, W, Hh = bloodWriting(wr[1], wr[2], wr[3], wr[4], wr[5])

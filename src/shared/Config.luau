@@ -13,7 +13,7 @@ local Config = {
 	RespawnDelay = 4, -- sekunder med svart skjerm etter at du blir tatt
 	RespawnProtection = 4, -- sekunder monsteret ignorerer deg etter respawn
 	GameOverChoiceTime = 25, -- sekunder til å velge "prøv igjen" eller "lobby"
-	WinReturnTime = 10, -- sekunder før alle sendes til lobbyen etter seier
+	WinReturnTime = 24, -- sekunder før alle sendes til lobbyen etter seier (sluttscenen varer ca. 20 sek)
 
 	-- Spiller
 	WalkSpeed = 12,
@@ -38,7 +38,18 @@ local Config = {
 		SeeHideRange = 12, -- ser den deg gjemme deg innenfor denne avstanden, drar den deg ut
 		CatchCooldown = 6, -- sekunder den "forsvinner" etter å ha tatt noen
 		GiggleCooldown = 10, -- sekunder mellom hver gang den fniser når den ser noen
+		SpeedPerKey = 0.6, -- raskere for hver nøkkel som er satt inn
 	},
+
+	-- Strømbrudd: etter et visst antall nøkler går lyset av og på
+	Blackout = {
+		AfterKeys = 3,
+		Every = { 30, 50 }, -- sekunder mellom hvert strømbrudd (tilfeldig)
+		Length = { 10, 16 }, -- hvor lenge lyset er borte
+	},
+
+	-- Finalen: når alle nøklene er satt inn må dere overleve til døra åpner seg
+	FinaleTime = 60,
 
 	-- Kjøp med Robux. Opprett produktene på create.roblox.com etter at spillet er publisert,
 	-- og lim inn ID-ene her. Står en ID på 0, er kjøpet gratis i Studio (for testing).
@@ -82,6 +93,10 @@ local Config = {
 		GameOver = "rbxassetid://1840927247", -- Horror Hits 7
 		Win = "rbxassetid://9047014318", -- Beautiful Horror Stinger
 		Push = "rbxassetid://9117969687", -- Punch Kit Beefy Hit
+		PowerDown = "rbxassetid://9117871125", -- Power Down
+		PowerUp = "rbxassetid://9117883108", -- Power Up And Down
+		Alarm = "rbxassetid://9119661709", -- Submarine Alarm Siren
+		StaticBurst = "rbxassetid://9126160991", -- Video Static Burst
 	},
 }
 

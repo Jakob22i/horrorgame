@@ -156,7 +156,7 @@ end
 
 function Manager:CanJumpscare(player: Player): boolean
 	local match = playerMatch[player]
-	return match ~= nil and match.state ~= "ended" and match:CountPrankTargets(player) > 0
+	return match ~= nil and match.state == "playing" and match:CountPrankTargets(player) > 0
 end
 
 function Manager:JumpscareAll(player: Player)

@@ -21,6 +21,7 @@ local Controls = {}
 
 local UI: any
 local inMatch = false
+local frozen = false -- sluttscenen: ingen bevegelse
 local sprintHeld = false
 local stamina = Config.StaminaMax
 local exhausted = false
@@ -61,9 +62,9 @@ local function buildFlashlight()
 
 	flashLight = Instance.new("SpotLight")
 	flashLight.Face = Enum.NormalId.Front
-	flashLight.Angle = 55
-	flashLight.Range = 48
-	flashLight.Brightness = 2.4
+	flashLight.Angle = 60
+	flashLight.Range = 60
+	flashLight.Brightness = 3.1
 	flashLight.Color = Color3.fromRGB(255, 244, 220)
 	flashLight.Shadows = true
 	flashLight.Enabled = false
@@ -71,7 +72,7 @@ local function buildFlashlight()
 
 	fillLight = Instance.new("PointLight")
 	fillLight.Range = 7
-	fillLight.Brightness = 0.25
+	fillLight.Brightness = 0.35
 	fillLight.Color = Color3.fromRGB(255, 244, 220)
 	fillLight.Shadows = false
 	fillLight.Enabled = false
@@ -108,9 +109,9 @@ local function updateOtherFlashlights()
 			local l = Instance.new("SpotLight")
 			l.Name = "RemoteFlashlight"
 			l.Face = Enum.NormalId.Front
-			l.Angle = 50
-			l.Range = 40
-			l.Brightness = 2
+			l.Angle = 55
+			l.Range = 52
+			l.Brightness = 2.6
 			l.Color = Color3.fromRGB(255, 244, 220)
 			l.Shadows = true
 			l.Parent = head
@@ -124,7 +125,7 @@ end
 
 -- Knappene nederst og tastene 1, 2 og 3 gjør det samme
 function Controls.doAction(name: string)
-	if not inMatch then
+	if not inMatch or frozen then
 		return
 	end
 	if name == "flashlight" then
@@ -252,6 +253,10 @@ end
 
 local function updateSpectate()
 	local camera = workspace.CurrentCamera
+	if frozen then
+		UI.setSpectate(nil)
+		return
+	end
 	if inMatch and attr("Out") == true then
 		local list = teammates()
 		if #list == 0 then
@@ -356,6 +361,11 @@ function Controls.init(ui: any)
 		if not hum then
 			return
 		end
+		if frozen then
+			hum.WalkSpeed = 0
+			UI.setStamina(1, false)
+			return
+		end
 		if not inMatch then
 			hum.WalkSpeed = LOBBY_SPEED
 			UI.setStamina(1, false)
@@ -398,6 +408,11 @@ function Controls.setMode(matchMode: boolean)
 		end
 	end
 	refreshHidden()
+end
+
+function Controls.setFrozen(on: boolean)
+	frozen = on
+	sprintHeld = false
 end
 
 -- Kalles når du får tilbake kontrollen etter å ha vært tilskuer

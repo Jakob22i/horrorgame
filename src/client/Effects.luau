@@ -18,7 +18,12 @@ local mode = "lobby"
 local colorCorrection: ColorCorrectionEffect
 local blur: BlurEffect
 local sounds: { [string]: Sound } = {}
-local lamps: { { model: Model, panel: BasePart, light: Light?, color: Color3, on: boolean } } = {}
+type Lamp = { model: Model, panel: BasePart, light: Light?, color: Color3, lightColor: Color3, on: boolean, red: boolean }
+local lamps: { Lamp } = {}
+local lastBlackout = false
+local blackoutChanged = -10
+local RED_PANEL = Color3.fromRGB(255, 40, 30)
+local RED_LIGHT = Color3.fromRGB(255, 30, 20)
 local lampRefresh = 0
 local lampTick = 0
 local monsterRoot: BasePart? = nil
@@ -26,6 +31,7 @@ local monsterRefresh = 0
 local shake = 0
 local danger = 0
 Effects.extraShake = 0
+Effects.fakeMonster = nil :: BasePart? -- monsteret i sluttscenen (lokal kopi)
 
 local function newSound(name: string, id: string, volume: number, looped: boolean): Sound
 	local s = Instance.new("Sound")
@@ -99,12 +105,20 @@ local function refreshLamps()
 		if model:IsDescendantOf(scope) then
 			local panel = model:FindFirstChild("Panel") :: BasePart?
 			if panel then
+				local light = panel:FindFirstChildWhichIsA("Light")
+				-- husk de opprinnelige fargene første gang vi ser lampa (vi endrer dem selv senere)
+				if panel:GetAttribute("BaseColor") == nil then
+					panel:SetAttribute("BaseColor", panel.Color)
+					panel:SetAttribute("BaseLight", light and light.Color or Color3.new(1, 1, 1))
+				end
 				table.insert(lamps, {
 					model = model :: Model,
 					panel = panel,
-					light = panel:FindFirstChildWhichIsA("Light"),
-					color = panel.Color,
-					on = true,
+					light = light,
+					color = panel:GetAttribute("BaseColor"),
+					lightColor = panel:GetAttribute("BaseLight"),
+					on = panel.Material == Enum.Material.Neon,
+					red = false,
 				})
 			end
 		end
@@ -113,21 +127,42 @@ end
 
 local OFF_COLOR = Color3.fromRGB(60, 64, 62)
 
-local function setLamp(lamp, on: boolean)
-	if lamp.on == on then
+local function setLamp(lamp: Lamp, on: boolean, red: boolean?)
+	local isRed = red == true
+	if lamp.on == on and lamp.red == isRed then
 		return
 	end
 	lamp.on = on
+	lamp.red = isRed
 	if lamp.light then
 		lamp.light.Enabled = on
+		lamp.light.Color = isRed and RED_LIGHT or lamp.lightColor
 	end
 	lamp.panel.Material = on and Enum.Material.Neon or Enum.Material.SmoothPlastic
-	lamp.panel.Color = on and lamp.color or OFF_COLOR
+	lamp.panel.Color = on and (isRed and RED_PANEL or lamp.color) or OFF_COLOR
 end
 
 local function updateLamps(monsterPos: Vector3?)
+	local folder = mode == "match" and currentMatchFolder() or nil
+	local now = os.clock()
+	local finale = folder ~= nil and folder:GetAttribute("FinaleEnd") ~= nil
+	local blackout = folder ~= nil and folder:GetAttribute("Blackout") == true
+	local transition = now - blackoutChanged < 0.9
 	for _, lamp in lamps do
 		local lampMode = lamp.model:GetAttribute("Mode")
+		if finale then
+			-- alarm: alle lamper blinker rødt
+			setLamp(lamp, math.floor(now * 2) % 2 == 0, true)
+			continue
+		end
+		if blackout then
+			setLamp(lamp, transition and math.random() < 0.4)
+			continue
+		end
+		if transition then
+			setLamp(lamp, lampMode ~= "off" and math.random() < 0.6)
+			continue
+		end
 		if lampMode == "off" then
 			setLamp(lamp, false)
 			continue
@@ -168,6 +203,9 @@ function Effects.init(ui: any)
 	newSound("Ambience", S.Ambience, 0.5, true)
 	newSound("Static", S.Static, 0, true)
 	newSound("Heartbeat", S.Heartbeat, 0, true)
+	newSound("Alarm", S.Alarm, 0.5, true)
+	newSound("PowerDown", S.PowerDown, 0.9, false)
+	newSound("PowerUp", S.PowerUp, 0.6, false)
 
 	CollectionService:GetInstanceAddedSignal("Lamp"):Connect(function()
 		lampRefresh = 0
@@ -210,6 +248,11 @@ function Effects.setMode(newMode: string)
 		sounds.Ambience:Stop()
 		sounds.Static:Stop()
 		sounds.Heartbeat:Stop()
+		sounds.Alarm:Stop()
+		lastBlackout = false
+		if UI then
+			UI.setFinaleTimer(nil)
+		end
 		if not sounds.Music.IsPlaying then
 			sounds.Music:Play()
 		end
@@ -223,12 +266,52 @@ function Effects.getDanger(): number
 	return danger
 end
 
+-- Strømbrudd og finale: lyd og nedtelling
+local function updateMatchEvents()
+	local folder = currentMatchFolder()
+	if mode ~= "match" or not folder then
+		return
+	end
+	local blackout = folder:GetAttribute("Blackout") == true
+	if blackout ~= lastBlackout then
+		lastBlackout = blackout
+		blackoutChanged = os.clock()
+		if blackout then
+			sounds.PowerDown:Play()
+		else
+			sounds.PowerUp:Play()
+		end
+	end
+	local finaleEnd = folder:GetAttribute("FinaleEnd")
+	if typeof(finaleEnd) == "number" then
+		if not sounds.Alarm.IsPlaying then
+			sounds.Alarm:Play()
+		end
+		if folder:GetAttribute("ExitOpen") == true then
+			UI.setFinaleTimer("THE DOOR IS OPEN — RUN!")
+		else
+			local left = math.max(0, math.ceil(finaleEnd - workspace:GetServerTimeNow()))
+			UI.setFinaleTimer(string.format("LOCKDOWN — DOOR OPENS IN %d:%02d", left // 60, left % 60))
+		end
+	else
+		if sounds.Alarm.IsPlaying then
+			sounds.Alarm:Stop()
+		end
+		UI.setFinaleTimer(nil)
+	end
+end
+
+function Effects.stopAlarm()
+	sounds.Alarm:Stop()
+end
+
 function Effects._step(dt: number)
 	lampRefresh -= dt
 	if lampRefresh <= 0 then
 		lampRefresh = 3
 		refreshLamps()
 	end
+	updateMatchEvents()
 
 	local monsterPos: Vector3? = nil
 	if mode == "match" then
@@ -239,6 +322,10 @@ function Effects._step(dt: number)
 		end
 		if monsterRoot then
 			monsterPos = monsterRoot.Position
+		end
+		local fake = Effects.fakeMonster
+		if fake and fake.Parent then
+			monsterPos = fake.Position
 		end
 	end
 

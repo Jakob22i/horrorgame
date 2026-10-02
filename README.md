@@ -6,20 +6,32 @@ Et analog-horror-spill i Roblox for 1–4 spillere per gruppe. Alt i spillet er 
 
 - Alle spawner i **lobbyen**. Langs veggen står **4 heiser** med plass til maks 4 spillere hver.
   Gå inn i en heis, så starter en nedtelling (15 sek, eller 5 sek hvis heisen er full).
-- Gruppa havner i et mørkt, forlatt **sykehus**. Målet er å finne **5 nøkler** som ligger
-  tilfeldig plassert rundt i kartet, og sette dem inn ved **nødutgangen** i resepsjonen.
+- Gruppa havner i et mørkt, forlatt **sykehus** med tre fløyer (hovedbygget, østfløyen med
+  intensiv, apotek, isolat og kantine, og sørfløyen med vaskeri, kapell, lab, arkiv og
+  lasterampe). Målet er å finne **5 nøkler** som ligger tilfeldig plassert rundt i kartet, og
+  sette dem inn ved **nødutgangen** på lasterampen (LOADING DOCK) helt i sørøst.
 - **Patient #0413** jakter på dere: en høy, utmagret pasient med et altfor bredt, sydd glis,
   svarte øyehuler og et dryppstativ med blodpose som den drar etter seg. Den ser dere, hører
   dere når dere løper, halter, rykker i hodet, klaprer med kjeven når den jakter, og du kan
   høre de knirkende hjulene og en spilledåse når den er i nærheten.
-- Gjem deg i **skapene** (24 stk). Trykk E på skapet for å gå inn og ut (eller LEAVE-knappen).
+- Gjem deg i **skapene** (44 stk). Trykk E på skapet for å gå inn og ut (eller LEAVE-knappen).
   Ser den deg gå inn, drar den deg ut.
 - Hver spiller har **3 liv**. Blir du tatt, får du en jumpscare, nøklene du bar faller der
   du døde, og du starter på nytt i resepsjonen.
 - Bruker du opp alle livene, får du valget **REVIVE** (39 Robux, du kommer tilbake i
   resepsjonen med 1 liv) eller **SPECTATE**. Har alle mistet alle liv, kan hver spiller
   velge **REVIVE**, **Try again** (ny runde fra starten) eller **To lobby**.
-- Når 5 nøkler er satt inn, åpner nødutgangen seg. Løp ut, så har dere vunnet.
+- Monsteret blir **raskere for hver nøkkel** som settes inn.
+- Etter **3 nøkler** begynner strømmen å svikte: lyset går av i 10–16 sekunder, kommer tilbake,
+  og går av igjen hvert 30.–50. sekund. Da trenger du lommelykta (som er litt sterkere nå).
+- Når alle 5 nøklene er satt inn, starter **LOCKDOWN**: alarmen går, alle lamper blinker rødt,
+  monsteret jakter på nærmeste spiller, og døra åpner seg først etter **60 sekunder**.
+  Overlev, og løp ut når den åpner seg.
+- Kommer noen seg ut, spilles **sluttscenen** for alle i runden: dere er ute... men noe står i
+  døråpningen bak dere. Den slutter med en cliffhanger og **PART 2 – COMING SOON**, og så går
+  alle tilbake til lobbyen.
+- Når du kommer inn i spillet, vises en **VHS-loading screen** («PLEASE STAND BY») mens lyder
+  og monsteret lastes inn.
 
 **Taster:** `1` lommelykt (eller `F`) · `2` push · `3` jumpscare everyone · `Shift` løp ·
 `E` bruk / gjem deg / gå ut av skap. Musa er bare fri når en meny er åpen.
@@ -65,7 +77,8 @@ jumpscares som ikke ble brukt med en gang, lagres og blir gratis neste gang (kre
 | Nøkkelen | `ServerStorage/Key` |
 | Innstillinger | `ReplicatedStorage/Shared/Config` |
 | Serverscript | `ServerScriptService/GameServer` (+ modulene Lobby, Match, Monster, Shop, Util) |
-| Klientscript | `StarterPlayer/StarterPlayerScripts/ClientMain` (+ UI, Effects, Controls, Jumpscare, MonsterAnimator) |
+| Klientscript | `StarterPlayer/StarterPlayerScripts/ClientMain` (+ UI, Effects, Controls, Jumpscare, MonsterAnimator, Ending) |
+| Loading screen | `ReplicatedFirst/LoadingScreen` |
 
 Sykehuset ligger i `ServerStorage` og klones inn i `Workspace/Matches` for hver gruppe.
 Vil du redigere kartet, drar du `HospitalTemplate` inn i `Workspace`, endrer det og drar
@@ -80,11 +93,16 @@ det tilbake. Mappene i kartet styrer spillet:
 ## Justere spillet
 
 Alt av tall ligger i `ReplicatedStorage/Shared/Config`: antall liv, nøkler, nedtelling,
-hvor fort monsteret går, hvor langt det ser, lyder osv.
+hvor fort monsteret går, hvor langt det ser, lyder osv. Noen nyttige:
+
+- `Monster.SpeedPerKey`: hvor mye raskere monsteret blir per nøkkel som er satt inn
+- `Blackout`: etter hvor mange nøkler strømmen begynner å svikte, og hvor ofte og lenge
+- `FinaleTime`: hvor lenge dere må overleve før døra åpnes (sekunder)
+- `WinReturnTime`: hvor lang tid sluttscenen får før alle sendes til lobbyen
 
 Monsteret er bygget av ca. 800 deler som er sveiset til et "skjelett" (mappen `Rig`).
 Leddene ligger i mappen `Joints` og animeres av `MonsterAnimator` på hver klient, mens
-serveren bare flytter `Root`. Bilder av karakteren ligger i `preview/`.
+serveren bare flytter `Root`. Bilder av karakteren, knappene, sluttscenen og loading screenen ligger i `preview/`.
 
 ## For utviklere
 
@@ -100,6 +118,7 @@ Andre verktøy:
 ```sh
 lune run build/check_map.luau                         # sjekker at alle skap kan brukes
 lune run build/export_preview.luau patient out.json   # eksporterer modellen for forhåndsvisning
+lune run build/export_preview.luau ending out.json    # sluttscenen: monsteret i døråpningen
 ```
 
 Merk: Lune sin `CFrame.lookAt` snur Z-aksen feil, så byggescriptene bruker `lib.lookAt`.

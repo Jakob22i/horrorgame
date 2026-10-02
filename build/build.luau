@@ -27,6 +27,7 @@ local ServerScriptService = game:GetService("ServerScriptService")
 local StarterPlayer = game:GetService("StarterPlayer")
 local Players = game:GetService("Players")
 local SoundService = game:GetService("SoundService")
+local ReplicatedFirst = game:GetService("ReplicatedFirst")
 
 -- Fjern ting fra en tidligere bygging (så skriptet kan kjøres flere ganger på samme fil)
 for _, item in {
@@ -199,9 +200,17 @@ if oldClient then
 	oldClient.Parent = nil
 end
 local client, smClient = script("LocalScript", "ClientMain", "src/client/ClientMain.client.luau", sps, smSPS)
-for _, name in { "UI", "Effects", "Controls", "Jumpscare", "MonsterAnimator" } do
+for _, name in { "UI", "Effects", "Controls", "Jumpscare", "MonsterAnimator", "Ending" } do
 	script("ModuleScript", name, "src/client/" .. name .. ".luau", client, smClient)
 end
+
+-- Loading screen (vises før alt annet)
+local smRF = smService("ReplicatedFirst", "ReplicatedFirst")
+local oldLoading = ReplicatedFirst:FindFirstChild("LoadingScreen")
+if oldLoading then
+	oldLoading.Parent = nil
+end
+script("LocalScript", "LoadingScreen", "src/first/LoadingScreen.client.luau", ReplicatedFirst, smRF)
 
 smService("Workspace", "Workspace")
 smService("ServerStorage", "ServerStorage")

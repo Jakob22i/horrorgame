@@ -192,6 +192,61 @@ elseif scene == "hospital" then
 		end
 	end
 	extra.monsterPivot = cfArray(m.PrimaryPart.CFrame)
+elseif scene == "ending" then
+	-- sluttscenen: monsteret står i nødutgangen og vinker (samme formler som Ending.luau)
+	buildHospital(container)
+	local m = buildPatient(container, "Monster")
+	local a = string.split(process.args[3] or "", ",")
+	local function arg(i: number, default: number): number
+		return tonumber(a[i]) or default
+	end
+	local CF = roblox.CFrame
+	local Vector3 = roblox.Vector3
+	local function set(name: string, cf: any)
+		local w = m.Joints:FindFirstChild(name)
+		w.C0 = w.C0 * cf
+	end
+	set("Neck", CF.Angles(0.12, 0, arg(4, 0.55)))
+	set("RShoulder", CF.Angles(arg(1, 1.2), 0, arg(2, 0.5)))
+	set("RElbow", CF.Angles(arg(3, 1.0), 0, 0))
+	set("Jaw", CF.Angles(-0.12, 0, 0))
+	local byPart0 = {}
+	for _, d in m:GetDescendants() do
+		if d.ClassName == "Weld" then
+			byPart0[d.Part0] = byPart0[d.Part0] or {}
+			table.insert(byPart0[d.Part0], d)
+		end
+	end
+	local map = container:FindFirstChild("HospitalTemplate") or container
+	local exit = map:FindFirstChild("ExitDoor", true)
+	local header = exit:FindFirstChild("Header")
+	local outside = exit:FindFirstChild("OutsideFloor")
+	for _, name in { "DoorL", "DoorR", "Chain" } do
+		local door = exit:FindFirstChild(name)
+		if door then
+			door.Parent = nil
+		end
+	end
+	local floorY = outside.CFrame.Position.Y + outside.Size.Y / 2
+	local hp = header.CFrame.Position
+	local door = Vector3.new(hp.X, floorY, hp.Z)
+	local d = outside.CFrame.Position - hp
+	local dir = Vector3.new(d.X, 0, d.Z).Unit
+	local rootPos = door - dir * 1.2 + Vector3.new(0, 1, 0)
+	m.Root.CFrame = lib.lookAt(rootPos, rootPos + dir)
+	local queue = { m.Root }
+	while #queue > 0 do
+		local p0 = table.remove(queue, 1)
+		for _, w in byPart0[p0] or {} do
+			w.Part1.CFrame = p0.CFrame * w.C0 * w.C1:Inverse()
+			table.insert(queue, w.Part1)
+		end
+	end
+	local side = Vector3.new(-dir.Z, 0, dir.X)
+	local camPos = door + dir * 14 + side * 3 + Vector3.new(0, 5.2, 0)
+	extra.camera = { camPos.X, camPos.Y, camPos.Z }
+	extra.target = { door.X, door.Y + 6.5, door.Z }
+	extra.monsterPivot = cfArray(m.Root.CFrame)
 end
 collect(container)
 

@@ -394,9 +394,55 @@ function Match:_insertKeys(player: Player)
 	end
 	local word = count == 1 and "key" or "keys"
 	self:Notify(player.DisplayName .. " inserted " .. count .. " " .. word .. " (" .. self.keysInserted .. "/" .. Config.KeysToEscape .. ")", "good")
-	if self.keysInserted >= Config.KeysToEscape then
-		self:_openExit()
+	if self.keysInserted >= Config.Blackout.AfterKeys then
+		self:_startBlackouts()
 	end
+	if self.keysInserted >= Config.KeysToEscape then
+		self:_startFinale()
+	end
+end
+
+-- Etter noen nøkler begynner strømmen å svikte: lyset går av og på med jevne mellomrom
+function Match:_startBlackouts()
+	if self.blackoutsStarted then
+		return
+	end
+	self.blackoutsStarted = true
+	local B = Config.Blackout
+	task.spawn(function()
+		task.wait(8)
+		while self.state ~= "ended" do
+			if self.state == "playing" and not self.finale then
+				self.folder:SetAttribute("Blackout", true)
+				self:Notify("The power is failing...", "bad")
+				task.wait(math.random(B.Length[1], B.Length[2]))
+				if (self.state :: string) == "ended" then
+					break
+				end
+				self.folder:SetAttribute("Blackout", false)
+			end
+			task.wait(math.random(B.Every[1], B.Every[2]))
+		end
+	end)
+end
+
+-- Alle nøklene er inne: alarmen går, monsteret jakter, og døra åpner seg etter en stund
+function Match:_startFinale()
+	if self.finale then
+		return
+	end
+	self.finale = true
+	self.folder:SetAttribute("Blackout", false)
+	self.folder:SetAttribute("FinaleEnd", workspace:GetServerTimeNow() + Config.FinaleTime)
+	self:Notify("LOCKDOWN OVERRIDE. SURVIVE UNTIL THE DOOR OPENS!", "bad")
+	if self.monster then
+		self.monster:Enrage()
+	end
+	task.delay(Config.FinaleTime, function()
+		if self.state == "playing" and self.finale then
+			self:_openExit()
+		end
+	end)
 end
 
 function Match:_openExit()
@@ -419,10 +465,8 @@ function Match:_openExit()
 			TweenService:Create(door, info, { CFrame = door.CFrame * CFrame.new(dir * door.Size.X, 0, 0) }):Play()
 		end
 	end
-	self:Notify("THE EMERGENCY EXIT IS OPEN! RUN!", "good")
-	if self.monster then
-		self.monster:Enrage()
-	end
+	self.folder:SetAttribute("ExitOpen", true)
+	self:Notify("THE DOOR IS OPEN! RUN!", "good")
 end
 
 ------------------------------------------------------------------
@@ -598,8 +642,13 @@ function Match:Win(escaper: Player)
 		return
 	end
 	self.state = "won"
+	-- alarmen og strømbruddene stopper; klientene spiller sluttscenen
+	self.folder:SetAttribute("FinaleEnd", nil)
+	self.folder:SetAttribute("Blackout", false)
 	if self.monster then
 		self.monster:Stop()
+		-- gjem det ekte monsteret; sluttscenen bruker sin egen kopi
+		self.monster.root.CFrame = self.monster.root.CFrame + Vector3.new(0, -150, 0)
 	end
 	for player, st in self.players do
 		if st.closet then
