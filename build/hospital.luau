@@ -14,8 +14,8 @@ local DOOR_H = 12
 local COLORS = {
 	floor = rgb(140, 146, 136),
 	wallLow = rgb(84, 110, 96),
-	wallHigh = rgb(176, 172, 156),
-	ceiling = rgb(96, 96, 92),
+	wallHigh = rgb(186, 174, 132),
+	ceiling = rgb(112, 106, 86),
 	metal = rgb(150, 152, 150),
 	darkMetal = rgb(80, 84, 84),
 	locker = rgb(70, 86, 82),
@@ -63,21 +63,21 @@ return function(parent: any)
 
 	-- Rom: id, navn, x1, y1, x2, y2, gulvfarge, gulvmateriale
 	local rooms = {
-		{ "R101", "PASIENTROM 101", 1, 1, 9, 10 },
-		{ "R102", "PASIENTROM 102", 11, 1, 19, 10 },
-		{ "STORAGE", "LAGER", 21, 1, 28, 10, rgb(110, 108, 100), Enum.Material.Concrete },
-		{ "R103", "PASIENTROM 103", 30, 1, 37, 10 },
-		{ "CHILD", "BARNEAVDELING", 39, 1, 47, 10, rgb(150, 120, 120), Enum.Material.CeramicTiles },
-		{ "XRAY", "RØNTGEN", 49, 1, 58, 10, rgb(120, 126, 132), Enum.Material.CeramicTiles },
-		{ "OR", "OPERASJON", 5, 16, 17, 23, rgb(170, 182, 178), Enum.Material.CeramicTiles },
-		{ "OFFICE", "KONTOR", 19, 16, 26, 23, rgb(78, 70, 62), Enum.Material.Carpet },
-		{ "WARD", "SENGEPOST", 32, 16, 44, 23 },
-		{ "MORGUE", "LIKHUS", 46, 16, 54, 23, rgb(105, 110, 112), Enum.Material.Concrete },
-		{ "BATH", "TOALETT", 1, 29, 9, 38, rgb(176, 180, 176), Enum.Material.CeramicTiles },
-		{ "R104", "PASIENTROM 104", 11, 29, 19, 38 },
-		{ "RECEPTION", "RESEPSJON", 21, 29, 38, 38, rgb(120, 118, 108), Enum.Material.Marble },
-		{ "WAITING", "VENTEROM", 40, 29, 48, 38, rgb(90, 78, 64), Enum.Material.Carpet },
-		{ "STAFF", "PERSONALROM", 50, 29, 58, 38, rgb(118, 100, 80), Enum.Material.WoodPlanks },
+		{ "R101", "PATIENT ROOM 101", 1, 1, 9, 10 },
+		{ "R102", "PATIENT ROOM 102", 11, 1, 19, 10 },
+		{ "STORAGE", "STORAGE", 21, 1, 28, 10, rgb(110, 108, 100), Enum.Material.Concrete },
+		{ "R103", "PATIENT ROOM 103", 30, 1, 37, 10 },
+		{ "CHILD", "PEDIATRICS", 39, 1, 47, 10, rgb(150, 120, 120), Enum.Material.CeramicTiles },
+		{ "XRAY", "X-RAY", 49, 1, 58, 10, rgb(120, 126, 132), Enum.Material.CeramicTiles },
+		{ "OR", "SURGERY", 5, 16, 17, 23, rgb(170, 182, 178), Enum.Material.CeramicTiles },
+		{ "OFFICE", "OFFICE", 19, 16, 26, 23, rgb(78, 70, 62), Enum.Material.Carpet },
+		{ "WARD", "WARD", 32, 16, 44, 23 },
+		{ "MORGUE", "MORGUE", 46, 16, 54, 23, rgb(105, 110, 112), Enum.Material.Concrete },
+		{ "BATH", "RESTROOM", 1, 29, 9, 38, rgb(176, 180, 176), Enum.Material.CeramicTiles },
+		{ "R104", "PATIENT ROOM 104", 11, 29, 19, 38 },
+		{ "RECEPTION", "RECEPTION", 21, 29, 38, 38, rgb(120, 118, 108), Enum.Material.Marble },
+		{ "WAITING", "WAITING ROOM", 40, 29, 48, 38, rgb(90, 78, 64), Enum.Material.Carpet },
+		{ "STAFF", "STAFF ROOM", 50, 29, 58, 38, rgb(118, 100, 80), Enum.Material.WoodPlanks },
 	}
 	local corridors = {
 		{ 1, 12, 58, 14 }, -- nordre korridor
@@ -97,26 +97,26 @@ return function(parent: any)
 	local doors = {
 		{ 4, 11, 5, 11, "101", "S" },
 		{ 14, 11, 15, 11, "102", "S" },
-		{ 24, 11, 25, 11, "LAGER", "S" },
+		{ 24, 11, 25, 11, "STORAGE", "S" },
 		{ 33, 11, 34, 11, "103", "S" },
-		{ 42, 11, 43, 11, "BARN", "S" },
-		{ 53, 11, 54, 11, "RØNTGEN", "S" },
+		{ 42, 11, 43, 11, "PEDIATRICS", "S" },
+		{ 53, 11, 54, 11, "X-RAY", "S" },
 		{ 20, 4, 20, 5 },
 		{ 48, 6, 48, 7 },
-		{ 10, 15, 11, 15, "OPERASJON", "N" },
+		{ 10, 15, 11, 15, "SURGERY", "N" },
 		{ 4, 19, 4, 20 },
-		{ 27, 18, 27, 19, "KONTOR", "E" },
+		{ 27, 18, 27, 19, "OFFICE", "E" },
 		{ 22, 24, 23, 24 },
-		{ 37, 15, 38, 15, "SENGEPOST", "N" },
+		{ 37, 15, 38, 15, "WARD B", "N" },
 		{ 31, 20, 31, 21 },
-		{ 55, 19, 55, 20, "LIKHUS", "E" },
-		{ 49, 24, 50, 24, "LIKHUS", "S" },
-		{ 4, 28, 5, 28, "WC", "N" },
+		{ 55, 19, 55, 20, "MORGUE", "E" },
+		{ 49, 24, 50, 24, "MORGUE", "S" },
+		{ 4, 28, 5, 28, "RESTROOM", "N" },
 		{ 14, 28, 15, 28, "104", "N" },
-		{ 27, 28, 32, 28, "RESEPSJON", "N" },
-		{ 43, 28, 44, 28, "VENTEROM", "N" },
+		{ 27, 28, 32, 28, "RECEPTION", "N" },
+		{ 43, 28, 44, 28, "WAITING", "N" },
 		{ 39, 33, 39, 34 },
-		{ 53, 28, 54, 28, "PERSONALE", "N" },
+		{ 53, 28, 54, 28, "STAFF ONLY", "N" },
 	}
 	for _, d in doors do
 		carve(d[1], d[2], d[3], d[4])
@@ -160,7 +160,7 @@ return function(parent: any)
 	local function againstWall(x: number, y: number, depth: number, prefer: string?)
 		local d = wallDir(x, y, prefer) or Vector3.new(0, 0, -1)
 		local c = cellCenter(x, y) + d * (CELL / 2 - depth / 2)
-		return CFrame.lookAt(c, c - d), d
+		return lib.lookAt(c, c - d), d
 	end
 
 	------------------------------------------------------------------
@@ -226,7 +226,7 @@ return function(parent: any)
 			local depth = (dir.X ~= 0) and sx or sz
 			local pos = Vector3.new(cx, DOOR_H + 1, cz) + dir * (depth / 2 + 0.06)
 			local signWidth = math.min(7, ((dir.X ~= 0) and sz or sx) - 0.6)
-			local plate = lib.part(folders.Signs, "DoorSign", Vector3.new(signWidth, 1.5, 0.1), CFrame.lookAt(pos, pos + dir), rgb(28, 40, 34), Enum.Material.SmoothPlastic)
+			local plate = lib.part(folders.Signs, "DoorSign", Vector3.new(signWidth, 1.5, 0.1), lib.lookAt(pos, pos + dir), rgb(28, 40, 34), Enum.Material.SmoothPlastic)
 			lib.sign(plate, d[5], { Color = rgb(200, 215, 200), Font = Enum.Font.SpecialElite, Brightness = 0.6, LightInfluence = 0.6 })
 		end
 	end
@@ -419,8 +419,8 @@ return function(parent: any)
 		local promptPart = lib.marker(m, "PromptPart", cf * CFrame.new(0, 4, -1.5))
 		lib.new("ProximityPrompt", {
 			Name = "HidePrompt",
-			ActionText = "Gjem deg",
-			ObjectText = "Skap",
+			ActionText = "Hide",
+			ObjectText = "Locker",
 			HoldDuration = 0,
 			MaxActivationDistance = 7,
 			RequiresLineOfSight = false,
@@ -443,8 +443,8 @@ return function(parent: any)
 		local c = cellCenter(x, y, WALL_H) + (offset or Vector3.new(0, 0, 0))
 		local m = lib.new("Model", { Name = "Lamp", Tags = { "Lamp" }, Attributes = { Mode = "on" } }, folders.Lamps)
 		lib.part(m, "Housing", Vector3.new(3.6, 0.2, 1.6), CFrame.new(c - Vector3.new(0, 0.1, 0)), COLORS.darkMetal, Enum.Material.Metal, { CanQuery = false, CastShadow = false })
-		local panel = lib.part(m, "Panel", Vector3.new(3.2, 0.12, 1.2), CFrame.new(c - Vector3.new(0, 0.26, 0)), rgb(215, 238, 222), Enum.Material.Neon, { CanQuery = false, CastShadow = false })
-		lib.new("PointLight", { Name = "Light", Range = 18, Brightness = 1.1, Color = rgb(200, 232, 212), Shadows = true }, panel)
+		local panel = lib.part(m, "Panel", Vector3.new(3.2, 0.12, 1.2), CFrame.new(c - Vector3.new(0, 0.26, 0)), rgb(255, 238, 190), Enum.Material.Neon, { CanQuery = false, CastShadow = false })
+		lib.new("PointLight", { Name = "Light", Range = 18, Brightness = 1.15, Color = rgb(255, 226, 160), Shadows = true }, panel)
 	end
 
 	for _, r in rooms do
@@ -511,7 +511,7 @@ return function(parent: any)
 	bed(40, 8, true)
 	keySpot(41, 1, "CHILD")
 	closet(47, 1, "E")
-	tv(47, 9, "E", "HVOR ER\nMAMMA?")
+	tv(47, 9, "E", "WHERE IS\nMOMMY?")
 	-- Røntgen
 	desk(50, 1, true, "N")
 	desk(52, 1, false, "N")
@@ -566,7 +566,7 @@ return function(parent: any)
 	for x = 22, 26 do
 		desk(x, 32, x == 24, "S")
 	end
-	tv(21, 29, "W", "ER DU\nFORTSATT\nDER?")
+	tv(21, 29, "W", "ARE YOU\nSTILL\nTHERE?")
 	closet(38, 29, "E")
 	closet(21, 37, "W")
 	-- Venterom
@@ -602,7 +602,7 @@ return function(parent: any)
 	------------------------------------------------------------------
 	for i, x in { 28, 29, 30, 31 } do
 		local c = cellCenter(x, 35, 3.2)
-		lib.marker(folders.SpawnPoints, "Spawn" .. i, CFrame.lookAt(c, c + Vector3.new(0, 0, -1)))
+		lib.marker(folders.SpawnPoints, "Spawn" .. i, lib.lookAt(c, c + Vector3.new(0, 0, -1)))
 	end
 
 	local exitModel = lib.new("Model", { Name = "ExitDoor" }, map)
@@ -621,18 +621,18 @@ return function(parent: any)
 	end
 	local signPos = Vector3.new(doorCX, WALL_H - 0.8, doorZ - 6)
 	lib.part(exitModel, "SignRod", Vector3.new(0.15, 0.6, 0.15), CFrame.new(signPos + Vector3.new(0, 0.55, 0)), COLORS.darkMetal, Enum.Material.Metal, { CanQuery = false })
-	local exitSign = lib.part(exitModel, "ExitSign", Vector3.new(6, 1.2, 0.3), CFrame.lookAt(signPos, signPos - Vector3.new(0, 0, 1)), rgb(20, 110, 50), Enum.Material.Neon, { CanQuery = false })
-	lib.sign(exitSign, "NØDUTGANG", { Color = rgb(235, 255, 235), Font = Enum.Font.GothamBold, Brightness = 1 })
+	local exitSign = lib.part(exitModel, "ExitSign", Vector3.new(6, 1.2, 0.3), lib.lookAt(signPos, signPos - Vector3.new(0, 0, 1)), rgb(20, 110, 50), Enum.Material.Neon, { CanQuery = false })
+	lib.sign(exitSign, "EXIT", { Color = rgb(235, 255, 235), Font = Enum.Font.GothamBold, Brightness = 1 })
 	lib.new("PointLight", { Range = 10, Brightness = 0.7, Color = rgb(60, 255, 110) }, exitSign)
 	-- Låsepanel ved siden av døra
 	local panelPos = Vector3.new(doorX1 - 1.6, 4.2, doorZ - CELL / 2 - 0.35)
-	local panel = lib.part(exitModel, "LockPanel", Vector3.new(2.2, 2.8, 0.5), CFrame.lookAt(panelPos, panelPos - Vector3.new(0, 0, 1)), rgb(40, 42, 44), Enum.Material.Metal)
+	local panel = lib.part(exitModel, "LockPanel", Vector3.new(2.2, 2.8, 0.5), lib.lookAt(panelPos, panelPos - Vector3.new(0, 0, 1)), rgb(40, 42, 44), Enum.Material.Metal)
 	local _, panelLabel = lib.sign(panel, "0/5", { Color = rgb(255, 80, 70), Font = Enum.Font.Code, Brightness = 2 })
 	panelLabel.Name = "Counter"
 	lib.new("ProximityPrompt", {
 		Name = "InsertPrompt",
-		ActionText = "Sett inn nøkler",
-		ObjectText = "Utgang (0/5)",
+		ActionText = "Insert keys",
+		ObjectText = "Exit (0/5)",
 		HoldDuration = 0.4,
 		MaxActivationDistance = 9,
 		RequiresLineOfSight = false,
@@ -668,30 +668,199 @@ return function(parent: any)
 	lib.marker(spec, "SpectatorPoint", CFrame.new(sb + Vector3.new(0, 3.2, 0)))
 
 	------------------------------------------------------------------
-	-- Skrift på veggene
+	-- Blodskrift på veggene: hver bokstav er litt skjev, med renner, sprut og håndavtrykk
 	------------------------------------------------------------------
-	local writings = {
-		{ 27, 12, "N", "HUN SER DEG" },
-		{ 52, 23, "S", "IKKE SE PÅ\nHENNE" },
-		{ 35, 23, "S", "GJEM DEG I\nSKAPENE" },
-		{ 20, 25, "N", "HVOR MANGE\nNØKLER?" },
-		{ 45, 1, "N", "MAMMA?" },
-		{ 6, 38, "S", "BAK DEG" },
-		{ 58, 13, "E", "IKKE LØP" },
-		{ 14, 16, "N", "HUN KOMMER\nTILBAKE" },
-	}
-	for _, wr in writings do
-		local x, y, dirName, text = wr[1], wr[2], wr[3], wr[4]
+	local BLOOD = { rgb(92, 4, 6), rgb(80, 6, 6), rgb(106, 10, 10), rgb(68, 8, 6), rgb(60, 10, 8) }
+	local PPS = 40
+	local function bloodColor()
+		return BLOOD[rng(1, #BLOOD)]
+	end
+
+	-- Et flatt merke rett på veggen (lokale koordinater i "plate"-rommet, x mot høyre, y opp)
+	local function wallMark(plateCF: any, name: string, lx: number, ly: number, w: number, h: number, color: any, rot: number?, transparency: number?)
+		local cf = plateCF * CFrame.new(-lx, ly, 0.012) * CFrame.Angles(0, 0, rot or 0)
+		local p = lib.ellipsoid(folders.Decor, name, Vector3.new(w, h, 0.02), cf, color, Enum.Material.SmoothPlastic)
+		p.CanCollide = false
+		p.CanQuery = false
+		p.CanTouch = false
+		p.CastShadow = false
+		p.Transparency = transparency or 0
+		p.Reflectance = 0.04
+		return p
+	end
+
+	local function drip(plateCF: any, lx: number, ly: number)
+		local len = rng() < 0.3 and (1.2 + rng() * 1.6) or (0.25 + rng() * 0.9)
+		local w = 0.05 + rng() * 0.06
+		local col = bloodColor()
+		wallMark(plateCF, "Drip", lx, ly - len / 2, w, len, col)
+		wallMark(plateCF, "Drop", lx, ly - len, w * 1.9, w * 2.3, col)
+	end
+
+	local function handprint(plateCF: any, lx: number, ly: number, angle: number, smearLen: number)
+		local col = bloodColor()
+		local rot = CFrame.Angles(0, 0, angle)
+		local function at(x: number, y: number)
+			local v = rot:PointToWorldSpace(Vector3.new(x, y, 0))
+			return lx + v.X, ly + v.Y
+		end
+		local px, py = at(0, 0)
+		wallMark(plateCF, "Hand", px, py, 0.62, 0.7, col, angle, 0.1)
+		local fingers = { { -0.27, 0.48, 0.12, 0.42, 0.35 }, { -0.1, 0.6, 0.12, 0.5, 0.1 }, { 0.07, 0.62, 0.12, 0.52, -0.05 }, { 0.23, 0.55, 0.11, 0.44, -0.2 }, { 0.38, 0.05, 0.12, 0.36, -0.9 } }
+		for _, f in fingers do
+			local fx, fy = at(f[1], f[2])
+			wallMark(plateCF, "Finger", fx, fy, f[3], f[4], col, angle + f[5], 0.15)
+		end
+		-- handen har sklidd nedover veggen
+		if smearLen > 0 then
+			for k = 1, 4 do
+				local sx, sy = at(-0.25 + k * 0.12, -smearLen / 2)
+				wallMark(plateCF, "Smear", sx, sy, 0.07, smearLen, col, angle, 0.45 + k * 0.08)
+			end
+		end
+	end
+
+	local function bloodWriting(x: number, y: number, dirName: string, text: string, height: number?, letterH: number?)
 		local d = ({ N = Vector3.new(0, 0, -1), S = Vector3.new(0, 0, 1), W = Vector3.new(-1, 0, 0), E = Vector3.new(1, 0, 0) })[dirName]
-		local pos = cellCenter(x, y, 6.5) + d * (CELL / 2 - 0.06)
-		local plate = lib.part(folders.Decor, "Writing", Vector3.new(7, 3.5, 0.05), CFrame.lookAt(pos, pos - d), rgb(0, 0, 0), nil, {
+		local lines = string.split(text, "\n")
+		local LH = letterH or (#lines > 1 and 1.15 or 1.5)
+		local longest = 0
+		for _, line in lines do
+			longest = math.max(longest, #line)
+		end
+		local W = math.max(6, longest * LH * 0.72 + 1.4)
+		local Hh = #lines * LH * 1.3 + 1.2
+		local pos = cellCenter(x, y, height or 6.2) + d * (CELL / 2 - 0.03)
+		local plateCF = lib.lookAt(pos, pos - d)
+		local plate = lib.part(folders.Decor, "Writing", Vector3.new(W, Hh, 0.02), plateCF, rgb(0, 0, 0), nil, {
 			Transparency = 1,
 			CanCollide = false,
 			CanQuery = false,
 			CanTouch = false,
 			CastShadow = false,
 		})
-		lib.sign(plate, text, { Color = rgb(110, 6, 8), Font = Enum.Font.PermanentMarker, LightInfluence = 1, Brightness = 1, TextTransparency = 0.1 })
+		local gui = lib.new("SurfaceGui", {
+			Name = "BloodText",
+			Face = Enum.NormalId.Front,
+			SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud,
+			PixelsPerStud = PPS,
+			LightInfluence = 1,
+			Brightness = 1,
+			ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+		}, plate)
+		local px = LH * PPS
+		local Wpx, Hpx = W * PPS, Hh * PPS
+
+		-- utsmurte strøk bak teksten
+		for _ = 1, rng(2, 4) do
+			local smear = lib.new("Frame", {
+				Name = "Smear",
+				AnchorPoint = lib.Vector2.new(0.5, 0.5),
+				Position = lib.UDim2.new(0, Wpx * (0.2 + rng() * 0.6), 0, Hpx * (0.25 + rng() * 0.5)),
+				Size = lib.UDim2.new(0, px * (1.5 + rng() * 3), 0, px * (0.12 + rng() * 0.18)),
+				Rotation = rng() * 40 - 20,
+				BackgroundColor3 = bloodColor(),
+				BackgroundTransparency = 0.72 + rng() * 0.15,
+				BorderSizePixel = 0,
+				ZIndex = 1,
+			}, gui)
+			lib.new("UICorner", { CornerRadius = lib.UDim.new(0.5, 0) }, smear)
+		end
+
+		for li, line in lines do
+			local lineW = 0
+			for i = 1, #line do
+				lineW += (string.sub(line, i, i) == " " and 0.42 or 0.7) * px
+			end
+			local cx = (Wpx - lineW) / 2
+			local cy = Hpx / 2 + (li - (#lines + 1) / 2) * px * 1.3
+			local slope = (rng() - 0.5) * 0.08 -- hele linja heller litt
+			for i = 1, #line do
+				local ch = string.sub(line, i, i)
+				local adv = (ch == " " and 0.42 or 0.7) * px
+				if ch ~= " " then
+					local lx = cx + adv / 2 + (rng() - 0.5) * px * 0.08
+					local ly = cy + (lx - Wpx / 2) * slope + (rng() - 0.5) * px * 0.14
+					local size = math.floor(px * (0.9 + rng() * 0.28))
+					local col = bloodColor()
+					local rot = (rng() - 0.5) * 18
+					local transp = 0.04 + rng() * 0.2
+					lib.new("TextLabel", {
+						Name = "Letter",
+						AnchorPoint = lib.Vector2.new(0.5, 0.5),
+						Position = lib.UDim2.new(0, lx, 0, ly),
+						Size = lib.UDim2.new(0, size * 1.2, 0, size * 1.3),
+						Rotation = rot,
+						BackgroundTransparency = 1,
+						Text = ch,
+						TextScaled = false,
+						TextSize = size,
+						TextColor3 = col,
+						TextTransparency = transp,
+						TextStrokeColor3 = rgb(30, 0, 0),
+						TextStrokeTransparency = 0.45,
+						FontFace = lib.Font.fromEnum(Enum.Font.PermanentMarker),
+						ZIndex = 2,
+					}, gui)
+					-- dobbelt strøk på noen bokstaver (som om fingeren gikk over to ganger)
+					if rng() < 0.3 then
+						lib.new("TextLabel", {
+							Name = "LetterSmear",
+							AnchorPoint = lib.Vector2.new(0.5, 0.5),
+							Position = lib.UDim2.new(0, lx + (rng() - 0.5) * 6, 0, ly + 3 + rng() * 5),
+							Size = lib.UDim2.new(0, size * 1.2, 0, size * 1.3),
+							Rotation = rot + (rng() - 0.5) * 8,
+							BackgroundTransparency = 1,
+							Text = ch,
+							TextScaled = false,
+							TextSize = size,
+							TextColor3 = col,
+							TextTransparency = 0.7,
+							FontFace = lib.Font.fromEnum(Enum.Font.PermanentMarker),
+							ZIndex = 1,
+						}, gui)
+					end
+					-- renner fra bunnen av bokstaven
+					local wx = W / 2 - lx / PPS
+					local wy = Hh / 2 - (ly + size * 0.42) / PPS
+					if rng() < 0.5 then
+						drip(plateCF, -wx + (rng() - 0.5) * 0.25, wy)
+					end
+					if rng() < 0.15 then
+						drip(plateCF, -wx + (rng() - 0.5) * 0.3, wy + 0.1)
+					end
+				end
+				cx += adv
+			end
+		end
+		-- sprut rundt teksten
+		for _ = 1, rng(8, 16) do
+			local r = 0.04 + rng() * 0.12
+			wallMark(plateCF, "Splatter", (rng() - 0.5) * W * 1.1, (rng() - 0.5) * Hh * 1.1, r, r * (1 + rng() * 0.6), bloodColor(), rng() * 3)
+		end
+		return plateCF, W, Hh
+	end
+
+	local writings = {
+		{ 27, 12, "N", "IT SEES YOU" },
+		{ 52, 23, "S", "DON'T LOOK\nAT ITS FACE" },
+		{ 35, 23, "S", "HIDE IN THE\nLOCKERS" },
+		{ 20, 25, "N", "HOW MANY\nKEYS LEFT?" },
+		{ 45, 1, "N", "MOMMY?" },
+		{ 7, 38, "S", "BEHIND YOU" },
+		{ 58, 13, "E", "DON'T RUN\nIT HEARS YOU" },
+		{ 14, 16, "N", "IT ALWAYS\nCOMES BACK" },
+		{ 34, 27, "S", "VISITING HOURS\nARE OVER" },
+		{ 50, 16, "N", "SMILE :)", 9.8 },
+	}
+	for i, wr in writings do
+		local plateCF, W, Hh = bloodWriting(wr[1], wr[2], wr[3], wr[4], wr[5])
+		if i == 1 or i == 6 or i == 9 then
+			handprint(plateCF, W / 2 + 0.6, -Hh * 0.1, math.rad(rng(-25, 25)), 0.8 + rng() * 1.2)
+		end
+		if i == 3 then
+			handprint(plateCF, -W / 2 - 0.4, 0.4, math.rad(-15), 0)
+		end
 	end
 
 	------------------------------------------------------------------

@@ -116,16 +116,16 @@ MatchStateRemote.OnClientEvent:Connect(function(state, data)
 		UI.hidePanels()
 		local players = data and data.players or 1
 		task.spawn(UI.intro, {
-			"OPPTAK #" .. tostring(data and data.matchId or 1) .. "  —  ST. AGATHE SYKEHUS",
-			"02.10.1997   03:13",
+			"TAPE #" .. tostring(data and data.matchId or 1) .. "  —  ST. AGATHE HOSPITAL",
+			"10/02/1997   03:13 AM",
 			"",
-			"Finn 5 nøkler. Sett dem inn ved nødutgangen.",
-			"Gjem deg i skapene. Ikke la henne se deg.",
+			"Find 5 keys. Bring them to the emergency exit.",
+			"Hide in the lockers. Do not let it see you.",
 			"",
-			players == 1 and "Du er alene." or ("Dere er " .. players .. "."),
+			players == 1 and "You are alone." or ("There are " .. players .. " of you."),
 		}, 2.2)
 	elseif state == "won" then
-		UI.showWin(data and data.escaper or "Noen", data and data.seconds or 10)
+		UI.showWin(data and data.escaper or "Someone", data and data.seconds or 10)
 		if Config.Sounds.Win ~= "" then
 			local s = Instance.new("Sound")
 			s.SoundId = Config.Sounds.Win

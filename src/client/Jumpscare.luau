@@ -121,11 +121,11 @@ function Jumpscare.play(livesLeft: number)
 
 	local message
 	if livesLeft > 1 then
-		message = "HUN TOK DEG\n\n" .. livesLeft .. " liv igjen"
+		message = "IT GOT YOU\n\n" .. livesLeft .. " lives left"
 	elseif livesLeft == 1 then
-		message = "HUN TOK DEG\n\n1 liv igjen"
+		message = "IT GOT YOU\n\n1 life left"
 	else
-		message = "HUN TOK DEG\n\nIngen liv igjen..."
+		message = "IT GOT YOU\n\nNo lives left..."
 	end
 	UI.fadeOut(message, 0.05)
 	task.delay(1.2, function()

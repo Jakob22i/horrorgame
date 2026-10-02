@@ -68,8 +68,8 @@ return function(parent: any, spawnLocation: any)
 
 	-- Stort skilt over heisene
 	local bannerPos = Vector3.new(0, 17.8, z0 + 0.15)
-	local banner = lib.part(walls, "Banner", Vector3.new(64, 2.6, 0.2), CFrame.lookAt(bannerPos, bannerPos + Vector3.new(0, 0, 1)), rgb(30, 26, 20), Enum.Material.SmoothPlastic)
-	lib.sign(banner, "VELG EN HEIS  •  1–4 SPILLERE PER HEIS", { Color = rgb(235, 220, 170), Font = Enum.Font.SpecialElite, LightInfluence = 0.4 })
+	local banner = lib.part(walls, "Banner", Vector3.new(64, 2.6, 0.2), lib.lookAt(bannerPos, bannerPos + Vector3.new(0, 0, 1)), rgb(30, 26, 20), Enum.Material.SmoothPlastic)
+	lib.sign(banner, "CHOOSE AN ELEVATOR  •  1–4 PLAYERS EACH", { Color = rgb(235, 220, 170), Font = Enum.Font.SpecialElite, LightInfluence = 0.4 })
 
 	-- Heiser
 	for index, cx in ELEVATOR_X do
@@ -86,7 +86,7 @@ return function(parent: any, spawnLocation: any)
 		lib.new("PointLight", { Range = 14, Brightness = 0.9, Color = rgb(255, 225, 180) }, carLight)
 		-- Knappepanel inne i heisen
 		local bp = Vector3.new(cx + 5.85, 4.5, z0 - 4)
-		local buttons = lib.part(m, "ButtonPanel", Vector3.new(1.2, 2.4, 0.1), CFrame.lookAt(bp, bp + Vector3.new(-1, 0, 0)), rgb(40, 40, 44), Enum.Material.Metal)
+		local buttons = lib.part(m, "ButtonPanel", Vector3.new(1.2, 2.4, 0.1), lib.lookAt(bp, bp + Vector3.new(-1, 0, 0)), rgb(40, 40, 44), Enum.Material.Metal)
 		lib.sign(buttons, "B\nB2\nB3", { Color = rgb(255, 120, 90), Font = Enum.Font.Code, Brightness = 2 })
 
 		-- Dører (står åpne i fila; serveren lukker dem når heisen går)
@@ -102,7 +102,7 @@ return function(parent: any, spawnLocation: any)
 
 		-- Skilt med status
 		local signPos = Vector3.new(cx, 14.5, z0 + 0.2)
-		local sign = lib.part(m, "Sign", Vector3.new(9, 3.4, 0.25), CFrame.lookAt(signPos, signPos + Vector3.new(0, 0, 1)), rgb(18, 16, 14), Enum.Material.SmoothPlastic)
+		local sign = lib.part(m, "Sign", Vector3.new(9, 3.4, 0.25), lib.lookAt(signPos, signPos + Vector3.new(0, 0, 1)), rgb(18, 16, 14), Enum.Material.SmoothPlastic)
 		local gui = lib.new("SurfaceGui", {
 			Name = "SignGui",
 			Face = Enum.NormalId.Front,
@@ -123,9 +123,9 @@ return function(parent: any, spawnLocation: any)
 				FontFace = lib.Font.fromEnum(font),
 			}, gui)
 		end
-		label("Title", 0.04, 0.38, "HEIS " .. index, rgb(255, 214, 120), Enum.Font.SpecialElite)
-		label("Status", 0.44, 0.28, "0/4 SPILLERE", rgb(220, 220, 210), Enum.Font.Code)
-		label("Timer", 0.74, 0.22, "VENTER...", rgb(150, 230, 150), Enum.Font.Code)
+		label("Title", 0.04, 0.38, "ELEVATOR " .. index, rgb(255, 214, 120), Enum.Font.SpecialElite)
+		label("Status", 0.44, 0.28, "0/4 PLAYERS", rgb(220, 220, 210), Enum.Font.Code)
+		label("Timer", 0.74, 0.22, "WAITING...", rgb(150, 230, 150), Enum.Font.Code)
 		local indicator = lib.part(m, "Indicator", Vector3.new(0.8, 0.8, 0.2), CFrame.new(cx, 16.7, z0 + 0.2), rgb(80, 220, 100), Enum.Material.Neon, { CanQuery = false })
 		lib.new("PointLight", { Range = 6, Brightness = 0.6, Color = rgb(80, 220, 100) }, indicator)
 
@@ -137,7 +137,7 @@ return function(parent: any, spawnLocation: any)
 			CanTouch = false,
 			CastShadow = false,
 		})
-		lib.marker(m, "ExitPoint", CFrame.lookAt(Vector3.new(cx, 3.2, z0 + 9), Vector3.new(cx, 3.2, z0 + 20)))
+		lib.marker(m, "ExitPoint", lib.lookAt(Vector3.new(cx, 3.2, z0 + 9), Vector3.new(cx, 3.2, z0 + 20)))
 		lib.new("Sound", { Name = "DoorSound", RollOffMaxDistance = 60, Volume = 0.8 }, sign)
 	end
 
@@ -180,20 +180,20 @@ return function(parent: any, spawnLocation: any)
 	local deskCf = CFrame.new(-30, 0, -176)
 	lib.part(props, "Desk", Vector3.new(12, 3.6, 3), deskCf * CFrame.new(0, 1.8, 0), rgb(84, 64, 48), Enum.Material.Wood)
 	lib.part(props, "TV", Vector3.new(3, 2.6, 2.4), deskCf * CFrame.new(-3, 4.9, 0.2), rgb(46, 44, 42), Enum.Material.SmoothPlastic)
-	local screen = lib.part(props, "TVScreen", Vector3.new(2.4, 1.9, 0.05), CFrame.lookAt((deskCf * CFrame.new(-3, 4.95, -1.03)).Position, (deskCf * CFrame.new(-3, 4.95, -5)).Position), rgb(20, 24, 40), Enum.Material.Glass)
-	local _, tvLabel = lib.sign(screen, "INGEN\nSIGNAL", { Color = rgb(230, 230, 230), Font = Enum.Font.Code, Brightness = 2 })
+	local screen = lib.part(props, "TVScreen", Vector3.new(2.4, 1.9, 0.05), lib.lookAt((deskCf * CFrame.new(-3, 4.95, -1.03)).Position, (deskCf * CFrame.new(-3, 4.95, -5)).Position), rgb(20, 24, 40), Enum.Material.Glass)
+	local _, tvLabel = lib.sign(screen, "NO\nSIGNAL", { Color = rgb(230, 230, 230), Font = Enum.Font.Code, Brightness = 2 })
 	tvLabel.BackgroundTransparency = 0
 	tvLabel.BackgroundColor3 = rgb(30, 40, 160)
 	lib.new("PointLight", { Range = 8, Brightness = 0.7, Color = rgb(120, 140, 255) }, screen)
 
 	-- Klokke som har stoppet
 	local clockPos = Vector3.new(0, 13, z1 - 0.15)
-	local clock = lib.part(props, "Clock", Vector3.new(3, 3, 0.2), CFrame.lookAt(clockPos, clockPos - Vector3.new(0, 0, 1)), rgb(230, 226, 210), Enum.Material.SmoothPlastic)
+	local clock = lib.part(props, "Clock", Vector3.new(3, 3, 0.2), lib.lookAt(clockPos, clockPos - Vector3.new(0, 0, 1)), rgb(230, 226, 210), Enum.Material.SmoothPlastic)
 	lib.sign(clock, "03:13", { Color = rgb(30, 20, 20), Font = Enum.Font.Code, LightInfluence = 1 })
 
 	-- Regeltavle på vestveggen
 	local boardPos = Vector3.new(-HALF_X + 0.15, 9.2, -197)
-	local board = lib.part(props, "RulesBoard", Vector3.new(16, 9, 0.2), CFrame.lookAt(boardPos, boardPos + Vector3.new(1, 0, 0)), rgb(26, 30, 24), Enum.Material.SmoothPlastic)
+	local board = lib.part(props, "RulesBoard", Vector3.new(16, 9, 0.2), lib.lookAt(boardPos, boardPos + Vector3.new(1, 0, 0)), rgb(26, 30, 24), Enum.Material.SmoothPlastic)
 	local boardGui = lib.new("SurfaceGui", {
 		Name = "SignGui",
 		Face = Enum.NormalId.Front,
@@ -206,7 +206,7 @@ return function(parent: any, spawnLocation: any)
 		BackgroundTransparency = 1,
 		Position = UDim2.fromScale(0.06, 0.06),
 		Size = UDim2.fromScale(0.88, 0.88),
-		Text = "SLIK SPILLER DU\n\n• Gå inn i en heis (maks 4 per heis)\n• Finn 5 nøkler på sykehuset\n• Sett dem inn ved NØDUTGANGEN\n• Gjem deg i skapene når hun kommer\n• Du har 3 liv. Dør du, mister du nøklene dine\n\nF = lommelykt    SHIFT = løp    E = bruk",
+		Text = "HOW TO PLAY\n\n• Step into an elevator (max 4 per elevator)\n• Find 5 keys hidden in the hospital\n• Bring them to the EMERGENCY EXIT\n• Hide in the lockers when it comes\n• You have 3 lives. If you die, you drop your keys\n\nF = flashlight    SHIFT = run    E = use",
 		TextScaled = true,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		TextColor3 = rgb(225, 225, 205),

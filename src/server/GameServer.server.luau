@@ -92,7 +92,7 @@ function Manager:EndMatch(match: any, retry: { Player })
 		playerMatch[player] = nil
 		if retrySet[player] and player.Parent == Players then
 			table.insert(again, player)
-			TransitionRemote:FireClient(player, "Spolerer tilbake båndet...")
+			TransitionRemote:FireClient(player, "Rewinding the tape...")
 		else
 			Manager:SendToLobby(player)
 		end

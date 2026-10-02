@@ -40,24 +40,24 @@ end
 
 local PRESETS = {
 	lobby = {
-		Ambient = Color3.fromRGB(46, 42, 34),
-		OutdoorAmbient = Color3.fromRGB(34, 32, 30),
+		Ambient = Color3.fromRGB(52, 46, 30),
+		OutdoorAmbient = Color3.fromRGB(38, 34, 24),
 		Brightness = 0.6,
 		ExposureCompensation = 0,
 		EnvironmentDiffuseScale = 0.2,
 		EnvironmentSpecularScale = 0.3,
-		Atmosphere = { Density = 0.3, Haze = 0.6, Color = Color3.fromRGB(32, 30, 28), Decay = Color3.fromRGB(18, 16, 14) },
-		CC = { Saturation = -0.25, Contrast = 0.08, Brightness = 0, TintColor = Color3.fromRGB(255, 244, 222) },
+		Atmosphere = { Density = 0.3, Haze = 0.7, Color = Color3.fromRGB(40, 34, 20), Decay = Color3.fromRGB(22, 18, 10) },
+		CC = { Saturation = -0.15, Contrast = 0.08, Brightness = 0, TintColor = Color3.fromRGB(255, 236, 186) },
 	},
 	match = {
-		Ambient = Color3.fromRGB(7, 8, 9),
-		OutdoorAmbient = Color3.fromRGB(4, 4, 5),
+		Ambient = Color3.fromRGB(12, 10, 6),
+		OutdoorAmbient = Color3.fromRGB(6, 5, 3),
 		Brightness = 0,
-		ExposureCompensation = 0.15,
+		ExposureCompensation = 0.25,
 		EnvironmentDiffuseScale = 0,
 		EnvironmentSpecularScale = 0.15,
-		Atmosphere = { Density = 0.5, Haze = 1.2, Color = Color3.fromRGB(8, 10, 10), Decay = Color3.fromRGB(4, 5, 5) },
-		CC = { Saturation = -0.4, Contrast = 0.18, Brightness = -0.02, TintColor = Color3.fromRGB(222, 255, 232) },
+		Atmosphere = { Density = 0.45, Haze = 1.1, Color = Color3.fromRGB(22, 18, 9), Decay = Color3.fromRGB(10, 8, 4) },
+		CC = { Saturation = -0.22, Contrast = 0.16, Brightness = 0, TintColor = Color3.fromRGB(255, 234, 178) },
 	},
 }
 
@@ -134,7 +134,7 @@ local function updateLamps(monsterPos: Vector3?)
 		end
 		local near = monsterPos and (lamp.panel.Position - monsterPos).Magnitude < 30
 		if near then
-			setLamp(lamp, math.random() < 0.35)
+			setLamp(lamp, math.random() < 0.72)
 		elseif lampMode == "flicker" then
 			if lamp.on then
 				setLamp(lamp, math.random() > 0.08)
@@ -189,7 +189,8 @@ function Effects.init(ui: any)
 		local amount = shake + Effects.extraShake
 		if amount > 0.001 then
 			local camera = workspace.CurrentCamera
-			lastShake = CFrame.Angles((math.random() - 0.5) * amount * 0.05, (math.random() - 0.5) * amount * 0.05, (math.random() - 0.5) * amount * 0.03)
+			local t = os.clock()
+			lastShake = CFrame.Angles(math.sin(t * 23) * amount * 0.02, math.sin(t * 17 + 1) * amount * 0.02, math.sin(t * 11 + 2) * amount * 0.012)
 			camera.CFrame = camera.CFrame * lastShake
 		end
 	end)
@@ -257,12 +258,12 @@ function Effects._step(dt: number)
 	end
 
 	local base = PRESETS[mode].CC
-	colorCorrection.Saturation = base.Saturation - danger * 0.55
-	colorCorrection.Contrast = base.Contrast + danger * 0.25
+	colorCorrection.Saturation = base.Saturation - danger * 0.25
+	colorCorrection.Contrast = base.Contrast + danger * 0.1
 	colorCorrection.Brightness = base.Brightness
-	colorCorrection.TintColor = base.TintColor:Lerp(Color3.fromRGB(255, 150, 150), danger * 0.6)
-	blur.Size = danger * 3
-	shake = danger * danger * 1.2
+	colorCorrection.TintColor = base.TintColor:Lerp(Color3.fromRGB(255, 190, 170), danger * 0.35)
+	blur.Size = 0
+	shake = danger * danger * 0.35
 
 	if mode == "match" then
 		sounds.Static.Volume = danger * danger * 0.55
@@ -270,7 +271,7 @@ function Effects._step(dt: number)
 		sounds.Heartbeat.PlaybackSpeed = 1 + danger * 0.5
 		sounds.Ambience.Volume = 0.5 * (1 - danger * 0.6)
 		if UI then
-			UI.setNoise(danger * danger * 0.55)
+			UI.setNoise(danger * danger * 0.8)
 		end
 	elseif UI then
 		UI.setNoise(0)

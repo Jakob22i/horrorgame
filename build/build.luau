@@ -132,8 +132,8 @@ do
 	lib.new("PointLight", { Range = 7, Brightness = 1.4, Color = rgb(255, 205, 110), Shadows = false }, bow)
 	lib.new("ProximityPrompt", {
 		Name = "PickupPrompt",
-		ActionText = "Ta opp",
-		ObjectText = "Nøkkel",
+		ActionText = "Pick up",
+		ObjectText = "Key",
 		HoldDuration = 0.25,
 		MaxActivationDistance = 8,
 		RequiresLineOfSight = false,

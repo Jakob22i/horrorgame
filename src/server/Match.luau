@@ -25,6 +25,7 @@ type PlayerState = {
 	busy: boolean,
 	protectedUntil: number,
 	closet: Model?,
+	closetChanged: number?,
 }
 
 local Match = {}
@@ -87,6 +88,7 @@ function Match.new(manager: any, id: number, slot: number, players: { Player })
 			busy = false,
 			protectedUntil = 0,
 			closet = nil,
+			closetChanged = 0,
 		}
 	end
 
@@ -203,7 +205,7 @@ function Match:Start()
 	task.delay(Config.Monster.StartDelay, function()
 		if self.state == "playing" then
 			self.monster:Activate()
-			self:Notify("Du hører noe i det fjerne...", "bad")
+			self:Notify("You hear something shuffling in the distance...", "bad")
 		end
 	end)
 end
@@ -249,8 +251,16 @@ function Match:_setupClosets()
 		local promptPart = closet:FindFirstChild("PromptPart")
 		local prompt = promptPart and promptPart:FindFirstChildOfClass("ProximityPrompt")
 		if prompt then
+			closet:SetAttribute("Occupant", 0)
 			table.insert(self.connections, prompt.Triggered:Connect(function(player)
-				self:Hide(player, closet :: Model)
+				local st = self.players[player]
+				if st and st.closet == closet then
+					self:Unhide(player, true)
+				elseif self.closetOccupant[closet] then
+					NotifyRemote:FireClient(player, "Someone is already hiding in there.", "info")
+				else
+					self:Hide(player, closet :: Model)
+				end
 			end))
 		end
 	end
@@ -299,8 +309,8 @@ function Match:_pickupKey(player: Player, key: Model)
 	st.keys += 1
 	player:SetAttribute("Keys", st.keys)
 	Util.playSound(root, Config.Sounds.KeyPickup, 0.9, 40)
-	NotifyRemote:FireClient(player, "Du fant en nøkkel! Ta den med til nødutgangen.", "good")
-	self:Notify(player.DisplayName .. " fant en nøkkel.", "info", player)
+	NotifyRemote:FireClient(player, "You found a key! Bring it to the emergency exit.", "good")
+	self:Notify(player.DisplayName .. " found a key.", "info", player)
 end
 
 -- Legger nøkler på gulvet der en spiller døde eller forsvant
@@ -354,7 +364,7 @@ function Match:_updateExitVisuals()
 		end
 		local prompt = panel:FindFirstChildOfClass("ProximityPrompt")
 		if prompt then
-			prompt.ObjectText = "Utgang (" .. self.keysInserted .. "/" .. Config.KeysToEscape .. ")"
+			prompt.ObjectText = "Exit (" .. self.keysInserted .. "/" .. Config.KeysToEscape .. ")"
 		end
 	end
 	self.folder:SetAttribute("KeysInserted", self.keysInserted)
@@ -366,7 +376,7 @@ function Match:_insertKeys(player: Player)
 		return
 	end
 	if st.keys <= 0 then
-		NotifyRemote:FireClient(player, "Du har ingen nøkler. Let etter dem på sykehuset!", "bad")
+		NotifyRemote:FireClient(player, "You have no keys. Search the hospital!", "bad")
 		return
 	end
 	local count = st.keys
@@ -378,8 +388,8 @@ function Match:_insertKeys(player: Player)
 	if panel then
 		Util.playSound(panel, Config.Sounds.KeyInsert, 1, 60)
 	end
-	local word = count == 1 and "nøkkel" or "nøkler"
-	self:Notify(player.DisplayName .. " satte inn " .. count .. " " .. word .. " (" .. self.keysInserted .. "/" .. Config.KeysToEscape .. ")", "good")
+	local word = count == 1 and "key" or "keys"
+	self:Notify(player.DisplayName .. " inserted " .. count .. " " .. word .. " (" .. self.keysInserted .. "/" .. Config.KeysToEscape .. ")", "good")
 	if self.keysInserted >= Config.KeysToEscape then
 		self:_openExit()
 	end
@@ -405,7 +415,7 @@ function Match:_openExit()
 			TweenService:Create(door, info, { CFrame = door.CFrame * CFrame.new(dir * door.Size.X, 0, 0) }):Play()
 		end
 	end
-	self:Notify("NØDUTGANGEN ER ÅPEN! LØP UT!", "good")
+	self:Notify("THE EMERGENCY EXIT IS OPEN! RUN!", "good")
 	if self.monster then
 		self.monster:Enrage()
 	end
@@ -420,6 +430,10 @@ function Match:Hide(player: Player, closet: Model)
 	if not st or st.out or st.busy or st.closet or self.state ~= "playing" then
 		return
 	end
+	-- hindrer at samme tastetrykk både går ut og inn igjen
+	if os.clock() - (st.closetChanged or 0) < 0.4 then
+		return
+	end
 	if self.closetOccupant[closet] then
 		return
 	end
@@ -429,12 +443,9 @@ function Match:Hide(player: Player, closet: Model)
 		return
 	end
 	st.closet = closet
+	st.closetChanged = os.clock()
 	self.closetOccupant[closet] = player
-	local promptPart = closet:FindFirstChild("PromptPart")
-	local prompt = promptPart and promptPart:FindFirstChildOfClass("ProximityPrompt")
-	if prompt then
-		prompt.Enabled = false
-	end
+	closet:SetAttribute("Occupant", player.UserId)
 	Util.placeCharacter(player, hidePoint.CFrame, true)
 	player:SetAttribute("Hidden", true)
 	Util.playSound(hidePoint, Config.Sounds.Locker, 0.8, 45)
@@ -449,18 +460,26 @@ function Match:Unhide(player: Player, stepOut: boolean)
 	if not st or not closet then
 		return
 	end
-	st.closet = nil
-	self.closetOccupant[closet] = nil
-	local promptPart = closet:FindFirstChild("PromptPart")
-	local prompt = promptPart and promptPart:FindFirstChildOfClass("ProximityPrompt")
-	if prompt then
-		prompt.Enabled = true
+	if stepOut and os.clock() - (st.closetChanged or 0) < 0.4 then
+		return
 	end
+	st.closet = nil
+	st.closetChanged = os.clock()
+	self.closetOccupant[closet] = nil
+	closet:SetAttribute("Occupant", 0)
 	player:SetAttribute("Hidden", false)
 	local outPoint = closet:FindFirstChild("OutPoint") :: BasePart?
+	local hidePoint = closet:FindFirstChild("HidePoint") :: BasePart?
 	if stepOut and outPoint then
 		Util.placeCharacter(player, outPoint.CFrame, st.busy)
 		Util.playSound(outPoint, Config.Sounds.Locker, 0.8, 45)
+		-- sikkerhetsnett: står spilleren fortsatt inne i skapet, flytt ut igjen
+		task.delay(0.25, function()
+			local root = Util.getRoot(player)
+			if root and hidePoint and st.closet == nil and not st.busy and (root.Position - hidePoint.Position).Magnitude < 2 then
+				Util.placeCharacter(player, outPoint.CFrame, false)
+			end
+		end)
 	end
 	if self.monster then
 		self.monster:OnPlayerLeftCloset(player)
@@ -472,7 +491,7 @@ end
 ------------------------------------------------------------------
 
 function Match:OnMonsterSpotted(player: Player)
-	NotifyRemote:FireClient(player, "HUN HAR FUNNET DEG. LØP!", "bad")
+	NotifyRemote:FireClient(player, "IT FOUND YOU. RUN!", "bad")
 end
 
 function Match:OnCaught(player: Player)
@@ -500,9 +519,9 @@ function Match:OnCaught(player: Player)
 	Util.setAnchored(player, true)
 	JumpscareRemote:FireClient(player, st.lives)
 	if st.lives > 0 then
-		self:Notify(player.DisplayName .. " ble tatt! (" .. st.lives .. " liv igjen)", "bad", player)
+		self:Notify(player.DisplayName .. " was caught! (" .. st.lives .. (st.lives == 1 and " life" or " lives") .. " left)", "bad", player)
 	else
-		self:Notify(player.DisplayName .. " ble tatt og er ute av spillet.", "bad", player)
+		self:Notify(player.DisplayName .. " was caught and is out of the game.", "bad", player)
 	end
 
 	task.delay(Config.RespawnDelay, function()
@@ -654,7 +673,7 @@ function Match:RemovePlayer(player: Player)
 		self.manager:EndMatch(self, {})
 		return
 	end
-	self:Notify(player.DisplayName .. " forlot spillet.", "info")
+	self:Notify(player.DisplayName .. " left the game.", "info")
 	if self.state == "playing" then
 		self:_checkGameOver()
 	elseif self.state == "over" then

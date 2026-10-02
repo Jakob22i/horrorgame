@@ -146,23 +146,40 @@ end
 -- Skap
 ------------------------------------------------------------------
 
-local function onLeaveCloset(_name: string, state: Enum.UserInputState)
-	if state == Enum.UserInputState.Begin and attr("Hidden") == true then
-		LeaveClosetRemote:FireServer()
-		return Enum.ContextActionResult.Sink
+-- Skapets egen prompt brukes både for å gå inn og ut. Her endrer vi teksten lokalt:
+-- "Leave" på skapet du står i, og skjuler prompten på skap som andre gjemmer seg i.
+local function updateClosetPrompts()
+	if not inMatch then
+		return
 	end
-	return Enum.ContextActionResult.Pass
+	local matches = workspace:FindFirstChild("Matches")
+	local folder = matches and matches:FindFirstChild("Match_" .. tostring(attr("MatchId")))
+	local map = folder and folder:FindFirstChild("Map")
+	local closets = map and map:FindFirstChild("Closets")
+	if not closets then
+		return
+	end
+	for _, closet in closets:GetChildren() do
+		local promptPart = closet:FindFirstChild("PromptPart")
+		local prompt = promptPart and promptPart:FindFirstChildOfClass("ProximityPrompt")
+		if prompt then
+			local occupant = closet:GetAttribute("Occupant") or 0
+			local mine = occupant == player.UserId
+			prompt.ActionText = mine and "Leave" or "Hide"
+			prompt.Enabled = occupant == 0 or mine
+		end
+	end
 end
 
 local function refreshHidden()
 	if attr("Hidden") == true then
-		ContextActionService:BindActionAtPriority("LeaveCloset", onLeaveCloset, true, 3000, Enum.KeyCode.E, Enum.KeyCode.ButtonB)
-		ContextActionService:SetTitle("LeaveCloset", "Ut")
-		UI.setHint("Du gjemmer deg. Trykk E for å gå ut av skapet.")
+		UI.setHint("You are hiding. Press E or click LEAVE to get out.")
+		UI.setLeaveButton(true)
 	else
-		ContextActionService:UnbindAction("LeaveCloset")
 		UI.setHint(nil)
+		UI.setLeaveButton(false)
 	end
+	updateClosetPrompts()
 end
 
 ------------------------------------------------------------------
@@ -186,7 +203,7 @@ local function updateSpectate()
 		local list = teammates()
 		if #list == 0 then
 			spectating = nil
-			UI.setSpectate("Du er ute av spillet.")
+			UI.setSpectate("You are out of the game.")
 			return
 		end
 		spectateIndex = ((spectateIndex - 1) % #list) + 1
@@ -199,7 +216,7 @@ local function updateSpectate()
 			spectating = target
 		end
 		player.CameraMode = Enum.CameraMode.Classic
-		UI.setSpectate("SER PÅ: " .. target.DisplayName .. "   (klikk for å bytte)")
+		UI.setSpectate("WATCHING: " .. target.DisplayName .. "   (click to switch)")
 	else
 		if spectating then
 			spectating = nil
@@ -219,11 +236,16 @@ function Controls.init(ui: any)
 	buildFlashlight()
 
 	ContextActionService:BindAction("Sprint", onSprintAction, true, Enum.KeyCode.LeftShift, Enum.KeyCode.RightShift, Enum.KeyCode.ButtonL3)
-	ContextActionService:SetTitle("Sprint", "Løp")
+	ContextActionService:SetTitle("Sprint", "Run")
 	ContextActionService:BindAction("Flashlight", onFlashlightAction, true, Enum.KeyCode.F, Enum.KeyCode.ButtonY)
-	ContextActionService:SetTitle("Flashlight", "Lys")
+	ContextActionService:SetTitle("Flashlight", "Light")
 
 	player:GetAttributeChangedSignal("Hidden"):Connect(refreshHidden)
+	UI.onLeaveClicked(function()
+		if attr("Hidden") == true then
+			LeaveClosetRemote:FireServer()
+		end
+	end)
 	player:GetAttributeChangedSignal("Flashlight"):Connect(function()
 		if inMatch then
 			clickSound:Play()
@@ -257,6 +279,7 @@ function Controls.init(ui: any)
 			otherTimer = 0.3
 			updateOtherFlashlights()
 			updateSpectate()
+			updateClosetPrompts()
 		end
 
 		-- Løping og utholdenhet

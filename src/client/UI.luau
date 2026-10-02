@@ -14,7 +14,10 @@ local FONT_TEXT = Enum.Font.SpecialElite
 local gui: ScreenGui
 local vhs: Frame
 local noiseFrame: Frame
-local noiseCells: { Frame } = {}
+local noiseLines: { Frame } = {}
+local noiseFlash: Frame
+local leaveButton: TextButton
+local leaveCallback: (() -> ())? = nil
 local trackingBar: Frame
 local recLabel: TextLabel
 local channelLabel: TextLabel
@@ -110,18 +113,22 @@ local function buildVhs()
 	edge(UDim2.fromScale(0, 0), UDim2.fromScale(0.16, 1), 0)
 	edge(UDim2.fromScale(0.84, 0), UDim2.fromScale(0.16, 1), 180)
 
-	-- Støy (vises når hun er nær)
+	-- Analog støy når monsteret er nær: tynne, blinkende VHS-striper (dekker lite av bildet)
 	noiseFrame = make("Frame", { Name = "Noise", BackgroundTransparency = 1, Size = UDim2.fromScale(1, 1), Visible = false }, vhs)
-	local cols, rows = 32, 18
-	for y = 0, rows - 1 do
-		for x = 0, cols - 1 do
-			table.insert(noiseCells, make("Frame", {
-				BorderSizePixel = 0,
-				BackgroundTransparency = 1,
-				Position = UDim2.fromScale(x / cols, y / rows),
-				Size = UDim2.fromScale(1 / cols + 0.002, 1 / rows + 0.002),
-			}, noiseFrame))
-		end
+	noiseFlash = make("Frame", {
+		Name = "Flash",
+		BorderSizePixel = 0,
+		BackgroundColor3 = Color3.fromRGB(200, 190, 150),
+		BackgroundTransparency = 1,
+		Size = UDim2.fromScale(1, 1),
+	}, noiseFrame)
+	for _ = 1, 26 do
+		table.insert(noiseLines, make("Frame", {
+			BorderSizePixel = 0,
+			BackgroundColor3 = Color3.new(1, 1, 1),
+			BackgroundTransparency = 1,
+			Size = UDim2.new(1, 0, 0, 2),
+		}, noiseFrame))
 	end
 
 	trackingBar = make("Frame", {
@@ -194,14 +201,14 @@ local function buildHud()
 		Size = UDim2.new(1, -24, 0, 26),
 		TextXAlignment = Enum.TextXAlignment.Left,
 		TextColor3 = Color3.fromRGB(255, 214, 110),
-		Text = "NØKLER: 0",
+		Text = "KEYS: 0",
 	})
 	exitLabel = text(box, {
 		Position = UDim2.new(0, 12, 0, 70),
 		Size = UDim2.new(1, -24, 0, 24),
 		TextXAlignment = Enum.TextXAlignment.Left,
 		TextColor3 = Color3.fromRGB(150, 230, 160),
-		Text = "UTGANG: 0/5",
+		Text = "EXIT: 0/5",
 	})
 
 	staminaBack = make("Frame", {
@@ -230,6 +237,30 @@ local function buildHud()
 		Text = "",
 		Visible = false,
 	})
+	leaveButton = make("TextButton", {
+		Name = "LeaveButton",
+		AnchorPoint = Vector2.new(0.5, 1),
+		Position = UDim2.new(0.5, 0, 1, -130),
+		Size = UDim2.new(0, 220, 0, 52),
+		BackgroundColor3 = Color3.fromRGB(30, 30, 26),
+		BackgroundTransparency = 0.2,
+		BorderSizePixel = 0,
+		Text = "LEAVE LOCKER  [E]",
+		TextColor3 = Color3.fromRGB(240, 232, 200),
+		Font = FONT_TEXT,
+		TextScaled = true,
+		Visible = false,
+		ZIndex = 5,
+	}, hud)
+	make("UICorner", { CornerRadius = UDim.new(0, 6) }, leaveButton)
+	make("UIStroke", { Color = Color3.fromRGB(150, 140, 100), Thickness = 1.5 }, leaveButton)
+	make("UIPadding", { PaddingTop = UDim.new(0, 10), PaddingBottom = UDim.new(0, 10) }, leaveButton)
+	leaveButton.Activated:Connect(function()
+		if leaveCallback then
+			leaveCallback()
+		end
+	end)
+
 	spectateLabel = text(gui, {
 		Name = "Spectate",
 		AnchorPoint = Vector2.new(0.5, 0),
@@ -355,7 +386,7 @@ function UI.init()
 			m -= 60
 			h += 1
 		end
-		timeLabel.Text = string.format("OKT. 02 1997   %02d:%02d:%02d", h, m, s)
+		timeLabel.Text = string.format("OCT. 02 1997   %02d:%02d:%02d", h, m, s)
 		if vhsMode == "match" then
 			recLabel.Text = (math.floor(t * 1.5) % 2 == 0) and "● REC" or "   REC"
 			recLabel.TextColor3 = Color3.fromRGB(235, 40, 40)
@@ -378,11 +409,19 @@ function UI.init()
 			noiseFrame.Visible = true
 			if noiseTimer > 0.05 then
 				noiseTimer = 0
-				for _, cell in noiseCells do
-					local g = math.random()
-					cell.BackgroundColor3 = Color3.new(g, g, g)
-					cell.BackgroundTransparency = 1 - intensity * (0.35 + math.random() * 0.65) * 0.85
+				local active = math.floor(#noiseLines * intensity + 0.5)
+				for i, line in noiseLines do
+					if i <= active then
+						local g = 0.55 + math.random() * 0.45
+						line.BackgroundColor3 = Color3.new(g, g, g * 0.9)
+						line.Position = UDim2.new(math.random() * 0.3 - 0.15, 0, math.random(), 0)
+						line.Size = UDim2.new(0.6 + math.random() * 0.8, 0, 0, math.random(1, 3))
+						line.BackgroundTransparency = 1 - (0.2 + math.random() * 0.5) * intensity
+					else
+						line.BackgroundTransparency = 1
+					end
 				end
+				noiseFlash.BackgroundTransparency = 1 - intensity * 0.06 * math.random()
 			end
 		else
 			noiseFrame.Visible = false
@@ -421,8 +460,8 @@ function UI.setLives(lives: number, max: number)
 end
 
 function UI.setKeys(carried: number, inserted: number, total: number)
-	keysLabel.Text = "NØKLER DU BÆRER: " .. carried
-	exitLabel.Text = "UTGANG: " .. inserted .. "/" .. total
+	keysLabel.Text = "KEYS CARRIED: " .. carried
+	exitLabel.Text = "EXIT: " .. inserted .. "/" .. total
 end
 
 function UI.setStamina(fraction: number, visible: boolean)
@@ -434,6 +473,14 @@ end
 function UI.setHint(message: string?)
 	hintLabel.Visible = message ~= nil
 	hintLabel.Text = message or ""
+end
+
+function UI.setLeaveButton(visible: boolean)
+	leaveButton.Visible = visible
+end
+
+function UI.onLeaveClicked(callback: () -> ())
+	leaveCallback = callback
 end
 
 function UI.setSpectate(message: string?)
@@ -565,8 +612,8 @@ end
 
 function UI.showGameOver(seconds: number, onChoice: (string) -> ())
 	panel.Visible = true
-	panelTitle.Text = "ALLE BLE TATT"
-	panelText.Text = "Hun fant dere alle sammen.\nVil du prøve igjen fra starten?"
+	panelTitle.Text = "EVERYONE WAS CAUGHT"
+	panelText.Text = "It found all of you.\nDo you want to try again from the start?"
 	clearButtons()
 	local chosen = false
 	local function choose(choice: string)
@@ -575,25 +622,25 @@ function UI.showGameOver(seconds: number, onChoice: (string) -> ())
 		end
 		chosen = true
 		clearButtons()
-		panelText.Text = choice == "retry" and "Venter på de andre..." or "Går tilbake til lobbyen..."
+		panelText.Text = choice == "retry" and "Waiting for the others..." or "Returning to the lobby..."
 		onChoice(choice)
 	end
-	button("PRØV IGJEN", Color3.fromRGB(110, 24, 24), function()
+	button("TRY AGAIN", Color3.fromRGB(110, 24, 24), function()
 		choose("retry")
 	end)
-	button("TIL LOBBYEN", Color3.fromRGB(40, 40, 44), function()
+	button("TO LOBBY", Color3.fromRGB(40, 40, 44), function()
 		choose("lobby")
 	end)
-	countdown(seconds, "Lobbyen om %d sekunder")
+	countdown(seconds, "Lobby in %d seconds")
 end
 
 function UI.showWin(escaper: string, seconds: number)
 	panel.Visible = true
-	panelTitle.Text = "DERE SLAPP UT!"
+	panelTitle.Text = "YOU ESCAPED!"
 	panelTitle.TextColor3 = Color3.fromRGB(150, 235, 160)
-	panelText.Text = escaper .. " løp ut av nødutgangen.\nBåndet stopper her... foreløpig."
+	panelText.Text = escaper .. " ran out the emergency exit.\nThe tape ends here... for now."
 	clearButtons()
-	countdown(seconds, "Tilbake til lobbyen om %d")
+	countdown(seconds, "Back to the lobby in %d")
 end
 
 function UI.hidePanels()

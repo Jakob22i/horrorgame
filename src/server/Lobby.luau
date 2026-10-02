@@ -57,17 +57,17 @@ local function updateSign(e: Elevator)
 	local count = #e.order
 	local max = Config.MaxPlayersPerElevator
 	if e.status then
-		e.status.Text = count .. "/" .. max .. " SPILLERE"
+		e.status.Text = count .. "/" .. max .. " PLAYERS"
 	end
 	if e.timer then
 		if e.departing then
-			e.timer.Text = "AVGÅR..."
+			e.timer.Text = "DEPARTING..."
 			e.timer.TextColor3 = RED
 		elseif e.countdown then
-			e.timer.Text = "STARTER OM " .. math.max(0, math.ceil(e.countdown))
+			e.timer.Text = "LEAVING IN " .. math.max(0, math.ceil(e.countdown))
 			e.timer.TextColor3 = YELLOW
 		else
-			e.timer.Text = "GÅ INN FOR Å SPILLE"
+			e.timer.Text = "STEP IN TO PLAY"
 			e.timer.TextColor3 = GREEN
 		end
 	end
@@ -89,7 +89,7 @@ local function depart(e: Elevator, startMatch: ({ Player }) -> ())
 	updateSign(e)
 	setDoors(e, false)
 	for _, player in group do
-		TransitionRemote:FireClient(player, "Heisen går ned...")
+		TransitionRemote:FireClient(player, "Going down...")
 	end
 	task.wait(2.2)
 	local stillHere = {}
@@ -138,7 +138,7 @@ local function step(e: Elevator, startMatch: ({ Player }) -> ())
 	while #order > Config.MaxPlayersPerElevator do
 		local extra = table.remove(order) :: Player
 		Util.placeCharacter(extra, e.exitPoint.CFrame, false)
-		NotifyRemote:FireClient(extra, "Heis " .. e.index .. " er full (" .. Config.MaxPlayersPerElevator .. "/" .. Config.MaxPlayersPerElevator .. "). Velg en annen heis.", "bad")
+		NotifyRemote:FireClient(extra, "Elevator " .. e.index .. " is full (" .. Config.MaxPlayersPerElevator .. "/" .. Config.MaxPlayersPerElevator .. "). Pick another elevator.", "bad")
 	end
 	e.order = order
 

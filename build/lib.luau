@@ -16,7 +16,26 @@ lib.CFrame = CFrame
 lib.Color3 = Color3
 lib.Enum = Enum
 lib.UDim2 = roblox.UDim2
+lib.UDim = roblox.UDim
+lib.Vector2 = roblox.Vector2
 lib.Font = roblox.Font
+
+-- Riktig lookAt (Lune sin CFrame.lookAt snur Z-retningen feil, så vi bygger matrisen selv).
+-- Lokal -Z peker mot target, slik som i Roblox.
+function lib.lookAt(pos: any, target: any, up: any?)
+	local f = target - pos
+	if f.Magnitude < 1e-6 then
+		return CFrame.new(pos)
+	end
+	f = f.Unit
+	local u = up or Vector3.new(0, 1, 0)
+	if math.abs(f:Dot(u.Unit)) > 0.999 then
+		u = math.abs(f.Z) < 0.9 and Vector3.new(0, 0, 1) or Vector3.new(1, 0, 0)
+	end
+	local right = f:Cross(u).Unit
+	local up2 = right:Cross(f).Unit
+	return CFrame.fromMatrix(pos, right, up2, -f)
+end
 
 function lib.rgb(r: number, g: number, b: number)
 	return Color3.fromRGB(r, g, b)
