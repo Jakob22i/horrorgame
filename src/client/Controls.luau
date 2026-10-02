@@ -11,6 +11,9 @@ local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Co
 local Remotes = ReplicatedStorage:WaitForChild("Remotes")
 local ToggleFlashlightRemote = Remotes:WaitForChild("ToggleFlashlight") :: RemoteEvent
 local LeaveClosetRemote = Remotes:WaitForChild("LeaveCloset") :: RemoteEvent
+local ShopRemote = Remotes:WaitForChild("Shop") :: RemoteEvent
+local PushRemote = Remotes:WaitForChild("Push") :: RemoteEvent
+local PushedRemote = Remotes:WaitForChild("Pushed") :: RemoteEvent
 
 local player = Players.LocalPlayer
 
@@ -119,14 +122,64 @@ local function updateOtherFlashlights()
 	end
 end
 
-local function onFlashlightAction(_name: string, state: Enum.UserInputState)
-	if state ~= Enum.UserInputState.Begin then
-		return Enum.ContextActionResult.Pass
+-- Knappene nederst og tastene 1, 2 og 3 gjør det samme
+function Controls.doAction(name: string)
+	if not inMatch then
+		return
 	end
-	if inMatch and attr("Out") ~= true then
-		ToggleFlashlightRemote:FireServer()
+	if name == "flashlight" then
+		if attr("Out") ~= true then
+			ToggleFlashlightRemote:FireServer()
+		end
+	elseif name == "push" then
+		if attr("Out") == true or attr("Hidden") == true then
+			return
+		end
+		if attr("HasPush") == true then
+			PushRemote:FireServer()
+		else
+			ShopRemote:FireServer("push")
+		end
+	elseif name == "jumpscare" then
+		ShopRemote:FireServer("jumpscare")
 	end
-	return Enum.ContextActionResult.Sink
+end
+
+local function keyAction(actionName: string)
+	return function(_name: string, state: Enum.UserInputState)
+		if state ~= Enum.UserInputState.Begin then
+			return Enum.ContextActionResult.Pass
+		end
+		Controls.doAction(actionName)
+		return Enum.ContextActionResult.Sink
+	end
+end
+
+-- Når noen dytter deg: du eier din egen karakter, så dyttet gjøres her på klienten
+local function onPushed(dir: Vector3, byName: string)
+	local character = player.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
+	if not root or root.Anchored or typeof(dir) ~= "Vector3" then
+		return
+	end
+	UI.notify(tostring(byName) .. " pushed you!", "bad")
+	local flat = Vector3.new(dir.X, 0, dir.Z)
+	flat = flat.Magnitude > 0.01 and flat.Unit or Vector3.new(0, 0, -1)
+	local start = os.clock()
+	local conn: RBXScriptConnection
+	conn = RunService.Heartbeat:Connect(function()
+		local t = os.clock() - start
+		if t > 0.35 or not root.Parent or root.Anchored then
+			conn:Disconnect()
+			return
+		end
+		local v = Config.Push.Speed * (1 - t / 0.35)
+		local y = root.AssemblyLinearVelocity.Y
+		if t < 0.05 then
+			y = math.max(y, 14)
+		end
+		root.AssemblyLinearVelocity = Vector3.new(flat.X * v, y, flat.Z * v)
+	end)
 end
 
 ------------------------------------------------------------------
@@ -237,8 +290,24 @@ function Controls.init(ui: any)
 
 	ContextActionService:BindAction("Sprint", onSprintAction, true, Enum.KeyCode.LeftShift, Enum.KeyCode.RightShift, Enum.KeyCode.ButtonL3)
 	ContextActionService:SetTitle("Sprint", "Run")
-	ContextActionService:BindAction("Flashlight", onFlashlightAction, true, Enum.KeyCode.F, Enum.KeyCode.ButtonY)
-	ContextActionService:SetTitle("Flashlight", "Light")
+	ContextActionService:BindAction("Flashlight", keyAction("flashlight"), false, Enum.KeyCode.One, Enum.KeyCode.F, Enum.KeyCode.ButtonY)
+	ContextActionService:BindAction("Push", keyAction("push"), false, Enum.KeyCode.Two)
+	ContextActionService:BindAction("JumpscareAll", keyAction("jumpscare"), false, Enum.KeyCode.Three)
+	UI.onAction("Flashlight", function()
+		Controls.doAction("flashlight")
+	end)
+	UI.onAction("Push", function()
+		Controls.doAction("push")
+	end)
+	UI.onAction("Jumpscare", function()
+		Controls.doAction("jumpscare")
+	end)
+	PushedRemote.OnClientEvent:Connect(onPushed)
+	PushRemote.OnClientEvent:Connect(function(kind, seconds)
+		if kind == "cooldown" and typeof(seconds) == "number" then
+			UI.startCooldown("Push", seconds)
+		end
+	end)
 
 	player:GetAttributeChangedSignal("Hidden"):Connect(refreshHidden)
 	UI.onLeaveClicked(function()

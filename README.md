@@ -16,12 +16,35 @@ Et analog-horror-spill i Roblox for 1–4 spillere per gruppe. Alt i spillet er 
   Ser den deg gå inn, drar den deg ut.
 - Hver spiller har **3 liv**. Blir du tatt, får du en jumpscare, nøklene du bar faller der
   du døde, og du starter på nytt i resepsjonen.
-- Har alle mistet alle liv, kan hver spiller velge **Try again** (ny runde fra starten)
-  eller **To lobby**.
+- Bruker du opp alle livene, får du valget **REVIVE** (39 Robux, du kommer tilbake i
+  resepsjonen med 1 liv) eller **SPECTATE**. Har alle mistet alle liv, kan hver spiller
+  velge **REVIVE**, **Try again** (ny runde fra starten) eller **To lobby**.
 - Når 5 nøkler er satt inn, åpner nødutgangen seg. Løp ut, så har dere vunnet.
 
-**Taster:** `F` lommelykt · `Shift` løp · `E` bruk / gjem deg / gå ut av skap.
-På mobil dukker det opp egne knapper.
+**Taster:** `1` lommelykt (eller `F`) · `2` push · `3` jumpscare everyone · `Shift` løp ·
+`E` bruk / gjem deg / gå ut av skap. Musa er bare fri når en meny er åpen.
+Knappene nederst på skjermen kan trykkes på (mobil).
+
+## Robux-kjøp
+
+| Kjøp | Type | Pris | Hva det gjør |
+| --- | --- | --- | --- |
+| Revive | Developer Product | 39 | Tilbake i resepsjonen med 1 liv og 5 sek beskyttelse |
+| Push | Game Pass | 49 | Låser opp Push: dytter spilleren foran deg (5 sek ventetid) |
+| Jumpscare everyone | Developer Product | 49 | Jumpscarer alle de andre i runden din (ikke lobbyen) |
+
+Slik setter du dem opp:
+
+1. Publiser spillet (**File → Publish to Roblox**).
+2. Gå til [create.roblox.com](https://create.roblox.com) → spillet ditt → **Monetization**.
+3. Under **Developer Products**: lag «Revive» (39) og «Jumpscare everyone» (49).
+4. Under **Passes**: lag «Push», og sett den til salgs for 49.
+5. Kopier ID-ene inn i `ReplicatedStorage/Shared/Config` → `Shop`
+   (`ReviveProductId`, `JumpscareProductId`, `PushGamePassId`).
+
+Så lenge en ID er `0`, er kjøpet gratis i Studio, slik at du kan teste. Kjøpte revives og
+jumpscares som ikke ble brukt med en gang, lagres og blir gratis neste gang (krever at
+**Enable Studio Access to API Services** er på hvis du vil teste lagringen i Studio).
 
 ## Åpne spillet i Roblox Studio
 
@@ -41,7 +64,7 @@ På mobil dukker det opp egne knapper.
 | Monsteret (Patient #0413) | `ServerStorage/Monster` |
 | Nøkkelen | `ServerStorage/Key` |
 | Innstillinger | `ReplicatedStorage/Shared/Config` |
-| Serverscript | `ServerScriptService/GameServer` (+ modulene Lobby, Match, Monster, Util) |
+| Serverscript | `ServerScriptService/GameServer` (+ modulene Lobby, Match, Monster, Shop, Util) |
 | Klientscript | `StarterPlayer/StarterPlayerScripts/ClientMain` (+ UI, Effects, Controls, Jumpscare, MonsterAnimator) |
 
 Sykehuset ligger i `ServerStorage` og klones inn i `Workspace/Matches` for hver gruppe.

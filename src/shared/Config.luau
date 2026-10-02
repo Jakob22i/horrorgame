@@ -40,6 +40,26 @@ local Config = {
 		GiggleCooldown = 10, -- sekunder mellom hver gang den fniser når den ser noen
 	},
 
+	-- Kjøp med Robux. Opprett produktene på create.roblox.com etter at spillet er publisert,
+	-- og lim inn ID-ene her. Står en ID på 0, er kjøpet gratis i Studio (for testing).
+	Shop = {
+		ReviveProductId = 0, -- Developer Product: Revive (39 Robux)
+		PushGamePassId = 0, -- Game Pass: Push (49 Robux)
+		JumpscareProductId = 0, -- Developer Product: Jumpscare everyone (49 Robux)
+		RevivePrice = 39, -- prisene som vises i spillet
+		PushPrice = 49,
+		JumpscarePrice = 49,
+	},
+	ReviveProtection = 5, -- sekunder monsteret ignorerer deg etter revive
+	DeathChoiceTime = 15, -- sekunder "YOU DIED"-menyen vises før du blir tilskuer
+
+	-- Push (dytte andre spillere)
+	Push = {
+		Range = 7,
+		Speed = 55, -- hvor hardt de blir dyttet
+		Cooldown = 5,
+	},
+
 	-- Lyder (lisensierte Roblox-lyder fra Creator Store)
 	Sounds = {
 		LobbyMusic = "rbxassetid://1846999567", -- Creepy Night
@@ -61,6 +81,7 @@ local Config = {
 		Flashlight = "rbxassetid://9114480271", -- Flashlight Click
 		GameOver = "rbxassetid://1840927247", -- Horror Hits 7
 		Win = "rbxassetid://9047014318", -- Beautiful Horror Stinger
+		Push = "rbxassetid://9117969687", -- Punch Kit Beefy Hit
 	},
 }
 

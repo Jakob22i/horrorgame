@@ -153,4 +153,48 @@ function Jumpscare.play(livesLeft: number)
 	playing = false
 end
 
+-- "Jumpscare everyone": en annen spiller har kjøpt en skremsel. Ingen liv mistes.
+function Jumpscare.prank(byName: string)
+	if playing then
+		return
+	end
+	playing = true
+	local layer = UI.jumpscareLayer :: Frame
+	layer.Visible = true
+	UI.setNoiseOverride(0.5)
+	Effects.extraShake = 3
+	sound(Config.Sounds.JumpscareHit, 1.2)
+	local scream = sound(Config.Sounds.Scream, 1)
+	local start = os.clock()
+	local conn = RunService.RenderStepped:Connect(function()
+		local t = os.clock() - start
+		local zoom = math.clamp(t / 0.15, 0, 1)
+		local dist = 6.5 - zoom * 4.3
+		local jitter = Vector3.new((math.random() - 0.5) * 0.25, (math.random() - 0.5) * 0.25, 0)
+		local target = (faceCF * CFrame.new(0, -0.25, 0)).Position
+		local camPos = (faceCF * CFrame.new(0, -0.3, -dist)).Position + jitter
+		camera.CFrame = CFrame.lookAt(camPos, target + jitter * 0.5) * CFrame.Angles(0, 0, (math.random() - 0.5) * 0.12)
+		if jawHinge then
+			local open = -math.clamp(t / 0.15, 0, 1) * 0.5 - math.abs(math.sin(t * 34)) * 0.08
+			local move = jawHinge * CFrame.Angles(open, 0, 0) * jawHinge:Inverse()
+			for _, jp in jawParts do
+				jp.part.CFrame = move * jp.base
+			end
+		end
+		viewport.Visible = math.random() > 0.12
+		redFlash.BackgroundTransparency = 0.55 + math.random() * 0.45
+	end)
+	task.wait(1.2)
+	conn:Disconnect()
+	layer.Visible = false
+	redFlash.BackgroundTransparency = 1
+	UI.setNoiseOverride(0)
+	Effects.extraShake = 0
+	if scream then
+		scream:Stop()
+	end
+	UI.notify(byName .. " jumpscared everyone!", "bad")
+	playing = false
+end
+
 return Jumpscare

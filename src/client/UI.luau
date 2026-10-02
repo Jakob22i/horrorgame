@@ -33,11 +33,34 @@ local spectateLabel: TextLabel
 local notifyList: Frame
 local fadeFrame: Frame
 local fadeLabel: TextLabel
+local panelDim: Frame
 local panel: Frame
 local panelTitle: TextLabel
 local panelText: TextLabel
 local panelButtons: Frame
 local panelTimer: TextLabel
+local reviveButton: TextButton
+local reviveCost: TextLabel
+local reviveCallback: (() -> ())? = nil
+local reviveCredits = 0
+local revivePrice = 39
+
+-- Knappene nederst (1 Flashlight, 2 Push, 3 Jumpscare)
+local actionBar: Frame
+local actionScale: UIScale
+type Slot = {
+	button: TextButton,
+	icon: TextLabel,
+	lock: TextLabel,
+	price: Frame,
+	priceText: TextLabel,
+	cooldown: Frame,
+	cooldownUntil: number,
+	cooldownLength: number,
+	callback: (() -> ())?,
+}
+local slots: { [string]: Slot } = {}
+local ROBUX = utf8.char(0xE002)
 
 UI.jumpscareLayer = nil :: Frame?
 
@@ -214,7 +237,7 @@ local function buildHud()
 	staminaBack = make("Frame", {
 		Name = "Stamina",
 		AnchorPoint = Vector2.new(0.5, 1),
-		Position = UDim2.new(0.5, 0, 1, -70),
+		Position = UDim2.new(0.5, 0, 1, -136),
 		Size = UDim2.new(0, 260, 0, 8),
 		BackgroundColor3 = Color3.fromRGB(20, 20, 20),
 		BackgroundTransparency = 0.3,
@@ -232,7 +255,7 @@ local function buildHud()
 	hintLabel = text(hud, {
 		Name = "Hint",
 		AnchorPoint = Vector2.new(0.5, 1),
-		Position = UDim2.new(0.5, 0, 1, -92),
+		Position = UDim2.new(0.5, 0, 1, -160),
 		Size = UDim2.new(0.6, 0, 0, 30),
 		Text = "",
 		Visible = false,
@@ -240,7 +263,7 @@ local function buildHud()
 	leaveButton = make("TextButton", {
 		Name = "LeaveButton",
 		AnchorPoint = Vector2.new(0.5, 1),
-		Position = UDim2.new(0.5, 0, 1, -130),
+		Position = UDim2.new(0.5, 0, 1, -200),
 		Size = UDim2.new(0, 220, 0, 52),
 		BackgroundColor3 = Color3.fromRGB(30, 30, 26),
 		BackgroundTransparency = 0.2,
@@ -286,6 +309,144 @@ local function buildHud()
 	}, notifyList)
 end
 
+local function makeSlot(name: string, key: string, iconText: string, labelText: string)
+	local slot = make("Frame", {
+		Name = name,
+		BackgroundTransparency = 1,
+		Size = UDim2.new(0, 66, 0, 92),
+	}, actionBar)
+	local button = make("TextButton", {
+		Name = "Button",
+		Size = UDim2.new(0, 66, 0, 66),
+		BackgroundColor3 = Color3.fromRGB(14, 12, 8),
+		BackgroundTransparency = 0.38,
+		BorderSizePixel = 0,
+		AutoButtonColor = true,
+		Text = "",
+		ZIndex = 6,
+	}, slot)
+	make("UICorner", { CornerRadius = UDim.new(0, 10) }, button)
+	local stroke = make("UIStroke", { Name = "Stroke", Color = Color3.fromRGB(206, 190, 140), Transparency = 0.45, Thickness = 1.5 }, button)
+	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	local icon = make("TextLabel", {
+		Name = "Icon",
+		BackgroundTransparency = 1,
+		AnchorPoint = Vector2.new(0.5, 0),
+		Position = UDim2.new(0.5, 0, 0, 9),
+		Size = UDim2.new(0, 34, 0, 32),
+		Text = iconText,
+		TextScaled = true,
+		Font = Enum.Font.BuilderSans,
+		ZIndex = 7,
+	}, button)
+	make("TextLabel", {
+		Name = "Label",
+		BackgroundTransparency = 1,
+		AnchorPoint = Vector2.new(0.5, 1),
+		Position = UDim2.new(0.5, 0, 1, -6),
+		Size = UDim2.new(1, -4, 0, 12),
+		Text = labelText,
+		TextScaled = true,
+		Font = Enum.Font.BuilderSansBold,
+		TextColor3 = Color3.fromRGB(232, 226, 204),
+		ZIndex = 7,
+	}, button)
+	make("TextLabel", {
+		Name = "Key",
+		BackgroundTransparency = 1,
+		Position = UDim2.new(0, 5, 0, 3),
+		Size = UDim2.new(0, 12, 0, 12),
+		Text = key,
+		TextScaled = true,
+		Font = Enum.Font.RobotoMono,
+		TextColor3 = Color3.fromRGB(189, 181, 156),
+		ZIndex = 7,
+	}, button)
+	local lock = make("TextLabel", {
+		Name = "Lock",
+		BackgroundTransparency = 1,
+		Position = UDim2.new(1, -14, 0, -8),
+		Size = UDim2.new(0, 22, 0, 22),
+		Text = "🔒",
+		TextScaled = true,
+		Visible = false,
+		ZIndex = 8,
+	}, button)
+	local cooldown = make("Frame", {
+		Name = "Cooldown",
+		AnchorPoint = Vector2.new(0, 1),
+		Position = UDim2.fromScale(0, 1),
+		Size = UDim2.fromScale(1, 0),
+		BackgroundColor3 = Color3.new(0, 0, 0),
+		BackgroundTransparency = 0.35,
+		BorderSizePixel = 0,
+		ZIndex = 9,
+	}, button)
+	make("UICorner", { CornerRadius = UDim.new(0, 10) }, cooldown)
+	local price = make("Frame", {
+		Name = "Price",
+		AnchorPoint = Vector2.new(0.5, 0),
+		Position = UDim2.new(0.5, 0, 0, 71),
+		Size = UDim2.new(0, 56, 0, 18),
+		BackgroundColor3 = Color3.new(0, 0, 0),
+		BackgroundTransparency = 0.28,
+		BorderSizePixel = 0,
+		Visible = false,
+		ZIndex = 6,
+	}, slot)
+	make("UICorner", { CornerRadius = UDim.new(0.5, 0) }, price)
+	local priceText = make("TextLabel", {
+		Name = "Text",
+		BackgroundTransparency = 1,
+		Size = UDim2.fromScale(1, 1),
+		Text = "",
+		TextScaled = true,
+		Font = Enum.Font.BuilderSansBold,
+		TextColor3 = Color3.new(1, 1, 1),
+		ZIndex = 7,
+	}, price)
+	make("UIPadding", { PaddingTop = UDim.new(0, 2), PaddingBottom = UDim.new(0, 2) }, price)
+	local s: Slot = {
+		button = button,
+		icon = icon,
+		lock = lock,
+		price = price,
+		priceText = priceText,
+		cooldown = cooldown,
+		cooldownUntil = 0,
+		cooldownLength = 1,
+		callback = nil,
+	}
+	button.Activated:Connect(function()
+		if s.callback then
+			s.callback()
+		end
+	end)
+	slots[name] = s
+	return s
+end
+
+local function buildActionBar()
+	actionBar = make("Frame", {
+		Name = "ActionBar",
+		AnchorPoint = Vector2.new(0.5, 1),
+		Position = UDim2.new(0.5, 0, 1, -24),
+		Size = UDim2.new(0, 222, 0, 92),
+		BackgroundTransparency = 1,
+		ZIndex = 6,
+	}, hud)
+	make("UIListLayout", {
+		FillDirection = Enum.FillDirection.Horizontal,
+		HorizontalAlignment = Enum.HorizontalAlignment.Center,
+		SortOrder = Enum.SortOrder.LayoutOrder,
+		Padding = UDim.new(0, 12),
+	}, actionBar)
+	actionScale = make("UIScale", { Scale = 1 }, actionBar)
+	makeSlot("Flashlight", "1", "🔦", "FLASHLIGHT").button.Parent.LayoutOrder = 1
+	makeSlot("Push", "2", "✋", "PUSH").button.Parent.LayoutOrder = 2
+	makeSlot("Jumpscare", "3", "💀", "JUMPSCARE").button.Parent.LayoutOrder = 3
+end
+
 local function buildOverlays()
 	UI.jumpscareLayer = make("Frame", {
 		Name = "Jumpscare",
@@ -314,47 +475,138 @@ local function buildOverlays()
 		ZIndex = 31,
 	})
 
+	panelDim = make("Frame", {
+		Name = "PanelDim",
+		BackgroundColor3 = Color3.new(0, 0, 0),
+		BackgroundTransparency = 0.45,
+		BorderSizePixel = 0,
+		Size = UDim2.fromScale(1, 1),
+		Visible = false,
+		ZIndex = 39,
+	}, gui)
 	panel = make("Frame", {
 		Name = "Panel",
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		Position = UDim2.fromScale(0.5, 0.5),
-		Size = UDim2.new(0, 520, 0, 300),
+		Size = UDim2.new(0, 470, 0, 0),
+		AutomaticSize = Enum.AutomaticSize.Y,
 		BackgroundColor3 = Color3.fromRGB(10, 10, 10),
-		BackgroundTransparency = 0.15,
+		BackgroundTransparency = 0.1,
 		BorderSizePixel = 0,
 		Visible = false,
 		ZIndex = 40,
 	}, gui)
 	make("UICorner", { CornerRadius = UDim.new(0, 8) }, panel)
 	make("UIStroke", { Color = Color3.fromRGB(120, 20, 20), Thickness = 2 }, panel)
-	make("UISizeConstraint", { MaxSize = Vector2.new(520, 300) }, panel)
+	make("UIPadding", {
+		PaddingTop = UDim.new(0, 16),
+		PaddingBottom = UDim.new(0, 14),
+		PaddingLeft = UDim.new(0, 26),
+		PaddingRight = UDim.new(0, 26),
+	}, panel)
+	make("UIListLayout", {
+		SortOrder = Enum.SortOrder.LayoutOrder,
+		HorizontalAlignment = Enum.HorizontalAlignment.Center,
+		Padding = UDim.new(0, 10),
+	}, panel)
+	make("UIScale", { Name = "Scale" }, panel)
+	-- En usynlig "Modal"-knapp gjør musa fri (også i førsteperson) så lenge panelet vises
+	make("TextButton", {
+		Name = "MouseUnlock",
+		Modal = true,
+		BackgroundTransparency = 1,
+		Text = "",
+		Size = UDim2.new(0, 1, 0, 1),
+		LayoutOrder = 0,
+		ZIndex = 41,
+	}, panel)
 	panelTitle = text(panel, {
-		Position = UDim2.new(0, 20, 0, 18),
-		Size = UDim2.new(1, -40, 0, 56),
+		LayoutOrder = 1,
+		Size = UDim2.new(1, 0, 0, 52),
 		TextColor3 = Color3.fromRGB(220, 40, 40),
+		TextWrapped = true,
 		ZIndex = 41,
 	})
 	panelText = text(panel, {
-		Position = UDim2.new(0, 30, 0, 82),
-		Size = UDim2.new(1, -60, 0, 70),
+		LayoutOrder = 2,
+		Size = UDim2.new(1, 0, 0, 24),
 		TextColor3 = Color3.fromRGB(220, 220, 210),
+		TextWrapped = true,
 		ZIndex = 41,
 	})
-	panelButtons = make("Frame", {
+	reviveButton = make("TextButton", {
+		Name = "Revive",
+		LayoutOrder = 3,
+		Size = UDim2.new(1, 0, 0, 52),
+		BackgroundColor3 = Color3.fromRGB(28, 112, 52),
+		BorderSizePixel = 0,
+		AutoButtonColor = true,
+		Text = "",
+		Visible = false,
+		ZIndex = 42,
+	}, panel)
+	make("UICorner", { CornerRadius = UDim.new(0, 6) }, reviveButton)
+	make("UIStroke", { Color = Color3.fromRGB(111, 210, 138), Thickness = 1.5, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, reviveButton)
+	make("UIGradient", {
+		Color = ColorSequence.new(Color3.fromRGB(255, 255, 255), Color3.fromRGB(170, 170, 170)),
+		Rotation = 90,
+	}, reviveButton)
+	local reviveRow = make("Frame", {
 		BackgroundTransparency = 1,
-		Position = UDim2.new(0, 20, 0, 172),
-		Size = UDim2.new(1, -40, 0, 64),
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.fromScale(0.5, 0.5),
+		Size = UDim2.new(0, 220, 0, 30),
+		ZIndex = 43,
+	}, reviveButton)
+	make("UIListLayout", {
+		FillDirection = Enum.FillDirection.Horizontal,
+		HorizontalAlignment = Enum.HorizontalAlignment.Center,
+		VerticalAlignment = Enum.VerticalAlignment.Center,
+		Padding = UDim.new(0, 10),
+	}, reviveRow)
+	text(reviveRow, {
+		Size = UDim2.new(0, 96, 0, 26),
+		Text = "REVIVE",
+		TextColor3 = Color3.fromRGB(240, 240, 235),
+		ZIndex = 44,
+	})
+	local pill = make("Frame", {
+		Size = UDim2.new(0, 76, 0, 26),
+		BackgroundColor3 = Color3.new(0, 0, 0),
+		BackgroundTransparency = 0.6,
+		BorderSizePixel = 0,
+		ZIndex = 44,
+	}, reviveRow)
+	make("UICorner", { CornerRadius = UDim.new(0.5, 0) }, pill)
+	reviveCost = make("TextLabel", {
+		BackgroundTransparency = 1,
+		Size = UDim2.fromScale(1, 1),
+		Text = ROBUX .. " 39",
+		TextScaled = true,
+		Font = Enum.Font.BuilderSansBold,
+		TextColor3 = Color3.new(1, 1, 1),
+		ZIndex = 45,
+	}, pill)
+	make("UIPadding", { PaddingTop = UDim.new(0, 3), PaddingBottom = UDim.new(0, 3) }, pill)
+	reviveButton.Activated:Connect(function()
+		if reviveCallback then
+			reviveCallback()
+		end
+	end)
+	panelButtons = make("Frame", {
+		LayoutOrder = 4,
+		BackgroundTransparency = 1,
+		Size = UDim2.new(1, 0, 0, 52),
 		ZIndex = 41,
 	}, panel)
 	make("UIListLayout", {
 		FillDirection = Enum.FillDirection.Horizontal,
 		HorizontalAlignment = Enum.HorizontalAlignment.Center,
-		Padding = UDim.new(0, 16),
+		Padding = UDim.new(0, 12),
 	}, panelButtons)
 	panelTimer = text(panel, {
-		AnchorPoint = Vector2.new(0.5, 1),
-		Position = UDim2.new(0.5, 0, 1, -14),
-		Size = UDim2.new(1, -40, 0, 26),
+		LayoutOrder = 5,
+		Size = UDim2.new(1, 0, 0, 18),
 		TextColor3 = Color3.fromRGB(160, 160, 150),
 		ZIndex = 41,
 	})
@@ -370,12 +622,14 @@ function UI.init()
 	}, player:WaitForChild("PlayerGui"))
 	buildVhs()
 	buildHud()
+	buildActionBar()
 	buildOverlays()
 
 	-- Animasjon av VHS-filteret
 	local noiseTimer = 0
 	local trackingY = -0.1
 	RunService.RenderStepped:Connect(function(dt)
+		UI.updateActionBar()
 		local t = os.clock()
 		-- Tidsstempel som på et gammelt videokamera
 		local elapsed = math.floor(t - recordStart)
@@ -574,9 +828,9 @@ local function clearButtons()
 	end
 end
 
-local function button(label: string, color: Color3, callback: () -> ())
+local function button(label: string, color: Color3, callback: () -> (), width: number?)
 	local b = make("TextButton", {
-		Size = UDim2.new(0, 200, 0, 56),
+		Size = UDim2.new(0, width or 150, 0, 50),
 		BackgroundColor3 = color,
 		BorderSizePixel = 0,
 		Text = label,
@@ -588,8 +842,8 @@ local function button(label: string, color: Color3, callback: () -> ())
 	}, panelButtons)
 	make("UICorner", { CornerRadius = UDim.new(0, 6) }, b)
 	make("UIPadding", {
-		PaddingTop = UDim.new(0, 8),
-		PaddingBottom = UDim.new(0, 8),
+		PaddingTop = UDim.new(0, 12),
+		PaddingBottom = UDim.new(0, 12),
 		PaddingLeft = UDim.new(0, 8),
 		PaddingRight = UDim.new(0, 8),
 	}, b)
@@ -597,7 +851,7 @@ local function button(label: string, color: Color3, callback: () -> ())
 	return b
 end
 
-local function countdown(seconds: number, format: string)
+local function countdown(seconds: number, format: string, onDone: (() -> ())?)
 	panelToken += 1
 	local token = panelToken
 	task.spawn(function()
@@ -607,14 +861,62 @@ local function countdown(seconds: number, format: string)
 			task.wait(1)
 			left -= 1
 		end
+		if onDone and token == panelToken and panel.Visible then
+			onDone()
+		end
 	end)
 end
 
-function UI.showGameOver(seconds: number, onChoice: (string) -> ())
+local function refreshRevive()
+	if reviveCredits > 0 then
+		reviveCost.Text = "FREE ×" .. reviveCredits
+	else
+		reviveCost.Text = ROBUX .. " " .. revivePrice
+	end
+end
+
+local function showPanel(title: string, body: string, titleColor: Color3?)
+	panelDim.Visible = true
 	panel.Visible = true
-	panelTitle.Text = "EVERYONE WAS CAUGHT"
-	panelText.Text = "It found all of you.\nDo you want to try again from the start?"
+	panelTitle.Text = title
+	panelTitle.TextColor3 = titleColor or Color3.fromRGB(220, 40, 40)
+	panelTitle.Size = UDim2.new(1, 0, 0, #title > 14 and 84 or 52)
+	panelText.Text = body
+	panelText.Size = UDim2.new(1, 0, 0, string.find(body, "\n") and 48 or 24)
 	clearButtons()
+	reviveButton.Visible = false
+	reviveCallback = nil
+end
+
+function UI.setRevive(credits: number, price: number)
+	reviveCredits = credits
+	revivePrice = price
+	refreshRevive()
+end
+
+-- Du har brukt opp alle livene, men andre spiller fortsatt
+function UI.showDeath(seconds: number, onRevive: () -> (), onSpectate: () -> ())
+	showPanel("YOU DIED", "You have no lives left.")
+	reviveButton.Visible = true
+	reviveCallback = onRevive
+	refreshRevive()
+	local done = false
+	local function spectate()
+		if done then
+			return
+		end
+		done = true
+		onSpectate()
+	end
+	button("SPECTATE", Color3.fromRGB(40, 40, 44), spectate, 418)
+	countdown(seconds, "Spectating in %d seconds", spectate)
+end
+
+function UI.showGameOver(seconds: number, onChoice: (string) -> (), onRevive: () -> ())
+	showPanel("EVERYONE WAS CAUGHT", "It found all of you.")
+	reviveButton.Visible = true
+	reviveCallback = onRevive
+	refreshRevive()
 	local chosen = false
 	local function choose(choice: string)
 		if chosen then
@@ -622,6 +924,7 @@ function UI.showGameOver(seconds: number, onChoice: (string) -> ())
 		end
 		chosen = true
 		clearButtons()
+		reviveButton.Visible = false
 		panelText.Text = choice == "retry" and "Waiting for the others..." or "Returning to the lobby..."
 		onChoice(choice)
 	end
@@ -635,19 +938,79 @@ function UI.showGameOver(seconds: number, onChoice: (string) -> ())
 end
 
 function UI.showWin(escaper: string, seconds: number)
-	panel.Visible = true
-	panelTitle.Text = "YOU ESCAPED!"
-	panelTitle.TextColor3 = Color3.fromRGB(150, 235, 160)
-	panelText.Text = escaper .. " ran out the emergency exit.\nThe tape ends here... for now."
-	clearButtons()
+	showPanel("YOU ESCAPED!", escaper .. " ran out the emergency exit.\nThe tape ends here... for now.", Color3.fromRGB(150, 235, 160))
+	-- en lukkeknapp, så musa også kan brukes her
+	button("OK", Color3.fromRGB(40, 40, 44), function()
+		UI.hidePanels()
+	end, 120)
 	countdown(seconds, "Back to the lobby in %d")
 end
 
 function UI.hidePanels()
 	panelToken += 1
 	panel.Visible = false
-	panelTitle.TextColor3 = Color3.fromRGB(220, 40, 40)
+	panelDim.Visible = false
+	reviveButton.Visible = false
+	reviveCallback = nil
 	clearButtons()
+end
+
+function UI.isPanelOpen(): boolean
+	return panel.Visible
+end
+
+------------------------------------------------------------------
+-- Knappene nederst
+------------------------------------------------------------------
+
+function UI.setActionBar(visible: boolean)
+	actionBar.Visible = visible
+end
+
+function UI.onAction(name: string, callback: () -> ())
+	slots[name].callback = callback
+end
+
+local function setLit(s: Slot, lit: boolean)
+	local stroke = s.button:FindFirstChild("Stroke") :: UIStroke
+	stroke.Color = lit and Color3.fromRGB(255, 214, 120) or Color3.fromRGB(206, 190, 140)
+	stroke.Transparency = lit and 0.05 or 0.45
+end
+
+function UI.setFlashlightOn(on: boolean)
+	setLit(slots.Flashlight, on)
+end
+
+function UI.setPush(owned: boolean, price: number)
+	local s = slots.Push
+	s.lock.Visible = not owned
+	s.price.Visible = not owned
+	s.priceText.Text = ROBUX .. " " .. price
+	s.icon.TextTransparency = owned and 0 or 0.45
+end
+
+function UI.setJumpscare(credits: number, price: number)
+	local s = slots.Jumpscare
+	s.price.Visible = true
+	s.priceText.Text = credits > 0 and ("FREE ×" .. credits) or (ROBUX .. " " .. price)
+end
+
+function UI.startCooldown(name: string, seconds: number)
+	local s = slots[name]
+	s.cooldownUntil = os.clock() + seconds
+	s.cooldownLength = seconds
+end
+
+function UI.updateActionBar()
+	local cam = workspace.CurrentCamera
+	if cam then
+		actionScale.Scale = math.clamp(cam.ViewportSize.Y / 720, 0.75, 1.25)
+	end
+	local now = os.clock()
+	for _, s in slots do
+		local left = s.cooldownUntil - now
+		s.cooldown.Size = UDim2.fromScale(1, left > 0 and math.clamp(left / s.cooldownLength, 0, 1) or 0)
+	end
 end
 
 return UI

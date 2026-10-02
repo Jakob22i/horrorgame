@@ -6,6 +6,7 @@ local RunService = game:GetService("RunService")
 
 local Lobby = require(script:WaitForChild("Lobby"))
 local Match = require(script:WaitForChild("Match"))
+local Shop = require(script:WaitForChild("Shop"))
 
 local Remotes = ReplicatedStorage:WaitForChild("Remotes")
 local MatchStateRemote = Remotes:WaitForChild("MatchState") :: RemoteEvent
@@ -13,6 +14,7 @@ local TransitionRemote = Remotes:WaitForChild("Transition") :: RemoteEvent
 local ToggleFlashlightRemote = Remotes:WaitForChild("ToggleFlashlight") :: RemoteEvent
 local LeaveClosetRemote = Remotes:WaitForChild("LeaveCloset") :: RemoteEvent
 local GameOverChoiceRemote = Remotes:WaitForChild("GameOverChoice") :: RemoteEvent
+local PushRemote = Remotes:WaitForChild("Push") :: RemoteEvent
 
 local matches: { [number]: any } = {}
 local playerMatch: { [Player]: any } = {}
@@ -141,6 +143,36 @@ LeaveClosetRemote.OnServerEvent:Connect(function(player)
 	end
 end)
 
+-- Brukes av Shop
+function Manager:CanRevive(player: Player): boolean
+	local match = playerMatch[player]
+	return match ~= nil and match:CanRevive(player)
+end
+
+function Manager:Revive(player: Player): boolean
+	local match = playerMatch[player]
+	return match ~= nil and match:Revive(player)
+end
+
+function Manager:CanJumpscare(player: Player): boolean
+	local match = playerMatch[player]
+	return match ~= nil and match.state ~= "ended" and match:CountPrankTargets(player) > 0
+end
+
+function Manager:JumpscareAll(player: Player)
+	local match = playerMatch[player]
+	if match then
+		match:JumpscareAll(player)
+	end
+end
+
+PushRemote.OnServerEvent:Connect(function(player)
+	local match = playerMatch[player]
+	if match then
+		match:Push(player)
+	end
+end)
+
 GameOverChoiceRemote.OnServerEvent:Connect(function(player, choice)
 	local match = playerMatch[player]
 	if match and typeof(choice) == "string" then
@@ -153,6 +185,8 @@ RunService.Heartbeat:Connect(function(dt)
 		match:Step(dt)
 	end
 end)
+
+Shop.init(Manager)
 
 Lobby.init(function(group)
 	Manager:StartMatch(group)

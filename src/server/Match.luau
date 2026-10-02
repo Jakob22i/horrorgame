@@ -13,6 +13,9 @@ local Remotes = ReplicatedStorage:WaitForChild("Remotes")
 local NotifyRemote = Remotes:WaitForChild("Notify") :: RemoteEvent
 local JumpscareRemote = Remotes:WaitForChild("Jumpscare") :: RemoteEvent
 local MatchStateRemote = Remotes:WaitForChild("MatchState") :: RemoteEvent
+local PushedRemote = Remotes:WaitForChild("Pushed") :: RemoteEvent
+local PushRemote = Remotes:WaitForChild("Push") :: RemoteEvent
+local PrankRemote = Remotes:WaitForChild("Prank") :: RemoteEvent
 
 local SLOT_SPACING = 1000
 local LOCK_ON = Color3.fromRGB(40, 230, 90)
@@ -26,6 +29,7 @@ type PlayerState = {
 	protectedUntil: number,
 	closet: Model?,
 	closetChanged: number?,
+	lastPush: number?,
 }
 
 local Match = {}
@@ -538,6 +542,9 @@ function Match:OnCaught(player: Player)
 			player:SetAttribute("Flashlight", false)
 			self:_toSpectator(player)
 			self:_checkGameOver()
+			if self.state == "playing" then
+				MatchStateRemote:FireClient(player, "dead", { seconds = Config.DeathChoiceTime })
+			end
 		end
 	end)
 end
@@ -616,9 +623,135 @@ function Match:GameOver()
 	for player in self.players do
 		MatchStateRemote:FireClient(player, "gameover", { seconds = Config.GameOverChoiceTime })
 	end
+	self.overToken = (self.overToken or 0) + 1
+	local token = self.overToken
 	task.delay(Config.GameOverChoiceTime, function()
-		self:_resolveChoices()
+		if self.overToken == token and self.state == "over" then
+			self:_resolveChoices()
+		end
 	end)
+end
+
+------------------------------------------------------------------
+-- Revive (kjøpt for Robux)
+------------------------------------------------------------------
+
+function Match:CanRevive(player: Player): boolean
+	local st = self.players[player]
+	if not st or not st.out or self.resolved then
+		return false
+	end
+	return self.state == "playing" or self.state == "over"
+end
+
+function Match:Revive(player: Player): boolean
+	if not self:CanRevive(player) then
+		return false
+	end
+	local st = self.players[player]
+	local wasOver = self.state == "over"
+	st.out = false
+	st.busy = false
+	st.closet = nil
+	st.lives = 1
+	st.keys = 0
+	st.protectedUntil = os.clock() + Config.ReviveProtection
+	self:_setPlayerAttributes(player)
+	self:_spawnPlayer(player)
+	if wasOver then
+		-- runden fortsetter: avbryt game over-nedtellingen og vekk monsteret igjen
+		self.state = "playing"
+		self.overToken = (self.overToken or 0) + 1
+		self.choices = {}
+		if self.monster then
+			local far = self:GetFarPatrolPoint()
+			if far then
+				self.monster:Teleport(far)
+			end
+			self.monster:Activate()
+		end
+		for p in self.players do
+			MatchStateRemote:FireClient(p, "resume")
+		end
+	else
+		MatchStateRemote:FireClient(player, "revived")
+	end
+	self:Notify(player.DisplayName .. " was revived!", "good")
+	return true
+end
+
+------------------------------------------------------------------
+-- Push (game pass) og "Jumpscare everyone" (developer product)
+------------------------------------------------------------------
+
+function Match:Push(player: Player): boolean
+	local st = self.players[player]
+	if not st or st.out or st.busy or st.closet or self.state ~= "playing" then
+		return false
+	end
+	if player:GetAttribute("HasPush") ~= true then
+		return false
+	end
+	local now = os.clock()
+	if now - (st.lastPush or 0) < Config.Push.Cooldown then
+		return false
+	end
+	local root = Util.getRoot(player)
+	if not root then
+		return false
+	end
+	local look = Vector3.new(root.CFrame.LookVector.X, 0, root.CFrame.LookVector.Z)
+	look = look.Magnitude > 0.01 and look.Unit or Vector3.new(0, 0, -1)
+	local best, bestDist = nil, Config.Push.Range
+	for other, ost in self.players do
+		if other == player or ost.out or ost.busy or ost.closet then
+			continue
+		end
+		local oroot = Util.getRoot(other)
+		if oroot then
+			local offset = Vector3.new(oroot.Position.X - root.Position.X, 0, oroot.Position.Z - root.Position.Z)
+			local dist = offset.Magnitude
+			if dist <= bestDist and (dist < 1.5 or look:Dot(offset.Unit) > 0.35) then
+				best, bestDist = other, dist
+			end
+		end
+	end
+	if not best then
+		NotifyRemote:FireClient(player, "Nobody close enough to push.", "info")
+		return false
+	end
+	st.lastPush = now
+	PushRemote:FireClient(player, "cooldown", Config.Push.Cooldown)
+	PushedRemote:FireClient(best, look, player.DisplayName)
+	local broot = Util.getRoot(best)
+	if broot then
+		Util.playSound(broot, Config.Sounds.Push, 1, 50)
+	end
+	return true
+end
+
+function Match:CountPrankTargets(player: Player): number
+	local n = 0
+	for other in self.players do
+		if other ~= player then
+			n += 1
+		end
+	end
+	return n
+end
+
+function Match:JumpscareAll(player: Player): number
+	local n = 0
+	for other in self.players do
+		if other ~= player then
+			PrankRemote:FireClient(other, player.DisplayName)
+			n += 1
+		end
+	end
+	if n > 0 then
+		NotifyRemote:FireClient(player, "You jumpscared everyone!", "good")
+	end
+	return n
 end
 
 function Match:OnChoice(player: Player, choice: string)
