@@ -8,7 +8,8 @@ local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Co
 local Util = require(script.Parent:WaitForChild("Util"))
 
 local M = Config.Monster
-local EYE_HEIGHT = 10
+local EYE_HEIGHT = 9.6 -- over Root (Root står 1 stud over gulvet)
+local EYE_FORWARD = 2 -- hodet henger et stykke foran kroppen
 
 local Monster = {}
 Monster.__index = Monster
@@ -30,27 +31,7 @@ function Monster.new(match: any, template: Model, parent: Instance)
 	local model = template:Clone()
 	model.Name = "Monster"
 	local root = model:WaitForChild("Root") :: BasePart
-	local neckWeld = root:WaitForChild("NeckWeld") :: Weld
-
-	-- Valgfritt bilde som ansikt
-	if Config.MonsterFaceDecal ~= "" then
-		local head = model:FindFirstChild("Head")
-		local plate = head and head:FindFirstChild("FaceDecalPlate")
-		if head and plate then
-			local decal = Instance.new("Decal")
-			decal.Texture = Config.MonsterFaceDecal
-			decal.Face = Enum.NormalId.Front
-			decal.Parent = plate
-			for _, name in { "EyeL", "EyeR", "PupilL", "PupilR", "Nose", "Lips", "Mouth" } do
-				local p = head:FindFirstChild(name)
-				if p and p:IsA("BasePart") then
-					p.Transparency = 1
-				end
-			end
-		end
-	end
-
-	-- Pust og hvisking som følger henne (3D-lyd)
+	-- Lyder som følger monsteret (3D-lyd). Klienten styrer volumet på "Squeak" etter farten.
 	local function loop(name: string, id: string, volume: number, maxDistance: number, speed: number)
 		if id == "" then
 			return
@@ -71,8 +52,6 @@ function Monster.new(match: any, template: Model, parent: Instance)
 		match = match,
 		model = model,
 		root = root,
-		neckWeld = neckWeld,
-		baseNeckC0 = neckWeld.C0,
 		position = root.Position,
 		yaw = 0,
 		state = "dormant", -- dormant | wander | chase | search | stunned
@@ -90,8 +69,8 @@ function Monster.new(match: any, template: Model, parent: Instance)
 		idleUntil = 0,
 		stunnedUntil = 0,
 		senseTimer = 0,
-		twitchTimer = 0,
-		twitchCF = CFrame.identity,
+		lastGiggle = 0,
+		wasChasing = false,
 		seenHiding = {} :: { [Player]: boolean },
 		enraged = false,
 		destroyed = false,
@@ -106,8 +85,10 @@ function Monster.new(match: any, template: Model, parent: Instance)
 	}, Monster)
 
 	model.Parent = parent
-	loop("Breathing", Config.Sounds.Breathing, 0.9, 55, 1)
-	loop("Whisper", Config.Sounds.Whisper, 0.5, 30, 0.85)
+	loop("Breathing", Config.Sounds.Breathing, 0.8, 50, 0.9)
+	loop("MusicBox", Config.Sounds.MusicBox, 0.35, 45, 0.92)
+	loop("Squeak", Config.Sounds.Squeak, 0, 60, 1)
+	model:SetAttribute("Chasing", false)
 	return self
 end
 
@@ -171,8 +152,8 @@ end
 
 -- Ser og hører etter spillere
 function Monster:_sense(now: number)
-	local eye = self.position + Vector3.new(0, EYE_HEIGHT - 1, 0)
 	local look = self:_lookVector()
+	local eye = self.position + Vector3.new(0, EYE_HEIGHT, 0) + look * EYE_FORWARD
 	local sightRange = M.SightRange * (self.enraged and 1.5 or 1)
 	local bestPlayer: Player? = nil
 	local bestDist = math.huge
@@ -216,6 +197,10 @@ function Monster:_sense(now: number)
 	if bestPlayer and bestPos then
 		if self.target ~= bestPlayer or self.state ~= "chase" then
 			self.match:OnMonsterSpotted(bestPlayer)
+			if now - self.lastGiggle > M.GiggleCooldown then
+				self.lastGiggle = now
+				Util.playSound(self.root, Config.Sounds.Giggle, 1.2, 70)
+			end
 		end
 		self.state = "chase"
 		self.target = bestPlayer
@@ -344,18 +329,6 @@ function Monster:_moveDirect(dt: number, speed: number, goal: Vector3)
 	self.yaw = lerpAngle(self.yaw, yawFromDirection(delta), math.min(1, dt * 10))
 end
 
-function Monster:_twitch(dt: number)
-	self.twitchTimer -= dt
-	if self.twitchTimer <= 0 then
-		local chasing = self.state == "chase"
-		local big = math.random() < (chasing and 0.35 or 0.12)
-		local amount = big and 0.55 or (chasing and 0.22 or 0.1)
-		self.twitchCF = CFrame.Angles((math.random() - 0.5) * amount, (math.random() - 0.5) * amount * 1.6, (math.random() - 0.5) * amount * 2)
-		self.twitchTimer = big and 0.06 + math.random() * 0.12 or 0.12 + math.random() * 0.5
-	end
-	self.neckWeld.C0 = self.baseNeckC0 * self.twitchCF
-end
-
 function Monster:_checkCatch()
 	for player in self.match.players do
 		if not self.match:CanBeHunted(player) then
@@ -398,7 +371,11 @@ function Monster:Step(dt: number)
 	if self.destroyed then
 		return
 	end
-	self:_twitch(dt)
+	local chasing = self.state == "chase"
+	if chasing ~= self.wasChasing then
+		self.wasChasing = chasing
+		self.model:SetAttribute("Chasing", chasing)
+	end
 	if self.state == "dormant" then
 		return
 	end

@@ -1,6 +1,6 @@
 -- Eksporterer modeller til JSON slik at de kan forhåndsvises (rendres) utenfor Roblox.
 -- Bruk: lune run build/export_preview.luau <scene> <utfil.json>
---   scene = "monster" | "hospital"
+--   scene = "patient" | "hospital"
 
 local fs = require("@lune/fs")
 local process = require("@lune/process")
@@ -9,10 +9,9 @@ local serde = require("@lune/serde")
 
 local lib = require("./lib")
 local buildHospital = require("./hospital")
-local buildMonster = require("./monster")
 local buildPatient = require("./patient")
 
-local scene = process.args[1] or "monster"
+local scene = process.args[1] or "patient"
 local outPath = process.args[2] or "preview.json"
 
 local parts = {}
@@ -131,13 +130,51 @@ local function collect(root: any)
 	end
 end
 
+-- Setter monsteret i en positur (samme formler som MonsterAnimator på klienten) og
+-- flytter alle delene etter sveisene, siden Lune ikke har fysikk.
+local function pose(m: any, walk: number, chase: number, ph: number, look: number, jawT: number)
+	local CF = roblox.CFrame
+	local function set(name: string, cf: any)
+		local w = m.Joints:FindFirstChild(name)
+		w.C0 = w.C0 * cf
+	end
+	local sinP, cosP = math.sin(ph), math.cos(ph)
+	set("LHip", CF.Angles(sinP * 0.42 * walk, 0, 0))
+	set("LKnee", CF.Angles(-math.max(0, cosP) * 0.75 * walk, 0, 0))
+	set("RHip", CF.Angles(-sinP * 0.22 * walk, 0, math.rad(4) * walk))
+	set("RKnee", CF.Angles(-math.max(0, -cosP) * 0.3 * walk, 0, 0))
+	local bob = -math.abs(sinP) * 0.18 * walk - math.max(0, -sinP) * 0.12 * walk
+	set("Waist", CF.new(0, bob, 0) * CF.Angles(0, sinP * 0.05 * walk, math.sin(ph + 0.6) * 0.06 * walk))
+	set("Spine", CF.Angles(-0.14 * chase, 0, math.sin(ph) * 0.03 * walk))
+	set("RShoulder", CF.Angles(-sinP * 0.28 * walk + 0.75 * chase, 0, math.rad(-4) * chase))
+	set("RElbow", CF.Angles(0.12 + 0.35 * chase + math.max(0, sinP) * 0.15 * walk, 0, 0))
+	set("Neck", CF.Angles(0, look, 0) * CF.Angles(0.15, -0.2, 0.35))
+	set("Jaw", CF.Angles(-(0.2 + 0.14 * jawT) * chase - 0.05, 0, 0))
+	-- løs sveisene fra Root og utover
+	local byPart0 = {}
+	for _, d in m:GetDescendants() do
+		if d.ClassName == "Weld" then
+			byPart0[d.Part0] = byPart0[d.Part0] or {}
+			table.insert(byPart0[d.Part0], d)
+		end
+	end
+	local queue = { m.Root }
+	while #queue > 0 do
+		local p0 = table.remove(queue, 1)
+		for _, w in byPart0[p0] or {} do
+			w.Part1.CFrame = p0.CFrame * w.C0 * w.C1:Inverse()
+			table.insert(queue, w.Part1)
+		end
+	end
+end
+
 local container = roblox.Instance.new("Folder")
 local extra = {}
-if scene == "patient" then
+if scene == "patient" or scene == "patient-chase" then
 	local m = buildPatient(container, "Monster")
-	extra.monsterPivot = cfArray(m.PrimaryPart.CFrame)
-elseif scene == "monster" then
-	local m = buildMonster(container, "Monster")
+	if scene == "patient-chase" then
+		pose(m, 1, 1, math.pi * 0.45, -0.3, 1)
+	end
 	extra.monsterPivot = cfArray(m.PrimaryPart.CFrame)
 elseif scene == "hospital" then
 	buildHospital(container)

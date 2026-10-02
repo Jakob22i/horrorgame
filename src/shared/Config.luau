@@ -23,9 +23,9 @@ local Config = {
 	StaminaRegen = 14, -- per sekund når du ikke løper
 	StaminaRegenDelay = 1.2,
 
-	-- Monsteret (Den bleke damen)
+	-- Monsteret (Patient #0413)
 	Monster = {
-		StartDelay = 12, -- sekunder før hun begynner å jakte
+		StartDelay = 12, -- sekunder før den begynner å jakte
 		WanderSpeed = 8,
 		ChaseSpeed = 16.5,
 		ExtraSpeedPerPlayer = 0.4, -- litt raskere for hver ekstra spiller
@@ -34,9 +34,10 @@ local Config = {
 		HearRange = 14, -- hører deg alltid innenfor denne avstanden
 		SprintHearRange = 32, -- hører deg på lengre avstand når du løper
 		CatchRange = 4.5,
-		LoseTargetTime = 6, -- sekunder hun leter etter at hun mistet deg av syne
-		SeeHideRange = 12, -- ser hun deg gjemme deg innenfor denne avstanden, drar hun deg ut
-		CatchCooldown = 6, -- sekunder hun "forsvinner" etter å ha tatt noen
+		LoseTargetTime = 6, -- sekunder den leter etter at den mistet deg av syne
+		SeeHideRange = 12, -- ser den deg gjemme deg innenfor denne avstanden, drar den deg ut
+		CatchCooldown = 6, -- sekunder den "forsvinner" etter å ha tatt noen
+		GiggleCooldown = 10, -- sekunder mellom hver gang den fniser når den ser noen
 	},
 
 	-- Lyder (lisensierte Roblox-lyder fra Creator Store)
@@ -47,8 +48,11 @@ local Config = {
 		Heartbeat = "rbxassetid://9043365842", -- Heartbeat 96 BPM
 		Scream = "rbxassetid://9125712561", -- Distorted Scream
 		JumpscareHit = "rbxassetid://9041752524", -- Eyes Scream Horror Hit
-		Whisper = "rbxassetid://9126213995", -- Whisper Bursts
 		Breathing = "rbxassetid://9114226295", -- Eerie Breathing Howl
+		Squeak = "rbxassetid://9120658777", -- Old Squeaky Wheel (dryppstativet)
+		Giggle = "rbxassetid://9114571613", -- Ghost Giggle Creepy
+		MusicBox = "rbxassetid://138717310622754", -- Twisted Music Box
+		BoneCrack = "rbxassetid://9113546532", -- Bone Cracks
 		KeyPickup = "rbxassetid://9116176803", -- Keys Jingle
 		KeyInsert = "rbxassetid://9116324156", -- Lock Unlock Door
 		Locker = "rbxassetid://9116742347", -- Metal Locker Door
@@ -58,10 +62,6 @@ local Config = {
 		GameOver = "rbxassetid://1840927247", -- Horror Hits 7
 		Win = "rbxassetid://9047014318", -- Beautiful Horror Stinger
 	},
-
-	-- Valgfritt: last opp bildet av damen som Decal på Roblox og lim inn ID-en her,
-	-- f.eks. "rbxassetid://1234567890". Da brukes bildet som ansiktet hennes.
-	MonsterFaceDecal = "",
 }
 
 return Config

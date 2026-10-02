@@ -1,4 +1,4 @@
--- Jumpscare: ansiktet hennes fyller skjermen med støy, skrik og risting.
+-- Jumpscare: ansiktet til monsteret fyller skjermen, kjeven gaper, støy, skrik og risting.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -13,7 +13,9 @@ local Effects: any
 local viewport: ViewportFrame
 local camera: Camera
 local redFlash: Frame
-local faceCenter = Vector3.new(0, 11.5, 0.1)
+local faceCF = CFrame.new(0, 11, -2)
+local jawHinge: CFrame? = nil
+local jawParts: { { part: BasePart, base: CFrame } } = {}
 local playing = false
 
 local function sound(id: string, volume: number): Sound?
@@ -54,25 +56,29 @@ function Jumpscare.init(ui: any, effects: any)
 
 	local assets = ReplicatedStorage:WaitForChild("Assets")
 	local model = (assets:WaitForChild("MonsterJumpscare") :: Model):Clone()
-	if Config.MonsterFaceDecal ~= "" then
-		local head = model:FindFirstChild("Head")
-		local plate = head and head:FindFirstChild("FaceDecalPlate")
-		if head and plate then
-			local decal = Instance.new("Decal")
-			decal.Texture = Config.MonsterFaceDecal
-			decal.Face = Enum.NormalId.Front
-			decal.Parent = plate
-			for _, name in { "EyeL", "EyeR", "PupilL", "PupilR", "Nose", "Lips", "Mouth" } do
-				local p = head:FindFirstChild(name)
-				if p and p:IsA("BasePart") then
-					p.Transparency = 1
-				end
-			end
+	-- bare hodet trengs i nærbildet
+	for _, name in { "Body", "IVPole" } do
+		local child = model:FindFirstChild(name)
+		if child then
+			child:Destroy()
 		end
 	end
 	local face = model:FindFirstChild("Face", true)
 	if face and face:IsA("BasePart") then
-		faceCenter = face.Position
+		faceCF = face.CFrame
+	end
+	-- kjeven: delene roteres rundt hengselet (ViewportFrame har ikke fysikk, så vi flytter dem selv)
+	local rig = model:FindFirstChild("Rig")
+	local hinge = rig and rig:FindFirstChild("Jaw")
+	local head = model:FindFirstChild("Head")
+	local jaw = head and head:FindFirstChild("Jaw")
+	if hinge and hinge:IsA("BasePart") and jaw then
+		jawHinge = hinge.CFrame
+		for _, p in jaw:GetDescendants() do
+			if p:IsA("BasePart") then
+				table.insert(jawParts, { part = p, base = p.CFrame })
+			end
+		end
 	end
 	model.Parent = viewport
 
@@ -103,10 +109,19 @@ function Jumpscare.play(livesLeft: number)
 	conn = RunService.RenderStepped:Connect(function()
 		local t = os.clock() - start
 		local zoom = math.clamp(t / 0.18, 0, 1)
-		local dist = 6 - zoom * 4.2 + math.sin(t * 40) * 0.08
+		local dist = 6.5 - zoom * 4.3 + math.sin(t * 40) * 0.08
 		local jitter = Vector3.new((math.random() - 0.5) * 0.25, (math.random() - 0.5) * 0.25, 0)
-		local camPos = faceCenter + Vector3.new(0, -0.1, -dist) + jitter
-		camera.CFrame = CFrame.lookAt(camPos, faceCenter + jitter * 0.5) * CFrame.Angles(0, 0, (math.random() - 0.5) * 0.12)
+		local target = (faceCF * CFrame.new(0, -0.25, 0)).Position
+		local camPos = (faceCF * CFrame.new(0, -0.3, -dist)).Position + jitter
+		camera.CFrame = CFrame.lookAt(camPos, target + jitter * 0.5) * CFrame.Angles(0, 0, (math.random() - 0.5) * 0.12)
+		-- kjeven gaper og klaprer
+		if jawHinge then
+			local open = -math.clamp(t / 0.15, 0, 1) * 0.5 - math.abs(math.sin(t * 34)) * 0.08
+			local move = jawHinge * CFrame.Angles(open, 0, 0) * jawHinge:Inverse()
+			for _, jp in jawParts do
+				jp.part.CFrame = move * jp.base
+			end
+		end
 		-- glitch: bildet blinker og rødt lys pulserer
 		viewport.Visible = math.random() > 0.12
 		redFlash.BackgroundTransparency = 0.55 + math.random() * 0.45

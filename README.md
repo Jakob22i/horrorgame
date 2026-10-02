@@ -1,6 +1,6 @@
 # horrorgame – St. Agathe sykehus
 
-Et analog-horror-spill i Roblox for 1–4 spillere per gruppe.
+Et analog-horror-spill i Roblox for 1–4 spillere per gruppe. Alt i spillet er på engelsk.
 
 ## Slik fungerer spillet
 
@@ -8,13 +8,16 @@ Et analog-horror-spill i Roblox for 1–4 spillere per gruppe.
   Gå inn i en heis, så starter en nedtelling (15 sek, eller 5 sek hvis heisen er full).
 - Gruppa havner i et mørkt, forlatt **sykehus**. Målet er å finne **5 nøkler** som ligger
   tilfeldig plassert rundt i kartet, og sette dem inn ved **nødutgangen** i resepsjonen.
-- **Den bleke damen** jakter på dere. Hun ser dere, hører dere når dere løper, og rykker
-  og blinker som et gammelt VHS-opptak.
-- Gjem deg i **skapene** (24 stk). Ser hun deg gå inn, drar hun deg ut.
+- **Patient #0413** jakter på dere: en høy, utmagret pasient med et altfor bredt, sydd glis,
+  svarte øyehuler og et dryppstativ med blodpose som den drar etter seg. Den ser dere, hører
+  dere når dere løper, halter, rykker i hodet, klaprer med kjeven når den jakter, og du kan
+  høre de knirkende hjulene og en spilledåse når den er i nærheten.
+- Gjem deg i **skapene** (24 stk). Trykk E på skapet for å gå inn og ut (eller LEAVE-knappen).
+  Ser den deg gå inn, drar den deg ut.
 - Hver spiller har **3 liv**. Blir du tatt, får du en jumpscare, nøklene du bar faller der
   du døde, og du starter på nytt i resepsjonen.
-- Har alle mistet alle liv, kan hver spiller velge **Prøv igjen** (ny runde fra starten)
-  eller **Til lobbyen**.
+- Har alle mistet alle liv, kan hver spiller velge **Try again** (ny runde fra starten)
+  eller **To lobby**.
 - Når 5 nøkler er satt inn, åpner nødutgangen seg. Løp ut, så har dere vunnet.
 
 **Taster:** `F` lommelykt · `Shift` løp · `E` bruk / gjem deg / gå ut av skap.
@@ -35,11 +38,11 @@ På mobil dukker det opp egne knapper.
 | --- | --- |
 | Lobbyen med heisene | `Workspace/Lobby` |
 | Sykehuskartet (malen) | `ServerStorage/HospitalTemplate` |
-| Monsteret | `ServerStorage/Monster` |
+| Monsteret (Patient #0413) | `ServerStorage/Monster` |
 | Nøkkelen | `ServerStorage/Key` |
 | Innstillinger | `ReplicatedStorage/Shared/Config` |
 | Serverscript | `ServerScriptService/GameServer` (+ modulene Lobby, Match, Monster, Util) |
-| Klientscript | `StarterPlayer/StarterPlayerScripts/ClientMain` (+ UI, Effects, Controls, Jumpscare) |
+| Klientscript | `StarterPlayer/StarterPlayerScripts/ClientMain` (+ UI, Effects, Controls, Jumpscare, MonsterAnimator) |
 
 Sykehuset ligger i `ServerStorage` og klones inn i `Workspace/Matches` for hver gruppe.
 Vil du redigere kartet, drar du `HospitalTemplate` inn i `Workspace`, endrer det og drar
@@ -54,10 +57,11 @@ det tilbake. Mappene i kartet styrer spillet:
 ## Justere spillet
 
 Alt av tall ligger i `ReplicatedStorage/Shared/Config`: antall liv, nøkler, nedtelling,
-hvor fort hun går, hvor langt hun ser, lyder osv.
+hvor fort monsteret går, hvor langt det ser, lyder osv.
 
-**Bruke ditt eget bilde som ansiktet hennes:** last opp bildet som en Decal på Roblox, og
-lim inn ID-en i `MonsterFaceDecal`, f.eks. `"rbxassetid://1234567890"`.
+Monsteret er bygget av ca. 800 deler som er sveiset til et "skjelett" (mappen `Rig`).
+Leddene ligger i mappen `Joints` og animeres av `MonsterAnimator` på hver klient, mens
+serveren bare flytter `Root`. Bilder av karakteren ligger i `preview/`.
 
 ## For utviklere
 
@@ -67,6 +71,15 @@ opprinnelige Baseplate-fila), og scriptene hentes fra `src/`.
 ```sh
 lune run build/build.luau   # lager horrorgame.rbxl og sourcemap.json
 ```
+
+Andre verktøy:
+
+```sh
+lune run build/check_map.luau                         # sjekker at alle skap kan brukes
+lune run build/export_preview.luau patient out.json   # eksporterer modellen for forhåndsvisning
+```
+
+Merk: Lune sin `CFrame.lookAt` snur Z-aksen feil, så byggescriptene bruker `lib.lookAt`.
 
 Typesjekk med [luau-lsp](https://github.com/JohnnyMorganz/luau-lsp):
 

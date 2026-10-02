@@ -10,7 +10,7 @@ local serde = require("@lune/serde")
 local lib = require("./lib")
 local buildLobby = require("./lobby")
 local buildHospital = require("./hospital")
-local buildMonster = require("./monster")
+local buildPatient = require("./patient")
 
 local Vector3, CFrame, Enum = lib.Vector3, lib.CFrame, lib.Enum
 local rgb = lib.rgb
@@ -102,7 +102,7 @@ local _, preview, stats = buildHospital(ServerStorage)
 print(preview)
 print(string.format("Sykehus: %d veggblokker, %d patruljepunkter", stats.walls, stats.patrol))
 
-local monster = buildMonster(ServerStorage, "Monster")
+local monster = buildPatient(ServerStorage, "Monster")
 
 local assets = lib.new("Folder", { Name = "Assets" }, ReplicatedStorage)
 local jumpscareModel = monster:Clone()
@@ -199,7 +199,7 @@ if oldClient then
 	oldClient.Parent = nil
 end
 local client, smClient = script("LocalScript", "ClientMain", "src/client/ClientMain.client.luau", sps, smSPS)
-for _, name in { "UI", "Effects", "Controls", "Jumpscare" } do
+for _, name in { "UI", "Effects", "Controls", "Jumpscare", "MonsterAnimator" } do
 	script("ModuleScript", name, "src/client/" .. name .. ".luau", client, smClient)
 end
 
