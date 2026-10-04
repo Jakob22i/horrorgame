@@ -59,10 +59,26 @@ Et analog-horror-spill i Roblox for 1–4 spillere per gruppe. Alt i spillet er 
 - Når du kommer inn i spillet, vises en **VHS-loading screen** («PLEASE STAND BY») mens lyder
   og monsteret lastes inn.
 
-**Taster:** `1` lommelykt (eller `F`) · `2` push · `3` jumpscare everyone · hold `Shift` for å løpe
-(eller hold inne RUN-knappen) ·
-`E` bruk / gjem deg / gå ut av skap. Musa er bare fri når en meny er åpen.
-Knappene nederst på skjermen kan trykkes på (mobil).
+**Taster (PC):** `1` lommelykt (eller `F`) · `2` push · `3` jumpscare everyone · hold `Shift` for
+å løpe · `E` bruk / gjem deg / gå ut av skap. Musa er bare fri når en meny er åpen.
+
+**Mobil:** styrespaken til venstre og hoppeknappen til høyre er Roblox sine egne. Knappene
+FLASHLIGHT, PUSH, JUMPSCARE og RUN ligger nede til høyre, rett ved hoppeknappen. RUN slår
+løping av og på (så du slipper å holde den inne). Trykk på knappene som dukker opp ved skap,
+nøkler og dører. Menyene krymper så de får plass på små skjermer, og skyggene er slått av på
+mobil så spillet går jevnere.
+
+## Flere runder i samme server (og venner)
+
+- Én server har plass til **16 spillere**. Hver heis lager en egen kopi av sykehuset til sin
+  gruppe, 1600 studs fra de andre, med eget monster, nøkler og lys. Maks **6 runder** går
+  samtidig (`Config.MaxMatches`). Er alle i bruk, står det «ALL HOSPITALS BUSY» på heisen, og
+  den går så fort en runde er ferdig.
+- **Streaming** er slått på: hver spiller laster bare inn det som er i nærheten, altså bare
+  sitt eget sykehus (ikke de andre rundene eller lobbyen). Monsteret og nøklene lastes inn hele
+  på én gang, og sluttscenen sørger for at nødutgangen er lastet inn hos alle.
+- Knappen **INVITE FRIENDS** i lobbyen åpner Roblox sin invitasjonsmeny (virker bare i det
+  publiserte spillet, ikke i Studio).
 
 ## Robux-kjøp
 
@@ -93,6 +109,9 @@ jumpscares som ikke ble brukt med en gang, lagres og blir gratis neste gang (kre
    spillere og trykk **Start** for å teste flerspiller.
 4. Når du publiserer, setter du maks antall spillere til **16** (4 heiser × 4 spillere) i
    **Game Settings**.
+5. Så venner alltid får plass: gå til [create.roblox.com](https://create.roblox.com) → spillet
+   ditt → **Places** → **Configure Place** → **Server Fill**, velg «Customize» og reserver
+   3–4 plasser. Da havner venner som trykker «Join» på profilen din i samme server som deg.
 
 ## Hvor ligger alt?
 
