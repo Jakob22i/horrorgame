@@ -91,7 +91,18 @@ function Jumpscare.init(ui: any, effects: any)
 	redFlash.Parent = layer
 end
 
-function Jumpscare.play(livesLeft: number)
+-- Teksten etter at du har mistet et liv
+local function lifeMessage(livesLeft: number): string
+	if livesLeft > 1 then
+		return "IT GOT YOU\n\n" .. livesLeft .. " lives left"
+	elseif livesLeft == 1 then
+		return "IT GOT YOU\n\n1 life left"
+	end
+	return "IT GOT YOU\n\nNo lives left..."
+end
+
+-- mode = "downed": du ligger nede og kan bli hjulpet opp (ingen liv mistet ennå)
+function Jumpscare.play(livesLeft: number, mode: string?)
 	if playing then
 		return
 	end
@@ -134,21 +145,37 @@ function Jumpscare.play(livesLeft: number)
 	UI.setNoiseOverride(0)
 	Effects.extraShake = 0
 
-	local message
-	if livesLeft > 1 then
-		message = "IT GOT YOU\n\n" .. livesLeft .. " lives left"
-	elseif livesLeft == 1 then
-		message = "IT GOT YOU\n\n1 life left"
-	else
-		message = "IT GOT YOU\n\nNo lives left..."
+	if mode == "downed" then
+		UI.fadeOut("YOU'RE DOWN\n\nA friend can still help you up", 0.05)
+		task.delay(1.2, function()
+			if scream then
+				scream:Stop()
+			end
+		end)
+		task.wait(1.6)
+		UI.fadeIn(0.7)
+		playing = false
+		return
 	end
-	UI.fadeOut(message, 0.05)
+	UI.fadeOut(lifeMessage(livesLeft), 0.05)
 	task.delay(1.2, function()
 		if scream then
 			scream:Stop()
 		end
 	end)
 	task.wait(math.max(0.5, Config.RespawnDelay - duration - 0.2))
+	UI.fadeIn(0.8)
+	playing = false
+end
+
+-- Du lå nede og ingen rakk å hjelpe deg: et liv er borte (ingen ny jumpscare)
+function Jumpscare.lostLife(livesLeft: number)
+	if playing then
+		return
+	end
+	playing = true
+	UI.fadeOut(lifeMessage(livesLeft), 0.6)
+	task.wait(math.max(0.5, Config.RespawnDelay - 0.4))
 	UI.fadeIn(0.8)
 	playing = false
 end

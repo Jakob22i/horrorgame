@@ -123,11 +123,12 @@ end
 
 function Monster:_speed(): number
 	local keys = self.match.keysInserted or 0
+	local mult = self.match.speedMultiplier or 1
 	if self.state == "chase" or self.state == "search" then
 		local extra = math.max(0, self.match:GetPlayerCount() - 1) * M.ExtraSpeedPerPlayer
-		return M.ChaseSpeed + extra + keys * M.SpeedPerKey + (self.enraged and 2 or 0)
+		return (M.ChaseSpeed + extra + keys * M.SpeedPerKey + (self.enraged and 2 or 0)) * mult
 	end
-	return M.WanderSpeed + keys * M.SpeedPerKey * 0.5 + (self.enraged and 3 or 0)
+	return (M.WanderSpeed + keys * M.SpeedPerKey * 0.5 + (self.enraged and 3 or 0)) * mult
 end
 
 -- I finalen vet monsteret hele tiden omtrent hvor nærmeste spiller er (ikke de som gjemmer seg)

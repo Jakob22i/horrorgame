@@ -29,17 +29,27 @@ type PlayerState = {
 	protectedUntil: number,
 	closet: Model?,
 	closetChanged: number?,
+	hiddenSince: number?,
+	closetLeftAt: number?,
+	downed: boolean?,
+	downedUntil: number?,
+	revivePrompt: ProximityPrompt?,
+	downedGui: BillboardGui?,
 	lastPush: number?,
 }
 
 local Match = {}
 Match.__index = Match
 
-function Match.new(manager: any, id: number, slot: number, players: { Player })
+function Match.new(manager: any, id: number, slot: number, players: { Player }, mode: string?)
 	local self = setmetatable({}, Match)
 	self.manager = manager
 	self.id = id
 	self.slot = slot
+	self.mode = if mode == "Nightmare" then "Nightmare" else "Normal"
+	self.nightmare = self.mode == "Nightmare"
+	self.speedMultiplier = if self.nightmare then Config.Nightmare.MonsterSpeed else 1
+	local startLives = if self.nightmare then Config.Nightmare.Lives else Config.Lives
 	self.state = "starting" -- starting | playing | won | over | ended
 	self.players = {} :: { [Player]: PlayerState }
 	self.keysInserted = 0
@@ -52,6 +62,7 @@ function Match.new(manager: any, id: number, slot: number, players: { Player })
 
 	self.folder = Instance.new("Folder")
 	self.folder.Name = "Match_" .. id
+	self.folder:SetAttribute("Mode", self.mode)
 	self.folder:SetAttribute("KeysInserted", 0)
 	self.folder:SetAttribute("KeysTotal", Config.KeysToEscape)
 
@@ -86,7 +97,7 @@ function Match.new(manager: any, id: number, slot: number, players: { Player })
 	for i, player in players do
 		self.players[player] = {
 			index = i,
-			lives = Config.Lives,
+			lives = startLives,
 			keys = 0,
 			out = false,
 			busy = false,
@@ -158,6 +169,7 @@ function Match:_setPlayerAttributes(player: Player)
 	player:SetAttribute("Hidden", false)
 	player:SetAttribute("Out", st.out)
 	player:SetAttribute("Flashlight", true)
+	player:SetAttribute("Downed", false)
 end
 
 function Match:_spawnPlayer(player: Player)
@@ -202,10 +214,11 @@ function Match:Start()
 	for player in self.players do
 		self:_setPlayerAttributes(player)
 		self:_spawnPlayer(player)
-		MatchStateRemote:FireClient(player, "start", { matchId = self.id, players = self:GetPlayerCount() })
+		MatchStateRemote:FireClient(player, "start", { matchId = self.id, players = self:GetPlayerCount(), mode = self.mode, lives = self.players[player].lives })
 	end
 
 	self.state = "playing"
+	self.startedAt = os.clock()
 	task.delay(Config.Monster.StartDelay, function()
 		if self.state == "playing" then
 			self.monster:Activate()
@@ -228,7 +241,8 @@ function Match:_setupLamps()
 		else
 			-- "dim" = en svak, summende lampe (ingen blinking; klienten styrer lysnivået)
 			local r = math.random()
-			mode = r < 0.55 and "on" or (r < 0.78 and "dim" or "off")
+			local off = if self.nightmare then Config.Nightmare.LampsOff else 0.22
+			mode = if r < off then "off" elseif r < off + 0.23 then "dim" else "on"
 		end
 		lamp:SetAttribute("Mode", mode)
 		if mode == "off" then
@@ -252,7 +266,16 @@ function Match:_setupLamps()
 end
 
 function Match:_setupClosets()
-	for _, closet in self.map:WaitForChild("Closets"):GetChildren() do
+	local closetFolder = self.map:WaitForChild("Closets")
+	if self.nightmare then
+		-- Nightmare: mange av skapene er borte
+		local list = Util.shuffle(closetFolder:GetChildren())
+		local keep = math.floor(#list * Config.Nightmare.ClosetsKept + 0.5)
+		for i = keep + 1, #list do
+			list[i]:Destroy()
+		end
+	end
+	for _, closet in closetFolder:GetChildren() do
 		local promptPart = closet:FindFirstChild("PromptPart")
 		local prompt = promptPart and promptPart:FindFirstChildOfClass("ProximityPrompt")
 		if prompt then
@@ -289,9 +312,10 @@ function Match:_setupKeys()
 	end
 end
 
-function Match:_spawnKey(cframe: CFrame)
+function Match:_spawnKey(cframe: CFrame, dropped: boolean?)
 	local key = (ServerStorage:WaitForChild("Key") :: Model):Clone()
 	key:PivotTo(cframe)
+	key:SetAttribute("Dropped", dropped == true)
 	key.Parent = self.keysFolder
 	local prompt = key:FindFirstChildWhichIsA("ProximityPrompt", true)
 	if prompt then
@@ -315,6 +339,9 @@ function Match:_pickupKey(player: Player, key: Model)
 	player:SetAttribute("Keys", st.keys)
 	Util.playSound(root, Config.Sounds.KeyPickup, 0.9, 40)
 	NotifyRemote:FireClient(player, "You found a key! Bring it to the emergency exit.", "good")
+	if key:GetAttribute("Dropped") ~= true then
+		self.manager:AwardCoins(player, Config.Coins.KeyFound, "key found")
+	end
 	self:Notify(player.DisplayName .. " found a key.", "info", player)
 end
 
@@ -324,7 +351,7 @@ function Match:_dropKeys(count: number, position: Vector3)
 		local angle = (i / count) * math.pi * 2
 		local offset = count > 1 and Vector3.new(math.cos(angle), 0, math.sin(angle)) * 1.5 or Vector3.zero
 		local pos = Vector3.new(position.X, self.floorY + 0.25, position.Z) + offset
-		self:_spawnKey(CFrame.new(pos) * CFrame.Angles(0, math.random() * math.pi * 2, 0))
+		self:_spawnKey(CFrame.new(pos) * CFrame.Angles(0, math.random() * math.pi * 2, 0), true)
 	end
 end
 
@@ -395,6 +422,7 @@ function Match:_insertKeys(player: Player)
 	end
 	local word = count == 1 and "key" or "keys"
 	self:Notify(player.DisplayName .. " inserted " .. count .. " " .. word .. " (" .. self.keysInserted .. "/" .. Config.KeysToEscape .. ")", "good")
+	self.manager:AwardCoins(player, Config.Coins.KeyInserted * count, "keys inserted")
 	if self.keysInserted >= Config.Blackout.AfterKeys then
 		self:_startBlackouts()
 	end
@@ -486,6 +514,12 @@ function Match:Hide(player: Player, closet: Model)
 	if self.closetOccupant[closet] then
 		return
 	end
+	-- litt pause mellom hver gang du gjemmer deg
+	local wait = Config.Closet.Cooldown - (os.clock() - (st.closetLeftAt or -100))
+	if wait > 0 then
+		NotifyRemote:FireClient(player, string.format("You need to catch your breath first (%d s).", math.ceil(wait)), "bad")
+		return
+	end
 	local hidePoint = closet:FindFirstChild("HidePoint") :: BasePart?
 	local root = Util.getRoot(player)
 	if not hidePoint or not root or (root.Position - hidePoint.Position).Magnitude > 12 then
@@ -493,8 +527,10 @@ function Match:Hide(player: Player, closet: Model)
 	end
 	st.closet = closet
 	st.closetChanged = os.clock()
+	st.hiddenSince = os.clock()
 	self.closetOccupant[closet] = player
 	closet:SetAttribute("Occupant", player.UserId)
+	player:SetAttribute("HiddenUntil", workspace:GetServerTimeNow() + Config.Closet.MaxTime)
 	Util.placeCharacter(player, hidePoint.CFrame, true)
 	player:SetAttribute("Hidden", true)
 	Util.playSound(hidePoint, Config.Sounds.Locker, 0.8, 45)
@@ -514,9 +550,11 @@ function Match:Unhide(player: Player, stepOut: boolean)
 	end
 	st.closet = nil
 	st.closetChanged = os.clock()
+	st.closetLeftAt = os.clock()
 	self.closetOccupant[closet] = nil
 	closet:SetAttribute("Occupant", 0)
 	player:SetAttribute("Hidden", false)
+	player:SetAttribute("ClosetCooldownUntil", workspace:GetServerTimeNow() + Config.Closet.Cooldown)
 	local outPoint = closet:FindFirstChild("OutPoint") :: BasePart?
 	local hidePoint = closet:FindFirstChild("HidePoint") :: BasePart?
 	if stepOut and outPoint then
@@ -543,6 +581,16 @@ function Match:OnMonsterSpotted(player: Player)
 	NotifyRemote:FireClient(player, "IT FOUND YOU. RUN!", "bad")
 end
 
+-- Kan noen andre i runden hjelpe deg opp akkurat nå?
+function Match:_hasRescuer(except: Player): boolean
+	for other, ost in self.players do
+		if other ~= except and not ost.out and not ost.busy and other.Parent ~= nil then
+			return true
+		end
+	end
+	return false
+end
+
 function Match:OnCaught(player: Player)
 	local st = self.players[player]
 	if not st or st.out or st.busy or self.state ~= "playing" then
@@ -550,23 +598,142 @@ function Match:OnCaught(player: Player)
 	end
 	st.busy = true
 	local root = Util.getRoot(player)
-	local dropPos = root and root.Position
+	local pos = root and root.Position
 	if st.closet then
 		local outPoint = st.closet:FindFirstChild("OutPoint") :: BasePart?
 		if outPoint then
-			dropPos = outPoint.Position
+			pos = outPoint.Position
 		end
 		self:Unhide(player, false)
 	end
-	if st.keys > 0 and dropPos then
-		self:_dropKeys(st.keys, dropPos)
+	if Config.Downed.Time > 0 and pos and self:_hasRescuer(player) then
+		self:_goDown(player, pos)
+	else
+		self:_loseLife(player, pos, true)
+	end
+end
+
+-- Du ligger nede: en venn kan holde E på deg for å hjelpe deg opp
+function Match:_goDown(player: Player, pos: Vector3)
+	local st = self.players[player]
+	st.downed = true
+	st.downedUntil = os.clock() + Config.Downed.Time
+	player:SetAttribute("Downed", true)
+	player:SetAttribute("DownedUntil", workspace:GetServerTimeNow() + Config.Downed.Time)
+	JumpscareRemote:FireClient(player, st.lives, "downed")
+
+	-- legg karakteren på ryggen på gulvet
+	local root = Util.getRoot(player)
+	local yaw = 0
+	if root then
+		local look = root.CFrame.LookVector
+		yaw = math.atan2(-look.X, -look.Z)
+	end
+	local floorPos = Vector3.new(pos.X, self.floorY + 0.9, pos.Z)
+	Util.placeCharacter(player, CFrame.new(floorPos) * CFrame.Angles(0, yaw, 0) * CFrame.Angles(math.pi / 2, 0, 0), true)
+
+	root = Util.getRoot(player)
+	if root then
+		local prompt = Instance.new("ProximityPrompt")
+		prompt.Name = "RevivePrompt"
+		prompt.ActionText = "Help up"
+		prompt.ObjectText = player.DisplayName
+		prompt.HoldDuration = Config.Downed.HelpTime
+		prompt.MaxActivationDistance = 9
+		prompt.RequiresLineOfSight = false
+		prompt.KeyboardKeyCode = Enum.KeyCode.E
+		prompt.Parent = root
+		st.revivePrompt = prompt
+		table.insert(self.connections, prompt.Triggered:Connect(function(helper)
+			self:_helpUp(helper, player)
+		end))
+
+		-- rød markør over den som ligger nede (synlig gjennom vegger, så vennene finner deg)
+		local gui = Instance.new("BillboardGui")
+		gui.Name = "DownedMarker"
+		gui.AlwaysOnTop = true
+		gui.Size = UDim2.fromOffset(170, 46)
+		gui.StudsOffsetWorldSpace = Vector3.new(0, 3.5, 0)
+		gui.MaxDistance = 300
+		gui.LightInfluence = 0
+		local label = Instance.new("TextLabel")
+		label.Name = "Text"
+		label.Size = UDim2.fromScale(1, 1)
+		label.BackgroundTransparency = 1
+		label.TextScaled = true
+		label.Font = Enum.Font.SpecialElite
+		label.TextColor3 = Color3.fromRGB(255, 70, 60)
+		label.TextStrokeTransparency = 0.3
+		label.Text = player.DisplayName .. " is DOWN"
+		label.Parent = gui
+		gui.Parent = root
+		st.downedGui = gui
+	end
+	self:Notify(player.DisplayName .. " is down! Find them and hold E to help them up.", "bad", player)
+end
+
+function Match:_clearDowned(player: Player)
+	local st = self.players[player]
+	if not st then
+		return
+	end
+	st.downed = false
+	if st.revivePrompt then
+		st.revivePrompt:Destroy()
+		st.revivePrompt = nil
+	end
+	if st.downedGui then
+		st.downedGui:Destroy()
+		st.downedGui = nil
+	end
+	player:SetAttribute("Downed", false)
+end
+
+function Match:_helpUp(helper: Player, player: Player)
+	local st, hs = self.players[player], self.players[helper]
+	if not st or not st.downed or not hs or helper == player then
+		return
+	end
+	if hs.out or hs.busy or hs.closet or self.state ~= "playing" then
+		return
+	end
+	local hr, pr = Util.getRoot(helper), Util.getRoot(player)
+	if not hr or not pr or (hr.Position - pr.Position).Magnitude > 12 then
+		return
+	end
+	self:_clearDowned(player)
+	st.busy = false
+	st.protectedUntil = os.clock() + Config.Downed.Protection
+	local p = pr.Position
+	local look = hr.Position - p
+	Util.placeCharacter(player, CFrame.lookAt(Vector3.new(p.X, self.floorY + 3, p.Z), Vector3.new(hr.Position.X, self.floorY + 3, hr.Position.Z) + (if look.Magnitude < 0.1 then Vector3.new(0, 0, -1) else Vector3.zero)), false)
+	MatchStateRemote:FireClient(player, "helpedUp", { by = helper.DisplayName })
+	self:Notify(helper.DisplayName .. " helped " .. player.DisplayName .. " up!", "good")
+	if self.manager.OnHelped then
+		self.manager:OnHelped(helper)
+	end
+end
+
+-- Du mister et liv: nøklene faller der du var, og du starter i resepsjonen (eller er ute)
+function Match:_loseLife(player: Player, pos: Vector3?, withScare: boolean)
+	local st = self.players[player]
+	if not st then
+		return
+	end
+	st.busy = true
+	if st.keys > 0 and pos then
+		self:_dropKeys(st.keys, pos)
 		st.keys = 0
 		player:SetAttribute("Keys", 0)
 	end
 	st.lives -= 1
 	player:SetAttribute("Lives", st.lives)
 	Util.setAnchored(player, true)
-	JumpscareRemote:FireClient(player, st.lives)
+	if withScare then
+		JumpscareRemote:FireClient(player, st.lives)
+	else
+		MatchStateRemote:FireClient(player, "lostLife", { lives = st.lives })
+	end
 	if st.lives > 0 then
 		self:Notify(player.DisplayName .. " was caught! (" .. st.lives .. (st.lives == 1 and " life" or " lives") .. " left)", "bad", player)
 	else
@@ -655,6 +822,7 @@ function Match:Win(escaper: Player)
 		if st.closet then
 			self:Unhide(player, true)
 		end
+		self.manager:AwardCoins(player, Config.Coins.Escape, "escaped")
 		MatchStateRemote:FireClient(player, "won", {
 			escaper = escaper.DisplayName,
 			seconds = Config.WinReturnTime,
@@ -875,6 +1043,30 @@ end
 function Match:Step(dt: number)
 	if self.monster and (self.state == "playing") then
 		self.monster:Step(dt)
+	end
+	-- ingen kan holde pusten for alltid: etter Closet.MaxTime sekunder må du ut av skapet
+	if self.state == "playing" then
+		for player, st in self.players do
+			-- de som ligger nede: tiden går ut, eller det er ingen igjen som kan hjelpe
+			if st.downed then
+				local left = (st.downedUntil or 0) - os.clock()
+				if left <= 0 or not self:_hasRescuer(player) then
+					local root = Util.getRoot(player)
+					self:_clearDowned(player)
+					self:_loseLife(player, root and root.Position, false)
+				elseif st.downedGui then
+					local label = st.downedGui:FindFirstChild("Text") :: TextLabel?
+					if label then
+						label.Text = string.format("%s is DOWN  %d", player.DisplayName, math.ceil(left))
+					end
+				end
+				continue
+			end
+			if st.closet and not st.busy and os.clock() - (st.hiddenSince or os.clock()) >= Config.Closet.MaxTime then
+				self:Unhide(player, true)
+				NotifyRemote:FireClient(player, "You couldn't hold your breath any longer!", "bad")
+			end
+		end
 	end
 end
 

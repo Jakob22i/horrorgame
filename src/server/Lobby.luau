@@ -25,6 +25,10 @@ type Elevator = {
 	doors: { { part: BasePart, open: CFrame, closed: CFrame } },
 	status: TextLabel?,
 	timer: TextLabel?,
+	modeLabel: TextLabel?,
+	panelLabel: TextLabel?,
+	prompt: ProximityPrompt?,
+	mode: string,
 	indicator: BasePart?,
 	doorSound: Sound?,
 	order: { Player },
@@ -53,9 +57,24 @@ local function setDoors(e: Elevator, open: boolean)
 	end
 end
 
+local NIGHTMARE = Color3.fromRGB(235, 50, 50)
+local NORMAL = Color3.fromRGB(200, 220, 200)
+
 local function updateSign(e: Elevator)
 	local count = #e.order
 	local max = Config.MaxPlayersPerElevator
+	local nightmare = e.mode == "Nightmare"
+	if e.modeLabel then
+		e.modeLabel.Text = if nightmare then "NIGHTMARE" else "NORMAL"
+		e.modeLabel.TextColor3 = if nightmare then NIGHTMARE else NORMAL
+	end
+	if e.panelLabel then
+		e.panelLabel.Text = if nightmare then "NIGHTMARE\n1 LIFE" else "NORMAL\n3 LIVES"
+		e.panelLabel.TextColor3 = if nightmare then NIGHTMARE else NORMAL
+	end
+	if e.prompt then
+		e.prompt.ObjectText = if nightmare then "Mode: Nightmare" else "Mode: Normal"
+	end
 	if e.status then
 		e.status.Text = count .. "/" .. max .. " PLAYERS"
 	end
@@ -81,8 +100,9 @@ local function updateSign(e: Elevator)
 	end
 end
 
-local function depart(e: Elevator, startMatch: ({ Player }) -> ())
+local function depart(e: Elevator, startMatch: ({ Player }, string) -> ())
 	e.departing = true
+	local mode = e.mode
 	local group = table.clone(e.order)
 	e.order = {}
 	e.countdown = nil
@@ -99,7 +119,7 @@ local function depart(e: Elevator, startMatch: ({ Player }) -> ())
 		end
 	end
 	if #stillHere > 0 then
-		startMatch(stillHere)
+		startMatch(stillHere, mode)
 	end
 	task.wait(1.5)
 	setDoors(e, true)
@@ -108,7 +128,7 @@ local function depart(e: Elevator, startMatch: ({ Player }) -> ())
 	updateSign(e)
 end
 
-local function step(e: Elevator, startMatch: ({ Player }) -> ())
+local function step(e: Elevator, startMatch: ({ Player }, string) -> ())
 	if e.departing then
 		return
 	end
@@ -144,6 +164,7 @@ local function step(e: Elevator, startMatch: ({ Player }) -> ())
 
 	if #order == 0 then
 		e.countdown = nil
+		e.mode = "Normal" -- tom heis går tilbake til vanlig modus
 	else
 		e.countdown = (e.countdown or Config.ElevatorCountdown) - TICK
 		if #order >= Config.MaxPlayersPerElevator then
@@ -156,7 +177,7 @@ local function step(e: Elevator, startMatch: ({ Player }) -> ())
 	updateSign(e)
 end
 
-function Lobby.init(startMatch: ({ Player }) -> ())
+function Lobby.init(startMatch: ({ Player }, string) -> ())
 	local lobby = workspace:WaitForChild("Lobby")
 	local folder = lobby:WaitForChild("Elevators")
 	for _, model in folder:GetChildren() do
@@ -185,12 +206,41 @@ function Lobby.init(startMatch: ({ Player }) -> ())
 			doors = doors,
 			status = gui and gui:FindFirstChild("Status") :: TextLabel?,
 			timer = gui and gui:FindFirstChild("Timer") :: TextLabel?,
+			modeLabel = gui and gui:FindFirstChild("Mode") :: TextLabel?,
+			panelLabel = nil,
+			prompt = nil,
+			mode = "Normal",
 			indicator = model:FindFirstChild("Indicator") :: BasePart?,
 			doorSound = sign and sign:FindFirstChild("DoorSound") :: Sound?,
 			order = {},
 			countdown = nil,
 			departing = false,
 		}
+		-- Bryter inne i heisen: Normal / Nightmare
+		local panel = model:FindFirstChild("ModePanel")
+		if panel then
+			local panelGui = panel:FindFirstChild("SignGui")
+			e.panelLabel = panelGui and panelGui:FindFirstChild("Text") :: TextLabel?
+			local prompt = panel:FindFirstChildOfClass("ProximityPrompt")
+			e.prompt = prompt
+			if prompt then
+				prompt.Triggered:Connect(function(player)
+					if e.departing or not table.find(e.order, player) then
+						NotifyRemote:FireClient(player, "Step into the elevator to change the difficulty.", "info")
+						return
+					end
+					e.mode = if e.mode == "Nightmare" then "Normal" else "Nightmare"
+					for _, p in e.order do
+						if e.mode == "Nightmare" then
+							NotifyRemote:FireClient(p, "NIGHTMARE: 1 life, a faster monster, darker halls and fewer lockers. Double coins.", "bad")
+						else
+							NotifyRemote:FireClient(p, "Difficulty set to NORMAL.", "good")
+						end
+					end
+					updateSign(e)
+				end)
+			end
+		end
 		table.insert(elevators, e)
 		updateSign(e)
 	end

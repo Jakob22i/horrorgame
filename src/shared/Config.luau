@@ -26,8 +26,8 @@ local Config = {
 	-- Monsteret (Patient #0413)
 	Monster = {
 		StartDelay = 12, -- sekunder før den begynner å jakte
-		WanderSpeed = 8,
-		ChaseSpeed = 16.5,
+		WanderSpeed = 9.2, -- (15 % raskere enn før)
+		ChaseSpeed = 19,
 		ExtraSpeedPerPlayer = 0.4, -- litt raskere for hver ekstra spiller
 		SightRange = 75,
 		FieldOfView = 140, -- grader
@@ -39,6 +39,29 @@ local Config = {
 		CatchCooldown = 6, -- sekunder den "forsvinner" etter å ha tatt noen
 		GiggleCooldown = 10, -- sekunder mellom hver gang den fniser når den ser noen
 		SpeedPerKey = 0.6, -- raskere for hver nøkkel som er satt inn
+	},
+
+	-- Redd vennene dine: blir du tatt mens en venn fortsatt står, ligger du nede en stund
+	-- og kan bli hjulpet opp (uten å miste et liv)
+	Downed = {
+		Time = 15, -- sekunder du ligger nede før du mister et liv (0 = slått av)
+		HelpTime = 2.5, -- hvor lenge en venn må holde E for å hjelpe deg opp
+		Protection = 3, -- sekunder monsteret lar deg være i fred etter at du er hjulpet opp
+	},
+
+	-- Nightmare-modus (velges i heisen)
+	Nightmare = {
+		Lives = 1,
+		MonsterSpeed = 1.15, -- ganger vanlig fart
+		ClosetsKept = 0.6, -- andel av skapene som er igjen
+		LampsOff = 0.45, -- andel lamper som er av
+		CoinMultiplier = 2,
+	},
+
+	-- Skap: du kan ikke gjemme deg for alltid
+	Closet = {
+		MaxTime = 20, -- sekunder før du må ut og trekke pusten
+		Cooldown = 6, -- sekunder før du kan gjemme deg igjen etter at du har gått ut
 	},
 
 	-- Strømbrudd: etter et visst antall nøkler går lyset av og på
@@ -69,6 +92,37 @@ local Config = {
 		Range = 7,
 		Speed = 55, -- hvor hardt de blir dyttet
 		Cooldown = 5,
+	},
+
+	-- Mynter du tjener (dobbelt i Nightmare). Brukes på kosmetikk i lobbyen.
+	Coins = {
+		Round = 10, -- for å spille en runde (minst 90 sekunder)
+		KeyFound = 5,
+		KeyInserted = 5,
+		HelpUp = 10, -- for å hjelpe en venn opp
+		Escape = 50, -- alle i runden får dette når noen kommer seg ut
+	},
+
+	-- Kosmetikk som kan kjøpes for mynter i butikken i lobbyen
+	Cosmetics = {
+		Flashlights = {
+			{ id = "warm", name = "Warm", color = Color3.fromRGB(255, 244, 220), price = 0 },
+			{ id = "white", name = "Cold White", color = Color3.fromRGB(215, 232, 255), price = 100 },
+			{ id = "green", name = "Night Vision", color = Color3.fromRGB(130, 255, 140), price = 250 },
+			{ id = "red", name = "Blood Red", color = Color3.fromRGB(255, 80, 66), price = 300 },
+			{ id = "blue", name = "Deep Blue", color = Color3.fromRGB(110, 160, 255), price = 300 },
+			{ id = "purple", name = "Ultraviolet", color = Color3.fromRGB(190, 110, 255), price = 450 },
+			{ id = "gold", name = "Golden", color = Color3.fromRGB(255, 205, 90), price = 700 },
+		},
+		Titles = {
+			{ id = "none", name = "No title", text = "", color = Color3.fromRGB(200, 200, 200), price = 0 },
+			{ id = "survivor", name = "Survivor", text = "SURVIVOR", color = Color3.fromRGB(150, 235, 160), price = 150 },
+			{ id = "nightshift", name = "Night Shift", text = "NIGHT SHIFT", color = Color3.fromRGB(150, 190, 255), price = 250 },
+			{ id = "patient", name = "Patient", text = "PATIENT", color = Color3.fromRGB(235, 235, 220), price = 300 },
+			{ id = "ghost", name = "Ghost", text = "GHOST", color = Color3.fromRGB(200, 200, 230), price = 400 },
+			{ id = "visitor", name = "Late Visitor", text = "LATE VISITOR", color = Color3.fromRGB(255, 200, 120), price = 500 },
+			{ id = "p0413", name = "#0413", text = "#0413", color = Color3.fromRGB(235, 50, 50), price = 1000 },
+		},
 	},
 
 	-- Lyder (lisensierte Roblox-lyder fra Creator Store)

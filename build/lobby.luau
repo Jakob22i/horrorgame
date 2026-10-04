@@ -88,6 +88,19 @@ return function(parent: any, spawnLocation: any)
 		local bp = Vector3.new(cx + 5.85, 4.5, z0 - 4)
 		local buttons = lib.part(m, "ButtonPanel", Vector3.new(1.2, 2.4, 0.1), lib.lookAt(bp, bp + Vector3.new(-1, 0, 0)), rgb(40, 40, 44), Enum.Material.Metal)
 		lib.sign(buttons, "B\nB2\nB3", { Color = rgb(255, 120, 90), Font = Enum.Font.Code, Brightness = 2 })
+		-- Bryter for vanskelighetsgrad på den andre veggen
+		local mp = Vector3.new(cx - 5.85, 5, z0 - 4.5)
+		local modePanel = lib.part(m, "ModePanel", Vector3.new(2.6, 2, 0.15), lib.lookAt(mp, mp + Vector3.new(1, 0, 0)), rgb(30, 28, 26), Enum.Material.Metal)
+		lib.sign(modePanel, "NORMAL\n3 LIVES", { Color = rgb(200, 220, 200), Font = Enum.Font.SpecialElite, Brightness = 1.6 })
+		lib.new("ProximityPrompt", {
+			Name = "ModePrompt",
+			ActionText = "Change difficulty",
+			ObjectText = "Mode: Normal",
+			HoldDuration = 0,
+			MaxActivationDistance = 8,
+			RequiresLineOfSight = false,
+			KeyboardKeyCode = Enum.KeyCode.E,
+		}, modePanel)
 
 		-- Dører (står åpne i fila; serveren lukker dem når heisen går)
 		local doorL = box(m, "DoorL", cx - 10, 0, z0 - 1.25, cx - 5, 12, z0 - 0.75, rgb(150, 152, 156), Enum.Material.Metal)
@@ -123,9 +136,10 @@ return function(parent: any, spawnLocation: any)
 				FontFace = lib.Font.fromEnum(font),
 			}, gui)
 		end
-		label("Title", 0.04, 0.38, "ELEVATOR " .. index, rgb(255, 214, 120), Enum.Font.SpecialElite)
-		label("Status", 0.44, 0.28, "0/4 PLAYERS", rgb(220, 220, 210), Enum.Font.Code)
-		label("Timer", 0.74, 0.22, "WAITING...", rgb(150, 230, 150), Enum.Font.Code)
+		label("Title", 0.03, 0.3, "ELEVATOR " .. index, rgb(255, 214, 120), Enum.Font.SpecialElite)
+		label("Mode", 0.33, 0.2, "NORMAL", rgb(200, 220, 200), Enum.Font.SpecialElite)
+		label("Status", 0.55, 0.2, "0/4 PLAYERS", rgb(220, 220, 210), Enum.Font.Code)
+		label("Timer", 0.77, 0.2, "WAITING...", rgb(150, 230, 150), Enum.Font.Code)
 		local indicator = lib.part(m, "Indicator", Vector3.new(0.8, 0.8, 0.2), CFrame.new(cx, 16.7, z0 + 0.2), rgb(80, 220, 100), Enum.Material.Neon, { CanQuery = false })
 		lib.new("PointLight", { Range = 6, Brightness = 0.6, Color = rgb(80, 220, 100) }, indicator)
 
@@ -186,6 +200,39 @@ return function(parent: any, spawnLocation: any)
 	tvLabel.BackgroundColor3 = rgb(30, 40, 160)
 	lib.new("PointLight", { Range = 8, Brightness = 0.7, Color = rgb(120, 140, 255) }, screen)
 
+	-- Butikk for kosmetikk (mynter): lommelyktfarger og titler
+	do
+		local bx, bz = 22, z1 - 3.2
+		local booth = lib.new("Model", { Name = "CosmeticsShop" }, props)
+		box(booth, "Counter", bx - 7, 0, bz - 1.6, bx + 7, 3.8, bz + 1.6, rgb(60, 44, 34), Enum.Material.Wood)
+		box(booth, "CounterTop", bx - 7.3, 3.8, bz - 1.9, bx + 7.3, 4.1, bz + 1.9, rgb(150, 120, 80), Enum.Material.Wood)
+		box(booth, "BackWall", bx - 8, 0, z1 - 0.6, bx + 8, 13, z1, rgb(40, 30, 26), Enum.Material.WoodPlanks)
+		-- lommelykter i ulike farger på hylla bak disken
+		local colors = { rgb(255, 244, 220), rgb(215, 232, 255), rgb(130, 255, 140), rgb(255, 80, 66), rgb(110, 160, 255), rgb(190, 110, 255), rgb(255, 205, 90) }
+		for i, c in colors do
+			local x = bx - 6 + (i - 1) * 2
+			box(booth, "Shelf", x - 0.9, 6.4, z1 - 1.6, x + 0.9, 6.6, z1 - 0.6, rgb(90, 70, 50), Enum.Material.Wood)
+			lib.cylinderY(booth, "Torch", 0.45, 1.3, CFrame.new(x, 7.25, z1 - 1.1), rgb(40, 40, 44), Enum.Material.Metal)
+			local lens = lib.cylinderY(booth, "Lens", 0.5, 0.1, CFrame.new(x, 7.95, z1 - 1.1), c, Enum.Material.Neon, { CanQuery = false })
+			lib.new("PointLight", { Range = 5, Brightness = 0.8, Color = c }, lens)
+		end
+		local signPos = Vector3.new(bx, 10.8, z1 - 0.7)
+		local sign = lib.part(booth, "ShopSign", Vector3.new(13, 2.4, 0.2), lib.lookAt(signPos, signPos - Vector3.new(0, 0, 1)), rgb(24, 20, 16), Enum.Material.SmoothPlastic)
+		lib.sign(sign, "FLASHLIGHTS & TITLES", { Color = rgb(255, 214, 120), Font = Enum.Font.SpecialElite, Brightness = 1.4 })
+		local light = lib.part(booth, "ShopLight", Vector3.new(1, 1, 1), CFrame.new(bx, 9, bz - 3), rgb(255, 255, 255), nil, { Transparency = 1, CanCollide = false, CanQuery = false })
+		lib.new("PointLight", { Range = 16, Brightness = 1.1, Color = rgb(255, 214, 150) }, light)
+		local promptPart = lib.part(booth, "PromptPart", Vector3.new(1, 1, 1), CFrame.new(bx, 4.6, bz - 1.4), rgb(0, 0, 0), nil, { Transparency = 1, CanCollide = false, CanQuery = false })
+		lib.new("ProximityPrompt", {
+			Name = "CosmeticsPrompt",
+			ActionText = "Open shop",
+			ObjectText = "Coins",
+			HoldDuration = 0,
+			MaxActivationDistance = 10,
+			RequiresLineOfSight = false,
+			KeyboardKeyCode = Enum.KeyCode.E,
+		}, promptPart)
+	end
+
 	-- Klokke som har stoppet
 	local clockPos = Vector3.new(0, 13, z1 - 0.15)
 	local clock = lib.part(props, "Clock", Vector3.new(3, 3, 0.2), lib.lookAt(clockPos, clockPos - Vector3.new(0, 0, 1)), rgb(230, 226, 210), Enum.Material.SmoothPlastic)
@@ -206,7 +253,7 @@ return function(parent: any, spawnLocation: any)
 		BackgroundTransparency = 1,
 		Position = UDim2.fromScale(0.06, 0.06),
 		Size = UDim2.fromScale(0.88, 0.88),
-		Text = "HOW TO PLAY\n\n• Step into an elevator (max 4 per elevator)\n• Find 5 keys hidden in the hospital\n• Bring them to the EMERGENCY EXIT\n• Hide in the lockers when it comes\n• You have 3 lives. If you die, you drop your keys\n\nF = flashlight    SHIFT = run    E = use",
+		Text = "HOW TO PLAY\n\n• Step into an elevator (max 4 per elevator)\n• Find 5 keys hidden in the hospital\n• Bring them to the EMERGENCY EXIT\n• Hide in the lockers when it comes\n• You have 3 lives. If you die, you drop your keys\n• Friends can help you up when you are down\n• Press E on the panel in the elevator for NIGHTMARE\n\n1 = flashlight    SHIFT = run    E = use",
 		TextScaled = true,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		TextColor3 = rgb(225, 225, 205),

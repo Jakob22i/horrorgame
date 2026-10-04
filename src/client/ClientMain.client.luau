@@ -21,6 +21,7 @@ local Jumpscare = require(script:WaitForChild("Jumpscare"))
 local MonsterAnimator = require(script:WaitForChild("MonsterAnimator"))
 local Ending = require(script:WaitForChild("Ending"))
 local Scares = require(script:WaitForChild("Scares"))
+local CosmeticsUI = require(script:WaitForChild("CosmeticsUI"))
 
 local player = Players.LocalPlayer
 
@@ -31,6 +32,7 @@ Jumpscare.init(UI, Effects)
 MonsterAnimator.init()
 Ending.init(UI, Effects, Controls)
 Scares.init(UI, Effects, Ending.isPlaying)
+CosmeticsUI.init()
 
 -- Ingen "Reset character" i et skrekkspill
 task.spawn(function()
@@ -57,7 +59,9 @@ local function insertedKeys(): number
 end
 
 local function refreshHud()
-	UI.setLives(player:GetAttribute("Lives") or 0, Config.Lives)
+	local folder = Effects.currentMatchFolder()
+	local maxLives = if folder and folder:GetAttribute("Mode") == "Nightmare" then Config.Nightmare.Lives else Config.Lives
+	UI.setLives(player:GetAttribute("Lives") or 0, maxLives)
 	UI.setKeys(player:GetAttribute("Keys") or 0, insertedKeys(), Config.KeysToEscape)
 end
 
@@ -133,8 +137,8 @@ NotifyRemote.OnClientEvent:Connect(function(message, kind)
 	UI.notify(message, kind)
 end)
 
-JumpscareRemote.OnClientEvent:Connect(function(livesLeft)
-	Jumpscare.play(livesLeft)
+JumpscareRemote.OnClientEvent:Connect(function(livesLeft, mode)
+	Jumpscare.play(livesLeft, mode)
 end)
 
 TransitionRemote.OnClientEvent:Connect(function(message)
@@ -154,6 +158,7 @@ MatchStateRemote.OnClientEvent:Connect(function(state, data)
 			"Hide in the lockers. Do not let it see you.",
 			"",
 			players == 1 and "You are alone." or ("There are " .. players .. " of you."),
+			if data and data.mode == "Nightmare" then "\nNIGHTMARE MODE. One life. No mercy." else "",
 		}, 2.2)
 	elseif state == "won" then
 		task.spawn(Ending.play, data)
@@ -183,6 +188,10 @@ MatchStateRemote.OnClientEvent:Connect(function(state, data)
 			task.wait(0.3)
 			UI.fadeIn(0.8)
 		end
+	elseif state == "helpedUp" then
+		UI.notify((data and data.by or "Someone") .. " helped you up!", "good")
+	elseif state == "lostLife" then
+		Jumpscare.lostLife(data and data.lives or 0)
 	elseif state == "lobby" then
 		Ending.cleanup()
 		UI.hidePanels()

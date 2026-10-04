@@ -8,7 +8,7 @@ local Vector3, CFrame, Enum = lib.Vector3, lib.CFrame, lib.Enum
 local rgb = lib.rgb
 
 local CELL = 4
-local W, H = 88, 56
+local W, H = 106, 56
 local WALL_H = 14
 local DOOR_H = 12
 
@@ -95,6 +95,10 @@ return function(parent: any)
 		{ "LAB", "LABORATORY", 39, 44, 51, 54, rgb(170, 180, 178), Enum.Material.CeramicTiles },
 		{ "RECORDS", "RECORDS", 53, 44, 64, 54, rgb(110, 92, 74), Enum.Material.WoodPlanks },
 		{ "DOCK", "LOADING DOCK", 66, 44, 86, 54, rgb(90, 90, 88), Enum.Material.Concrete },
+		-- Den nye østfløyen: tre store haller med møbler man kan løpe rundt
+		{ "GYM", "PHYSIOTHERAPY", 88, 1, 104, 17, rgb(132, 100, 66), Enum.Material.WoodPlanks },
+		{ "LECTURE", "LECTURE HALL", 88, 19, 104, 34, rgb(74, 62, 72), Enum.Material.Carpet },
+		{ "ATRIUM", "ATRIUM", 88, 36, 104, 54, rgb(150, 146, 136), Enum.Material.Marble },
 	}
 	local corridors = {
 		{ 1, 12, 58, 14 }, -- nordre korridor
@@ -160,6 +164,18 @@ return function(parent: any)
 		{ 52, 49, 52, 49 },
 		{ 58, 43, 59, 43, "RECORDS", "N" },
 		{ 70, 43, 72, 43, "LOADING DOCK", "N" },
+		-- Ekstra dør i sengeposten, så man kan løpe runder
+		{ 40, 24, 41, 24 },
+		-- Østfløyen (hallene har flere dører, så man kan løpe rundt)
+		{ 87, 12, 87, 14, "PHYSIOTHERAPY", "W" },
+		{ 87, 7, 87, 8 },
+		{ 95, 18, 97, 18, "LECTURE HALL", "N" },
+		{ 87, 25, 87, 27, "LECTURE HALL", "W" },
+		{ 87, 32, 87, 32 },
+		{ 91, 35, 92, 35, "ATRIUM", "N" },
+		{ 100, 35, 101, 35 },
+		{ 87, 40, 87, 42, "ATRIUM", "W" },
+		{ 87, 48, 87, 49 },
 	}
 	for _, d in doors do
 		carve(d[1], d[2], d[3], d[4])
@@ -195,6 +211,9 @@ return function(parent: any)
 			if isWall(x + d[1], y + d[2]) then
 				return Vector3.new(d[1], 0, d[2])
 			end
+		end
+		if prefer then
+			print(string.format("ADVARSEL: ingen vegg mot %s ved (%d, %d)", prefer, x, y))
 		end
 		return nil
 	end
@@ -500,10 +519,132 @@ return function(parent: any)
 		end
 	end
 
+	-- Søyle fra gulv til tak (fin å løpe rundt)
+	local function pillar(x: number, y: number)
+		occupy(x, y)
+		local c = cellCenter(x, y)
+		local m = lib.new("Model", { Name = "Pillar" }, folders.Props)
+		lib.part(m, "Base", Vector3.new(2.6, 4, 2.6), CFrame.new(c + Vector3.new(0, 2, 0)), COLORS.wallLow, Enum.Material.CeramicTiles)
+		lib.part(m, "Column", Vector3.new(2.3, WALL_H - 4, 2.3), CFrame.new(c + Vector3.new(0, 4 + (WALL_H - 4) / 2, 0)), COLORS.wallHigh, Enum.Material.Plaster)
+	end
+
+	-- Langbord (en "øy" over flere ruter) med stoler på begge sider
+	local function longTable(x: number, y: number, len: number, horizontal: boolean, color: any?)
+		local cells = {}
+		for i = 0, len - 1 do
+			local cx, cy = if horizontal then x + i else x, if horizontal then y else y + i
+			occupy(cx, cy)
+			table.insert(cells, cellCenter(cx, cy))
+		end
+		local c = (cells[1] + cells[#cells]) / 2
+		local length = len * CELL - 0.8
+		local cf = CFrame.new(c) * (if horizontal then CFrame.Angles(0, math.pi / 2, 0) else CFrame.new())
+		local m = lib.new("Model", { Name = "LongTable" }, folders.Props)
+		lib.part(m, "Top", Vector3.new(3.2, 0.3, length), cf * CFrame.new(0, 3.0, 0), color or rgb(132, 108, 80), Enum.Material.WoodPlanks)
+		for _, sz in { -1, 1 } do
+			for _, sx in { -1, 1 } do
+				lib.part(m, "Leg", Vector3.new(0.3, 2.85, 0.3), cf * CFrame.new(sx * 1.3, 1.43, sz * (length / 2 - 0.5)), COLORS.darkMetal, Enum.Material.Metal)
+			end
+		end
+		-- stoler langs sidene (noen er veltet)
+		for i = 0, len - 1 do
+			for _, sx in { -1, 1 } do
+				if rng() < 0.75 then
+					local seat = cf * CFrame.new(sx * 2.3, 0, -length / 2 + CELL / 2 + i * CELL + (rng() - 0.5) * 0.6)
+					if rng() < 0.15 then
+						seat = seat * CFrame.new(0, 0.6, 0) * CFrame.Angles(0, rng() * 3, math.pi / 2)
+					else
+						seat = seat * CFrame.Angles(0, (sx > 0 and math.pi or 0) + (rng() - 0.5) * 0.5, 0)
+					end
+					lib.part(m, "Seat", Vector3.new(1.5, 0.25, 1.5), seat * CFrame.new(0, 1.9, 0), rgb(70, 60, 54), Enum.Material.SmoothPlastic)
+					lib.part(m, "SeatBack", Vector3.new(1.5, 1.5, 0.2), seat * CFrame.new(0, 2.7, 0.7), rgb(70, 60, 54), Enum.Material.SmoothPlastic)
+					lib.part(m, "SeatPost", Vector3.new(0.25, 1.8, 0.25), seat * CFrame.new(0, 0.9, 0), COLORS.darkMetal, Enum.Material.Metal)
+					lib.part(m, "SeatFoot", Vector3.new(1.2, 0.12, 1.2), seat * CFrame.new(0, 0.06, 0), COLORS.darkMetal, Enum.Material.Metal)
+				end
+			end
+		end
+		if rng() < 0.6 then
+			lib.part(m, "Papers", Vector3.new(1.0, 0.05, 1.3), cf * CFrame.new((rng() - 0.5) * 1.5, 3.18, (rng() - 0.5) * length * 0.6) * CFrame.Angles(0, rng() * 3, 0), rgb(215, 212, 196), Enum.Material.SmoothPlastic, { CanQuery = false })
+		end
+	end
+
+	-- Benk uten rygg
+	local function bench(x: number, y: number, horizontal: boolean)
+		occupy(x, y)
+		local cf = CFrame.new(cellCenter(x, y)) * (if horizontal then CFrame.Angles(0, math.pi / 2, 0) else CFrame.new())
+		local m = lib.new("Model", { Name = "Bench" }, folders.Props)
+		lib.part(m, "Seat", Vector3.new(1.4, 0.3, 3.6), cf * CFrame.new(0, 1.7, 0), rgb(110, 84, 58), Enum.Material.WoodPlanks)
+		for _, sz in { -1, 1 } do
+			lib.part(m, "Leg", Vector3.new(1.2, 1.55, 0.25), cf * CFrame.new(0, 0.78, sz * 1.5), COLORS.darkMetal, Enum.Material.Metal)
+		end
+	end
+
+	-- Blomsterkrukke med en død plante
+	local function planter(x: number, y: number)
+		occupy(x, y)
+		local c = cellCenter(x, y)
+		local m = lib.new("Model", { Name = "Planter" }, folders.Props)
+		lib.cylinderY(m, "Pot", 2.4, 2.4, CFrame.new(c + Vector3.new(0, 1.2, 0)), rgb(96, 70, 54), Enum.Material.Concrete)
+		lib.cylinderY(m, "Soil", 2.1, 0.1, CFrame.new(c + Vector3.new(0, 2.42, 0)), rgb(40, 30, 22), Enum.Material.Ground)
+		for i = 1, 5 do
+			local a = i * 1.3 + rng()
+			local stem = CFrame.new(c + Vector3.new(math.cos(a) * 0.3, 3.4, math.sin(a) * 0.3)) * CFrame.Angles(math.cos(a) * 0.5, 0, math.sin(a) * 0.5)
+			lib.part(m, "Stem", Vector3.new(0.12, 2.2, 0.12), stem, rgb(70, 60, 40), Enum.Material.Wood, { CanCollide = false, CanQuery = false })
+		end
+	end
+
+	-- Tørr fontene midt i atriet (3x3 ruter)
+	local function fountain(cx: number, cy: number)
+		for yy = cy - 1, cy + 1 do
+			for xx = cx - 1, cx + 1 do
+				occupy(xx, yy)
+			end
+		end
+		local c = cellCenter(cx, cy)
+		local m = lib.new("Model", { Name = "Fountain" }, folders.Props)
+		lib.cylinderY(m, "Basin", 11, 1.6, CFrame.new(c + Vector3.new(0, 0.8, 0)), rgb(150, 146, 138), Enum.Material.Marble)
+		lib.cylinderY(m, "Inside", 9.8, 0.2, CFrame.new(c + Vector3.new(0, 1.55, 0)), rgb(52, 50, 44), Enum.Material.Slate)
+		lib.cylinderY(m, "Pedestal", 1.6, 4.5, CFrame.new(c + Vector3.new(0, 3.6, 0)), rgb(150, 146, 138), Enum.Material.Marble)
+		lib.cylinderY(m, "Bowl", 4.2, 0.6, CFrame.new(c + Vector3.new(0, 5.9, 0)), rgb(150, 146, 138), Enum.Material.Marble)
+		-- noe mørkt har tørket inn i bunnen
+		lib.cylinderY(m, "Stain", 5.5, 0.05, CFrame.new(c + Vector3.new(0.8, 1.68, -0.5)), rgb(58, 10, 10), Enum.Material.SmoothPlastic, { CanQuery = false })
+	end
+
+	-- Barre for gåtrening (over 3 ruter)
+	local function parallelBars(x: number, y: number)
+		for i = 0, 2 do
+			occupy(x + i, y)
+		end
+		local c = cellCenter(x + 1, y)
+		local m = lib.new("Model", { Name = "ParallelBars" }, folders.Props)
+		lib.part(m, "Platform", Vector3.new(11.5, 0.2, 3.4), CFrame.new(c + Vector3.new(0, 0.1, 0)), rgb(70, 90, 110), Enum.Material.Rubber)
+		for _, sz in { -1, 1 } do
+			lib.part(m, "Rail", Vector3.new(11, 0.25, 0.25), CFrame.new(c + Vector3.new(0, 3.2, sz * 1.3)), COLORS.metal, Enum.Material.Metal)
+			for _, sx in { -1, 0, 1 } do
+				lib.part(m, "Post", Vector3.new(0.25, 3.2, 0.25), CFrame.new(c + Vector3.new(sx * 5.2, 1.6, sz * 1.3)), COLORS.metal, Enum.Material.Metal)
+			end
+		end
+	end
+
+	-- Treningsmatte på gulvet (man kan gå over den)
+	local function gymMat(x: number, y: number, w: number, h: number)
+		local c = cellCenter(x, y) + Vector3.new((w - 1) * CELL / 2, 0, (h - 1) * CELL / 2)
+		lib.part(folders.Decor, "GymMat", Vector3.new(w * CELL - 0.6, 0.25, h * CELL - 0.6), CFrame.new(c + Vector3.new(0, 0.22, 0)), rgb(46, 70, 104), Enum.Material.Rubber, { CanQuery = false })
+	end
+
+	-- Tavle på veggen med kritt-tekst
+	local function blackboard(x: number, y: number, prefer: string, text: string)
+		local cf = againstWall(x, y, 0.3, prefer)
+		local m = lib.new("Model", { Name = "Blackboard" }, folders.Props)
+		lib.part(m, "Frame", Vector3.new(11, 5.4, 0.3), cf * CFrame.new(0, 6.5, 0), rgb(92, 70, 48), Enum.Material.Wood)
+		local board = lib.part(m, "Board", Vector3.new(10.4, 4.8, 0.1), cf * CFrame.new(0, 6.5, -0.2), rgb(34, 46, 38), Enum.Material.Slate)
+		lib.sign(board, text, { Color = rgb(225, 225, 215), Font = Enum.Font.PermanentMarker, Brightness = 0.6, LightInfluence = 0.8 })
+	end
+
 	------------------------------------------------------------------
 	-- Skap (gjemmesteder)
 	------------------------------------------------------------------
-	local function closet(x: number, y: number, prefer: string?)
+	local function buildCloset(x: number, y: number, prefer: string?)
 		occupy(x, y)
 		local cf = againstWall(x, y, 2.8, prefer)
 		local m = lib.new("Model", { Name = "Closet", Tags = { "Closet" } }, folders.Closets)
@@ -538,6 +679,12 @@ return function(parent: any)
 	------------------------------------------------------------------
 	-- Nøkkelplasser (5 av disse velges tilfeldig hver runde)
 	------------------------------------------------------------------
+	-- Skapene planlegges først og bygges til slutt, så vi kan fjerne de som står tettest
+	local closetPlans: { { any } } = {}
+	local function closet(x: number, y: number, prefer: string?)
+		table.insert(closetPlans, { x, y, prefer })
+	end
+
 	local function keySpot(x: number, y: number, room: string)
 		local top = cabinet(x, y)
 		lib.marker(folders.KeySpots, "KeySpot", top * CFrame.Angles(0, rng() * math.pi * 2, 0), Vector3.new(0.4, 0.4, 0.4)):SetAttribute("Room", room)
@@ -558,7 +705,14 @@ return function(parent: any)
 	for _, r in rooms do
 		local x1, y1, x2, y2 = r[3], r[4], r[5], r[6]
 		local w, h = x2 - x1 + 1, y2 - y1 + 1
-		if w >= 12 then
+		if w * h >= 150 then
+			-- store haller: lamper i et rutenett
+			for ly = y1 + 2, y2 - 1, 5 do
+				for lx = x1 + 2, x2 - 1, 5 do
+					lamp(lx, ly)
+				end
+			end
+		elseif w >= 12 then
 			lamp(x1 + math.floor(w / 4), y1 + math.floor(h / 2))
 			lamp(x2 - math.floor(w / 4), y1 + math.floor(h / 2))
 		elseif h >= 9 then
@@ -672,7 +826,7 @@ return function(parent: any)
 	closet(11, 30, "W")
 	-- Resepsjon (ingen nøkkel her, her starter dere)
 	for x = 22, 26 do
-		desk(x, 32, x == 24, "S")
+		desk(x, 32, x == 24)
 	end
 	tv(21, 29, "W", "ARE YOU\nSTILL\nTHERE?")
 	closet(38, 29, "E")
@@ -685,7 +839,7 @@ return function(parent: any)
 	keySpot(48, 38, "WAITING")
 	closet(40, 38, "W")
 	-- Personalrom
-	desk(55, 33, false, "S")
+	desk(55, 33, false)
 	chair(55, 32, math.pi)
 	sink(58, 31, "E")
 	keySpot(51, 38, "STAFF")
@@ -825,6 +979,85 @@ return function(parent: any)
 	keySpot(86, 45, "DOCK")
 	closet(66, 53, "W")
 	closet(86, 51, "E")
+
+	-- ØSTFLØYEN: TRE STORE HALLER -------------------------------------
+	-- Treningssal (fysioterapi): søyler, behandlingsbenker og barre i midten
+	for _, p in { { 92, 5 }, { 100, 5 }, { 92, 13 }, { 100, 13 } } do
+		pillar(p[1], p[2])
+	end
+	bed(94, 9, true)
+	bed(97, 9, true)
+	parallelBars(95, 3)
+	gymMat(95, 12, 4, 3)
+	gymMat(89, 7, 2, 4)
+	bench(104, 8, false)
+	bench(104, 10, false)
+	bench(88, 3, false)
+	shelf(89, 1, "N")
+	shelf(103, 1, "N")
+	wheelchair(102, 15, 1.2)
+	keySpot(104, 16, "GYM")
+	closet(88, 16, "W")
+	closet(104, 3, "E")
+	-- Auditorium: rader med langbord, midtgang og tavle foran
+	for _, x in { 90, 93, 96, 99 } do
+		longTable(x, 20, 4, false)
+		longTable(x, 29, 4, false)
+	end
+	blackboard(104, 26, "E", "LESSON 1:\nHOW TO HIDE")
+	keySpot(88, 34, "LECTURE")
+	closet(104, 20, "E")
+	closet(104, 33, "E")
+	tv(88, 22, "W", "LIGHTS OUT\nAT 9")
+	-- Atrium: tørr fontene, langbord, søyler og planter
+	fountain(96, 45)
+	longTable(90, 39, 4, true)
+	longTable(99, 39, 4, true)
+	longTable(90, 51, 4, true)
+	longTable(99, 51, 4, true)
+	for _, p in { { 93, 42 }, { 99, 42 }, { 93, 48 }, { 99, 48 } } do
+		pillar(p[1], p[2])
+	end
+	for _, p in { { 89, 37 }, { 103, 37 }, { 89, 53 }, { 103, 53 }, { 91, 45 }, { 101, 45 } } do
+		planter(p[1], p[2])
+	end
+	bench(96, 42, true)
+	bench(96, 48, true)
+	keySpot(104, 45, "ATRIUM")
+	closet(88, 45, "W")
+	closet(104, 50, "E")
+	tv(104, 38, "E", "PLEASE\nREMAIN\nCALM")
+
+	------------------------------------------------------------------
+	-- Skapene: fjern de som står tettest (de mest unødvendige), og bygg resten
+	------------------------------------------------------------------
+	local CLOSET_TARGET = 33 -- 25 % færre enn de 44 vi hadde før
+	local function nearestDist(i: number): number
+		local best = math.huge
+		local a = closetPlans[i]
+		for j, b in closetPlans do
+			if j ~= i then
+				best = math.min(best, math.sqrt((a[1] - b[1]) ^ 2 + (a[2] - b[2]) ^ 2))
+			end
+		end
+		return best
+	end
+	local removed = 0
+	while #closetPlans > CLOSET_TARGET do
+		local worst, worstD = 1, math.huge
+		for i in closetPlans do
+			local d = nearestDist(i)
+			if d < worstD then
+				worst, worstD = i, d
+			end
+		end
+		table.remove(closetPlans, worst)
+		removed += 1
+	end
+	for _, c in closetPlans do
+		buildCloset(c[1], c[2], c[3])
+	end
+	print(string.format("Skap: %d (fjernet %d som sto tett)", #closetPlans, removed))
 
 	------------------------------------------------------------------
 	-- Startpunkter (resepsjonen) og utgangsdør
@@ -1040,9 +1273,68 @@ return function(parent: any)
 		{ 47, 44, "N", "PROJECT\n#0413" },
 		{ 82, 44, "N", "ALMOST\nOUT :)" },
 		{ 30, 42, "S", "DON'T GO TO\nTHE DOCK" },
+		{ 96, 54, "S", "NO WAY OUT" },
+		{ 97, 1, "N", "KEEP\nMOVING" },
 	}
 	local nearWriting = {} -- ruter med blodskrift (ingen sprut oppå teksten)
+	local WALL_DIRS = { N = { 0, -1 }, S = { 0, 1 }, W = { -1, 0 }, E = { 1, 0 } }
+	-- Hvor bred blir skriften (hele lerretet, i studs)?
+	local function writingWidth(text: string, letterH: number?): number
+		local lines = string.split(text, "\n")
+		local LH = letterH or (#lines > 1 and 1.15 or 1.5)
+		local longest = 0
+		for _, line in lines do
+			longest = math.max(longest, #line)
+		end
+		return math.max(6, longest * LH * 0.72 + 1.4) + PAD_SIDE * 2
+	end
+	-- Står skriften på en ekte, hel vegg? Alle rutene langs lerretet må ha vegg bak og ledig gulv foran.
+	local function writingFits(x: number, y: number, dirName: string, width: number): boolean
+		local dv = WALL_DIRS[dirName]
+		local ax, ay = if dv[2] ~= 0 then 1 else 0, if dv[1] ~= 0 then 1 else 0
+		local half = math.ceil((width / 2 - CELL / 2) / CELL)
+		for k = -half, half do
+			local fx, fy = x + ax * k, y + ay * k
+			local row, wallRow = grid[fy], grid[fy + dv[2]]
+			if not row or row[fx] ~= "." or occupied[key(fx, fy)] or nearWriting[key(fx, fy)] then
+				return false
+			end
+			if not wallRow or wallRow[fx + dv[1]] ~= "#" then
+				return false
+			end
+		end
+		return true
+	end
+	-- Finner nærmeste sted der skriften får plass (først samme vegg, så utover i ringer)
+	local function placeWriting(x: number, y: number, dirName: string, width: number): (number?, number?, string?)
+		if writingFits(x, y, dirName, width) then
+			return x, y, dirName
+		end
+		for r = 1, 12 do
+			for dy = -r, r do
+				for dx = -r, r do
+					if math.max(math.abs(dx), math.abs(dy)) == r then
+						for _, dn in { dirName, "N", "S", "E", "W" } do
+							if writingFits(x + dx, y + dy, dn, width) then
+								return x + dx, y + dy, dn
+							end
+						end
+					end
+				end
+			end
+		end
+		return nil, nil, nil
+	end
 	for i, wr in writings do
+		local wx, wy, wd = placeWriting(wr[1], wr[2], wr[3], writingWidth(wr[4]))
+		if not wx or not wy or not wd then
+			print("ADVARSEL: fant ingen vegg til blodskriften " .. wr[4])
+			continue
+		end
+		if wx ~= wr[1] or wy ~= wr[2] or wd ~= wr[3] then
+			print(string.format("Flyttet blodskrift %q til (%d, %d, %s)", (wr[4]:gsub("\n", " ")), wx, wy, wd))
+		end
+		wr[1], wr[2], wr[3] = wx, wy, wd
 		for dy = -3, 3 do
 			for dx = -3, 3 do
 				nearWriting[key(wr[1] + dx, wr[2] + dy)] = true

@@ -28,6 +28,11 @@ local keysLabel: TextLabel
 local exitLabel: TextLabel
 local staminaBack: Frame
 local staminaFill: Frame
+local breathBack: Frame
+local breathFill: Frame
+local breathLabel: TextLabel
+local downedFrame: Frame
+local downedLabel: TextLabel
 local hintLabel: TextLabel
 local spectateLabel: TextLabel
 local finaleLabel: TextLabel
@@ -256,6 +261,61 @@ local function buildHud()
 		BorderSizePixel = 0,
 	}, staminaBack)
 	make("UICorner", { CornerRadius = UDim.new(1, 0) }, staminaFill)
+
+	-- rødt skjær og nedtelling mens du ligger nede
+	downedFrame = make("Frame", {
+		Name = "Downed",
+		Size = UDim2.fromScale(1, 1),
+		BackgroundColor3 = Color3.fromRGB(120, 0, 0),
+		BackgroundTransparency = 0.72,
+		BorderSizePixel = 0,
+		Visible = false,
+		ZIndex = 1,
+	}, hud)
+	make("UIGradient", {
+		Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0),
+			NumberSequenceKeypoint.new(0.5, 0.85),
+			NumberSequenceKeypoint.new(1, 0),
+		}),
+		Rotation = 90,
+	}, downedFrame)
+	downedLabel = text(hud, {
+		Name = "DownedText",
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.fromScale(0.5, 0.62),
+		Size = UDim2.new(0.6, 0, 0, 64),
+		Text = "",
+		TextColor3 = Color3.fromRGB(255, 120, 110),
+		Visible = false,
+		ZIndex = 2,
+	})
+
+	-- pusten mens du gjemmer deg i et skap
+	breathBack = make("Frame", {
+		Name = "Breath",
+		AnchorPoint = Vector2.new(0.5, 1),
+		Position = UDim2.new(0.5, 0, 1, -186),
+		Size = UDim2.new(0, 260, 0, 10),
+		BackgroundColor3 = Color3.fromRGB(20, 20, 20),
+		BackgroundTransparency = 0.3,
+		BorderSizePixel = 0,
+		Visible = false,
+	}, hud)
+	make("UICorner", { CornerRadius = UDim.new(1, 0) }, breathBack)
+	breathFill = make("Frame", {
+		Size = UDim2.fromScale(1, 1),
+		BackgroundColor3 = Color3.fromRGB(150, 200, 235),
+		BorderSizePixel = 0,
+	}, breathBack)
+	make("UICorner", { CornerRadius = UDim.new(1, 0) }, breathFill)
+	breathLabel = text(breathBack, {
+		AnchorPoint = Vector2.new(0.5, 1),
+		Position = UDim2.new(0.5, 0, 0, -4),
+		Size = UDim2.new(1, 60, 0, 22),
+		Text = "",
+		Font = FONT_VHS,
+	})
 
 	hintLabel = text(hud, {
 		Name = "Hint",
@@ -776,6 +836,27 @@ function UI.setStamina(fraction: number, visible: boolean)
 	staminaBack.Visible = visible
 	staminaFill.Size = UDim2.fromScale(math.clamp(fraction, 0, 1), 1)
 	staminaFill.BackgroundColor3 = fraction < 0.25 and Color3.fromRGB(200, 60, 50) or Color3.fromRGB(220, 220, 210)
+end
+
+-- Mens du ligger nede (nil = skjul)
+function UI.setDowned(secondsLeft: number?)
+	downedFrame.Visible = secondsLeft ~= nil
+	downedLabel.Visible = secondsLeft ~= nil
+	if secondsLeft then
+		downedLabel.Text = string.format("YOU'RE DOWN\nWait for a friend to help you up  %d", math.ceil(secondsLeft))
+	end
+end
+
+-- Hvor mye pust du har igjen i skapet (nil = skjul)
+function UI.setBreath(fraction: number?, secondsLeft: number?)
+	breathBack.Visible = fraction ~= nil
+	if fraction then
+		breathFill.Size = UDim2.fromScale(math.clamp(fraction, 0, 1), 1)
+		local low = (secondsLeft or 99) <= 5
+		breathFill.BackgroundColor3 = if low then Color3.fromRGB(230, 70, 60) else Color3.fromRGB(150, 200, 235)
+		breathLabel.Text = string.format("HOLDING YOUR BREATH  %d", math.ceil(secondsLeft or 0))
+		breathLabel.TextColor3 = if low then Color3.fromRGB(240, 110, 100) else Color3.fromRGB(220, 225, 230)
+	end
 end
 
 function UI.setHint(message: string?)

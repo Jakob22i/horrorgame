@@ -125,7 +125,7 @@ buildKey(ServerStorage)
 -- RemoteEvents
 ------------------------------------------------------------------
 local remotes = lib.new("Folder", { Name = "Remotes" }, ReplicatedStorage)
-for _, name in { "Notify", "Jumpscare", "MatchState", "Transition", "ToggleFlashlight", "LeaveCloset", "GameOverChoice", "Shop", "Push", "Pushed", "Prank" } do
+for _, name in { "Notify", "Jumpscare", "MatchState", "Transition", "ToggleFlashlight", "LeaveCloset", "GameOverChoice", "Shop", "Push", "Pushed", "Prank", "Cosmetics" } do
 	lib.new("RemoteEvent", { Name = name }, remotes)
 end
 
@@ -177,7 +177,7 @@ if oldClient then
 	oldClient.Parent = nil
 end
 local client, smClient = script("LocalScript", "ClientMain", "src/client/ClientMain.client.luau", sps, smSPS)
-for _, name in { "UI", "Effects", "Controls", "Jumpscare", "MonsterAnimator", "Ending", "Scares" } do
+for _, name in { "UI", "Effects", "Controls", "Jumpscare", "MonsterAnimator", "Ending", "Scares", "CosmeticsUI" } do
 	script("ModuleScript", name, "src/client/" .. name .. ".luau", client, smClient)
 end
 

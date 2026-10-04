@@ -15,11 +15,31 @@ local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Co
 
 local Remotes = ReplicatedStorage:WaitForChild("Remotes")
 local ShopRemote = Remotes:WaitForChild("Shop") :: RemoteEvent
+local CosmeticsRemote = Remotes:WaitForChild("Cosmetics") :: RemoteEvent
 local NotifyRemote = Remotes:WaitForChild("Notify") :: RemoteEvent
 
 local S = Config.Shop
 
-type Data = { revive: number, jumpscare: number }
+type Data = {
+	revive: number,
+	jumpscare: number,
+	coins: number,
+	owned: { [string]: boolean },
+	flash: string,
+	title: string,
+}
+
+-- Finn en kosmetikk-ting i katalogen ("Flashlights" eller "Titles")
+local function findItem(id: string): (any, string?)
+	for _, kind in { "Flashlights", "Titles" } do
+		for _, item in (Config.Cosmetics :: any)[kind] do
+			if item.id == id then
+				return item, kind
+			end
+		end
+	end
+	return nil, nil
+end
 
 local Shop = {}
 
@@ -32,11 +52,54 @@ local function key(player: Player): string
 	return "u" .. player.UserId
 end
 
+local function applyTitle(player: Player)
+	local character = player.Character
+	local head = character and character:FindFirstChild("Head")
+	if not head then
+		return
+	end
+	local old = head:FindFirstChild("TitleTag")
+	if old then
+		old:Destroy()
+	end
+	local d = data[player]
+	local item = d and findItem(d.title)
+	if not item or item.text == "" then
+		return
+	end
+	local gui = Instance.new("BillboardGui")
+	gui.Name = "TitleTag"
+	gui.Size = UDim2.fromOffset(200, 30)
+	gui.StudsOffset = Vector3.new(0, 2.3, 0)
+	gui.MaxDistance = 60
+	gui.LightInfluence = 0
+	local label = Instance.new("TextLabel")
+	label.Size = UDim2.fromScale(1, 1)
+	label.BackgroundTransparency = 1
+	label.TextScaled = true
+	label.Font = Enum.Font.SpecialElite
+	label.Text = item.text
+	label.TextColor3 = item.color
+	label.TextStrokeTransparency = 0.4
+	label.Parent = gui
+	gui.Parent = head
+end
+
 local function sync(player: Player)
 	local d = data[player]
 	if d then
 		player:SetAttribute("ReviveCredits", d.revive)
 		player:SetAttribute("JumpscareCredits", d.jumpscare)
+		player:SetAttribute("Coins", d.coins)
+		local owned = {}
+		for id in d.owned do
+			table.insert(owned, id)
+		end
+		player:SetAttribute("Owned", table.concat(owned, ","))
+		player:SetAttribute("FlashId", d.flash)
+		local flash = findItem(d.flash)
+		player:SetAttribute("FlashColor", flash and flash.color or Color3.fromRGB(255, 244, 220))
+		player:SetAttribute("TitleId", d.title)
 	end
 end
 
@@ -45,14 +108,25 @@ local function save(player: Player): boolean
 	if not d or not store then
 		return true
 	end
+	local owned = {}
+	for id in d.owned do
+		table.insert(owned, id)
+	end
 	local ok = pcall(function()
-		(store :: DataStore):SetAsync(key(player), { revive = d.revive, jumpscare = d.jumpscare })
+		(store :: DataStore):SetAsync(key(player), {
+			revive = d.revive,
+			jumpscare = d.jumpscare,
+			coins = d.coins,
+			owned = owned,
+			flash = d.flash,
+			title = d.title,
+		})
 	end)
 	return ok
 end
 
 local function load(player: Player)
-	local d: Data = { revive = 0, jumpscare = 0 }
+	local d: Data = { revive = 0, jumpscare = 0, coins = 0, owned = { warm = true, none = true }, flash = "warm", title = "none" }
 	if store then
 		local ok, value = pcall(function()
 			return (store :: DataStore):GetAsync(key(player))
@@ -60,10 +134,25 @@ local function load(player: Player)
 		if ok and type(value) == "table" then
 			d.revive = tonumber(value.revive) or 0
 			d.jumpscare = tonumber(value.jumpscare) or 0
+			d.coins = math.max(0, math.floor(tonumber(value.coins) or 0))
+			if type(value.owned) == "table" then
+				for _, id in value.owned do
+					if type(id) == "string" and findItem(id) then
+						d.owned[id] = true
+					end
+				end
+			end
+			if type(value.flash) == "string" and d.owned[value.flash] then
+				d.flash = value.flash
+			end
+			if type(value.title) == "string" and d.owned[value.title] then
+				d.title = value.title
+			end
 		end
 	end
 	data[player] = d
 	sync(player)
+	applyTitle(player)
 end
 
 local function checkPushPass(player: Player)
@@ -193,6 +282,58 @@ local function processReceipt(info: any): Enum.ProductPurchaseDecision
 	return Enum.ProductPurchaseDecision.PurchaseGranted
 end
 
+-- Mynter for å spille (kalles fra rundene). Lagres når runden er over og når du går.
+function Shop.addCoins(player: Player, amount: number)
+	local d = data[player]
+	if d and amount > 0 then
+		d.coins += math.floor(amount)
+		sync(player)
+	end
+end
+
+function Shop.save(player: Player)
+	task.spawn(save, player)
+end
+
+local function onCosmetic(player: Player, action: any, id: any)
+	local d = data[player]
+	if not d or typeof(action) ~= "string" or typeof(id) ~= "string" then
+		return
+	end
+	local item, kind = findItem(id)
+	if not item then
+		return
+	end
+	if action == "buy" and not d.owned[id] then
+		if d.coins < item.price then
+			notify(player, string.format("You need %d more coins.", item.price - d.coins), "bad")
+			return
+		end
+		d.coins -= item.price
+		d.owned[id] = true
+		if not save(player) then
+			-- lagringen feilet: gi tilbake myntene
+			d.coins += item.price
+			d.owned[id] = nil
+			sync(player)
+			notify(player, "Could not save the purchase. Try again.", "bad")
+			return
+		end
+		notify(player, "Bought " .. item.name .. "!", "good")
+		action = "equip"
+	end
+	if action == "equip" and d.owned[id] then
+		if kind == "Flashlights" then
+			d.flash = id
+		else
+			d.title = id
+		end
+		sync(player)
+		applyTitle(player)
+		task.spawn(save, player)
+	end
+end
+
 function Shop.init(mgr: any)
 	manager = mgr
 	local ok, result = pcall(function()
@@ -206,6 +347,10 @@ function Shop.init(mgr: any)
 		player:SetAttribute("HasPush", false)
 		task.spawn(load, player)
 		task.spawn(checkPushPass, player)
+		player.CharacterAdded:Connect(function(character)
+			character:WaitForChild("Head", 10)
+			applyTitle(player)
+		end)
 	end
 	Players.PlayerAdded:Connect(onPlayer)
 	for _, player in Players:GetPlayers() do
@@ -224,6 +369,7 @@ function Shop.init(mgr: any)
 		end
 	end)
 	ShopRemote.OnServerEvent:Connect(onRequest)
+	CosmeticsRemote.OnServerEvent:Connect(onCosmetic)
 end
 
 return Shop

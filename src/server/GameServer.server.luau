@@ -4,6 +4,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
+local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"))
 local Lobby = require(script:WaitForChild("Lobby"))
 local Match = require(script:WaitForChild("Match"))
 local Shop = require(script:WaitForChild("Shop"))
@@ -15,6 +16,7 @@ local ToggleFlashlightRemote = Remotes:WaitForChild("ToggleFlashlight") :: Remot
 local LeaveClosetRemote = Remotes:WaitForChild("LeaveCloset") :: RemoteEvent
 local GameOverChoiceRemote = Remotes:WaitForChild("GameOverChoice") :: RemoteEvent
 local PushRemote = Remotes:WaitForChild("Push") :: RemoteEvent
+local NotifyRemote = Remotes:WaitForChild("Notify") :: RemoteEvent
 
 local matches: { [number]: any } = {}
 local playerMatch: { [Player]: any } = {}
@@ -31,9 +33,10 @@ local function resetAttributes(player: Player)
 	player:SetAttribute("Hidden", false)
 	player:SetAttribute("Out", false)
 	player:SetAttribute("Flashlight", false)
+	player:SetAttribute("Downed", false)
 end
 
-function Manager:StartMatch(group: { Player })
+function Manager:StartMatch(group: { Player }, mode: string?)
 	local players = {}
 	for _, player in group do
 		if player.Parent == Players and not playerMatch[player] then
@@ -49,7 +52,7 @@ function Manager:StartMatch(group: { Player })
 	end
 	usedSlots[slot] = true
 	nextId += 1
-	local match = Match.new(Manager, nextId, slot, players)
+	local match = Match.new(Manager, nextId, slot, players, mode)
 	matches[match.id] = match
 	for _, player in players do
 		playerMatch[player] = match
@@ -66,10 +69,35 @@ function Manager:SendToLobby(player: Player)
 	end
 end
 
+-- Mynter (dobbelt i Nightmare). reason vises i beskjeden.
+function Manager:AwardCoins(player: Player, amount: number, reason: string)
+	local match = playerMatch[player]
+	if match and match.nightmare then
+		amount *= Config.Nightmare.CoinMultiplier
+	end
+	if amount <= 0 or player.Parent ~= Players then
+		return
+	end
+	Shop.addCoins(player, amount)
+	NotifyRemote:FireClient(player, string.format("+%d coins (%s)", amount, reason), "good")
+end
+
+function Manager:OnHelped(helper: Player)
+	Manager:AwardCoins(helper, Config.Coins.HelpUp, "helped a friend")
+end
+
 -- Avslutter en runde. Spillere i `retry` starter en ny runde sammen, resten går til lobbyen.
 function Manager:EndMatch(match: any, retry: { Player })
 	if match.state == "ended" then
 		return
+	end
+	-- litt mynter for å ha spilt (ikke for runder som var over med en gang)
+	local played = os.clock() - (match.startedAt or os.clock()) >= 90
+	for player in match.players do
+		if played then
+			Manager:AwardCoins(player, Config.Coins.Round, "round played")
+		end
+		Shop.save(player)
 	end
 	local retrySet = {}
 	for _, p in retry do
@@ -100,8 +128,9 @@ function Manager:EndMatch(match: any, retry: { Player })
 		end
 	end
 	if #again > 0 then
+		local mode = match.mode
 		task.delay(2, function()
-			Manager:StartMatch(again)
+			Manager:StartMatch(again, mode)
 		end)
 	end
 end
@@ -188,6 +217,6 @@ end)
 
 Shop.init(Manager)
 
-Lobby.init(function(group)
-	Manager:StartMatch(group)
+Lobby.init(function(group, mode)
+	Manager:StartMatch(group, mode)
 end)

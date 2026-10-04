@@ -119,6 +119,10 @@ local function updateOtherFlashlights()
 		end
 		if light then
 			light.Enabled = shouldShow
+			local color = other:GetAttribute("FlashColor")
+			if typeof(color) == "Color3" then
+				light.Color = color
+			end
 		end
 	end
 end
@@ -219,7 +223,14 @@ local function updateClosetPrompts()
 		if prompt then
 			local occupant = closet:GetAttribute("Occupant") or 0
 			local mine = occupant == player.UserId
-			prompt.ActionText = mine and "Leave" or "Hide"
+			local cooldown = (attr("ClosetCooldownUntil") or 0) - workspace:GetServerTimeNow()
+			if mine then
+				prompt.ActionText = "Leave"
+			elseif cooldown > 0 then
+				prompt.ActionText = string.format("Catch your breath (%d)", math.ceil(cooldown))
+			else
+				prompt.ActionText = "Hide"
+			end
 			prompt.Enabled = occupant == 0 or mine
 		end
 	end
@@ -344,8 +355,33 @@ function Controls.init(ui: any)
 		local on = flashlightOn()
 		flashLight.Enabled = on
 		fillLight.Enabled = on
+		local myColor = attr("FlashColor")
+		if typeof(myColor) == "Color3" and flashLight.Color ~= myColor then
+			flashLight.Color = myColor
+			fillLight.Color = myColor
+		end
 		if on then
 			flashPart.CFrame = camera.CFrame * CFrame.new(0.4, -0.4, -0.5)
+		end
+
+		-- nedtelling mens du ligger nede, og skjul din egen "Help up"-knapp
+		if inMatch and attr("Downed") == true then
+			UI.setDowned(math.max(0, (attr("DownedUntil") or 0) - workspace:GetServerTimeNow()))
+			local character = player.Character
+			local ownPrompt = character and character:FindFirstChild("RevivePrompt", true)
+			if ownPrompt and ownPrompt:IsA("ProximityPrompt") and ownPrompt.Enabled then
+				ownPrompt.Enabled = false
+			end
+		else
+			UI.setDowned(nil)
+		end
+
+		-- pustemåler mens du er i skapet
+		if inMatch and attr("Hidden") == true then
+			local left = math.max(0, (attr("HiddenUntil") or 0) - workspace:GetServerTimeNow())
+			UI.setBreath(left / Config.Closet.MaxTime, left)
+		else
+			UI.setBreath(nil)
 		end
 
 		otherTimer -= dt

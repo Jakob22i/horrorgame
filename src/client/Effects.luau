@@ -84,7 +84,10 @@ local PRESETS = {
 	},
 }
 
+local nightmareApplied = false
+
 local function applyPreset(name: string)
+	nightmareApplied = false
 	local p = PRESETS[name]
 	Lighting.Ambient = p.Ambient
 	Lighting.OutdoorAmbient = p.OutdoorAmbient
@@ -459,6 +462,21 @@ function Effects._step(dt: number)
 
 	updateLamps(dt, monsterPos)
 	updateKeys()
+
+	-- Nightmare: mørkere og tettere tåke
+	if mode == "match" then
+		local folder = currentMatchFolder()
+		local nightmare = folder ~= nil and folder:GetAttribute("Mode") == "Nightmare"
+		if nightmare ~= nightmareApplied then
+			nightmareApplied = nightmare
+			local p = PRESETS.match
+			Lighting.ExposureCompensation = p.ExposureCompensation + (if nightmare then -0.45 else 0)
+			local atmosphere = Lighting:FindFirstChildOfClass("Atmosphere")
+			if atmosphere then
+				atmosphere.Density = p.Atmosphere.Density + (if nightmare then 0.15 else 0)
+			end
+		end
+	end
 
 	local base = PRESETS[mode].CC
 	colorCorrection.Saturation = base.Saturation - danger * 0.25

@@ -6,22 +6,34 @@ Et analog-horror-spill i Roblox for 1–4 spillere per gruppe. Alt i spillet er 
 
 - Alle spawner i **lobbyen**. Langs veggen står **4 heiser** med plass til maks 4 spillere hver.
   Gå inn i en heis, så starter en nedtelling (15 sek, eller 5 sek hvis heisen er full).
-- Gruppa havner i et mørkt, forlatt **sykehus** med tre fløyer (hovedbygget, østfløyen med
-  intensiv, apotek, isolat og kantine, og sørfløyen med vaskeri, kapell, lab, arkiv og
-  lasterampe). Målet er å finne **5 nøkler** som ligger tilfeldig plassert rundt i kartet, og
+- Gruppa havner i et mørkt, forlatt **sykehus**: hovedbygget, østfløyen (intensiv, apotek,
+  isolat og kantine), sørfløyen (vaskeri, kapell, lab, arkiv og lasterampe) og en ny fløy helt i
+  øst med **tre store haller** (treningssal, auditorium og atrium med fontene) fulle av søyler,
+  langbord og benker du kan løpe rundt. Hallene og flere rom har flere dører, så du kan løpe
+  runder unna monsteret. Målet er å finne **5 nøkler** som ligger tilfeldig plassert rundt i kartet, og
   sette dem inn ved **nødutgangen** på lasterampen (LOADING DOCK) helt i sørøst.
 - **Patient #0413** jakter på dere: en høy, utmagret pasient med et altfor bredt, sydd glis,
   svarte øyehuler og et dryppstativ med blodpose som den drar etter seg. Den ser dere, hører
   dere når dere løper, halter, rykker i hodet, klaprer med kjeven når den jakter, og du kan
   høre de knirkende hjulene og en spilledåse når den er i nærheten.
-- Gjem deg i **skapene** (44 stk). Trykk E på skapet for å gå inn og ut (eller LEAVE-knappen).
-  Ser den deg gå inn, drar den deg ut.
-- Hver spiller har **3 liv**. Blir du tatt, får du en jumpscare, nøklene du bar faller der
-  du døde, og du starter på nytt i resepsjonen.
+- Gjem deg i **skapene** (33 stk). Trykk E på skapet for å gå inn og ut (eller LEAVE-knappen).
+  Ser den deg gå inn, drar den deg ut. Du kan bare holde pusten i **20 sekunder** (en måler
+  viser hvor lenge), så blir du tvunget ut, og du må vente **6 sekunder** før du kan gjemme
+  deg igjen.
+- Hver spiller har **3 liv**. Blir du tatt mens en venn fortsatt står, **ligger du nede** i
+  15 sekunder (med en rød markør som vennene ser gjennom vegger). En venn kan holde E på deg for
+  å hjelpe deg opp, da mister du ikke liv og beholder nøklene. Rekker ingen det (eller du er
+  alene), mister du et liv, nøklene faller der du var, og du starter på nytt i resepsjonen.
 - Bruker du opp alle livene, får du valget **REVIVE** (39 Robux, du kommer tilbake i
   resepsjonen med 1 liv) eller **SPECTATE**. Har alle mistet alle liv, kan hver spiller
   velge **REVIVE**, **Try again** (ny runde fra starten) eller **To lobby**.
 - Monsteret blir **raskere for hver nøkkel** som settes inn.
+- **Nightmare-modus**: trykk E på panelet inne i heisen for å bytte mellom NORMAL og NIGHTMARE.
+  Nightmare har 1 liv, et raskere monster, mørkere ganger, færre skap og dobbelt så mange
+  mynter.
+- **Mynter og kosmetikk**: du får mynter for å finne nøkler, sette dem inn, hjelpe venner opp,
+  spille en runde og komme deg ut (dobbelt i Nightmare). Bruk dem i butikken **FLASHLIGHTS &
+  TITLES** i lobbyen på lommelyktfarger og titler som vises over hodet ditt. Alt lagres.
 - Etter **3 nøkler** begynner strømmen å svikte: hvert 30.–50. sekund dempes lyset sakte ned i
   10–16 sekunder (bare noen svake, røde nødlys står igjen) før det sakte kommer tilbake. Da
   trenger du lommelykta.
@@ -90,7 +102,7 @@ jumpscares som ikke ble brukt med en gang, lagres og blir gratis neste gang (kre
 | Nøkkelen | `ServerStorage/Key` |
 | Innstillinger | `ReplicatedStorage/Shared/Config` |
 | Serverscript | `ServerScriptService/GameServer` (+ modulene Lobby, Match, Monster, Shop, Util) |
-| Klientscript | `StarterPlayer/StarterPlayerScripts/ClientMain` (+ UI, Effects, Controls, Jumpscare, MonsterAnimator, Ending, Scares) |
+| Klientscript | `StarterPlayer/StarterPlayerScripts/ClientMain` (+ UI, Effects, Controls, Jumpscare, MonsterAnimator, Ending, Scares, CosmeticsUI) |
 | Loading screen | `ReplicatedFirst/LoadingScreen` |
 
 Sykehuset ligger i `ServerStorage` og klones inn i `Workspace/Matches` for hver gruppe.
@@ -113,6 +125,10 @@ hvor fort monsteret går, hvor langt det ser, lyder osv. Noen nyttige:
 - `Blackout`: etter hvor mange nøkler strømmen begynner å svikte, og hvor ofte og lenge
 - `FinaleTime`: hvor lenge dere må overleve før døra åpnes (sekunder)
 - `WinReturnTime`: hvor lang tid sluttscenen får før alle sendes til lobbyen
+- `Closet`: hvor lenge du kan være i et skap, og pausen før du kan gjemme deg igjen
+- `Downed`: hvor lenge du ligger nede, og hvor lenge en venn må holde E
+- `Nightmare`: liv, monsterfart, andel skap og lamper, myntbonus
+- `Coins` og `Cosmetics`: hvor mange mynter du får, og alt som kan kjøpes (navn, farge, pris)
 
 Monsteret er bygget av ca. 800 deler som er sveiset til et "skjelett" (mappen `Rig`).
 Leddene ligger i mappen `Joints` og animeres av `MonsterAnimator` på hver klient, mens
