@@ -22,8 +22,21 @@ Et analog-horror-spill i Roblox for 1–4 spillere per gruppe. Alt i spillet er 
   resepsjonen med 1 liv) eller **SPECTATE**. Har alle mistet alle liv, kan hver spiller
   velge **REVIVE**, **Try again** (ny runde fra starten) eller **To lobby**.
 - Monsteret blir **raskere for hver nøkkel** som settes inn.
-- Etter **3 nøkler** begynner strømmen å svikte: lyset går av i 10–16 sekunder, kommer tilbake,
-  og går av igjen hvert 30.–50. sekund. Da trenger du lommelykta (som er litt sterkere nå).
+- Etter **3 nøkler** begynner strømmen å svikte: hvert 30.–50. sekund dempes lyset sakte ned i
+  10–16 sekunder (bare noen svake, røde nødlys står igjen) før det sakte kommer tilbake. Da
+  trenger du lommelykta.
+- **Lyset blinker ikke.** I stedet dempes lampene og blir røde der monsteret er, så du ser at
+  gangen foran deg blir mørkere og rødere før den kommer rundt hjørnet.
+- **Ting som skjer av og til** (bare på din skjerm, og aldri når monsteret er nær):
+  - lyder i det fjerne: banking, dører som smeller, hvisking, en båre som ruller, skraping
+  - en mørk skikkelse med lysende øyne som står langt borte og ser på deg, og forsvinner med et
+    støyglimt når du ser rett på den
+  - lampene slukner én etter én med et «klonk» bortover gangen mot deg, og kommer tilbake etterpå
+- **Nøklene skinner**: de svever og snurrer over der de ligger, lyser varmt gult, glitrer og har
+  en svak klingende lyd, så de er lette å finne.
+- **Blodet** er tegnet med myke, organiske former: mørke, våte pytter som har rent ut, inntørkede
+  brune flekker, slepespor, bare fotspor som går ut av en pytt, sprut og renner på veggene og
+  flekkete håndavtrykk.
 - Når alle 5 nøklene er satt inn, starter **LOCKDOWN**: alarmen går, alle lamper blinker rødt,
   monsteret jakter på nærmeste spiller, og døra åpner seg først etter **60 sekunder**.
   Overlev, og løp ut når den åpner seg.
@@ -77,7 +90,7 @@ jumpscares som ikke ble brukt med en gang, lagres og blir gratis neste gang (kre
 | Nøkkelen | `ServerStorage/Key` |
 | Innstillinger | `ReplicatedStorage/Shared/Config` |
 | Serverscript | `ServerScriptService/GameServer` (+ modulene Lobby, Match, Monster, Shop, Util) |
-| Klientscript | `StarterPlayer/StarterPlayerScripts/ClientMain` (+ UI, Effects, Controls, Jumpscare, MonsterAnimator, Ending) |
+| Klientscript | `StarterPlayer/StarterPlayerScripts/ClientMain` (+ UI, Effects, Controls, Jumpscare, MonsterAnimator, Ending, Scares) |
 | Loading screen | `ReplicatedFirst/LoadingScreen` |
 
 Sykehuset ligger i `ServerStorage` og klones inn i `Workspace/Matches` for hver gruppe.
@@ -88,7 +101,8 @@ det tilbake. Mappene i kartet styrer spillet:
 - `KeySpots`: steder der nøkler kan dukke opp. Attributtet `Room` sørger for maks én nøkkel per rom.
 - `SpawnPoints`: startpunktene i resepsjonen
 - `PatrolPoints`: punktene monsteret vandrer mellom
-- `Lamps`: taklampene. Serveren velger tilfeldig om de er på, av eller blinker.
+- `Lamps`: taklampene. Serveren velger tilfeldig om de er på, svake (`dim`) eller av.
+  Klienten styrer lysnivået mykt (`Effects`).
 
 ## Justere spillet
 
@@ -119,7 +133,12 @@ Andre verktøy:
 lune run build/check_map.luau                         # sjekker at alle skap kan brukes
 lune run build/export_preview.luau patient out.json   # eksporterer modellen for forhåndsvisning
 lune run build/export_preview.luau ending out.json    # sluttscenen: monsteret i døråpningen
+lune run build/export_preview.luau blood out.json     # utstilling av blodet
+lune run build/export_preview.luau keyroom out.json   # en glødende nøkkel i et mørkt rom
 ```
+
+Blodet bygges av `build/blood.luau` (avrundede Frames i en SurfaceGui på usynlige deler), og
+nøkkelen av `build/key.luau`.
 
 Merk: Lune sin `CFrame.lookAt` snur Z-aksen feil, så byggescriptene bruker `lib.lookAt`.
 

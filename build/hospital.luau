@@ -3,6 +3,7 @@
 -- Origo (0, 0, 0) er nordvestre hjørne, gulvet ligger på y = 0.
 
 local lib = require("./lib")
+local Blood = require("./blood")
 local Vector3, CFrame, Enum = lib.Vector3, lib.CFrame, lib.Enum
 local rgb = lib.rgb
 
@@ -404,7 +405,9 @@ return function(parent: any)
 		local m = lib.new("Model", { Name = "OperatingTable" }, folders.Props)
 		lib.part(m, "Pillar", Vector3.new(1.2, 2.6, 1.2), cf * CFrame.new(0, 1.3, 0), COLORS.metal, Enum.Material.Metal)
 		lib.part(m, "Top", Vector3.new(2.8, 0.45, 7.2), cf * CFrame.new(0, 2.85, 0), rgb(70, 90, 92), Enum.Material.Leather)
-		lib.part(m, "Stain", Vector3.new(1.6, 0.05, 2.2), cf * CFrame.new(0.2, 3.1, 0.6), COLORS.blood, Enum.Material.SmoothPlastic, { CanQuery = false })
+		local stain = Blood.canvas(m, "Stain", cf * CFrame.new(0.1, 3.085, 0.4), 2.6, 4.2, "Top", 40)
+		stain:pool(0, 0, 0.7, Blood.DRIED, rng, { drops = 10 })
+		stain:pool(0.3, -1.1, 0.3, Blood.DRIED, rng, { gloss = false, drops = 4 })
 		-- stor operasjonslampe i taket
 		lib.cylinderY(m, "LampArm", 0.3, 3, CFrame.new(c + Vector3.new(0, WALL_H - 1.5, 0)), COLORS.metal, Enum.Material.Metal)
 		lib.cylinderY(m, "LampDisc", 3.2, 0.6, CFrame.new(c + Vector3.new(0, WALL_H - 3.2, 0)), rgb(200, 200, 196), Enum.Material.Metal)
@@ -902,50 +905,10 @@ return function(parent: any)
 		return BLOOD[rng(1, #BLOOD)]
 	end
 
-	-- Et flatt merke rett på veggen (lokale koordinater i "plate"-rommet, x mot høyre, y opp)
-	local function wallMark(plateCF: any, name: string, lx: number, ly: number, w: number, h: number, color: any, rot: number?, transparency: number?)
-		local cf = plateCF * CFrame.new(-lx, ly, 0.012) * CFrame.Angles(0, 0, rot or 0)
-		local p = lib.ellipsoid(folders.Decor, name, Vector3.new(w, h, 0.02), cf, color, Enum.Material.SmoothPlastic)
-		p.CanCollide = false
-		p.CanQuery = false
-		p.CanTouch = false
-		p.CastShadow = false
-		p.Transparency = transparency or 0
-		p.Reflectance = 0.04
-		return p
-	end
-
-	local function drip(plateCF: any, lx: number, ly: number)
-		local len = rng() < 0.3 and (1.2 + rng() * 1.6) or (0.25 + rng() * 0.9)
-		local w = 0.05 + rng() * 0.06
-		local col = bloodColor()
-		wallMark(plateCF, "Drip", lx, ly - len / 2, w, len, col)
-		wallMark(plateCF, "Drop", lx, ly - len, w * 1.9, w * 2.3, col)
-	end
-
-	local function handprint(plateCF: any, lx: number, ly: number, angle: number, smearLen: number)
-		local col = bloodColor()
-		local rot = CFrame.Angles(0, 0, angle)
-		local function at(x: number, y: number)
-			local v = rot:PointToWorldSpace(Vector3.new(x, y, 0))
-			return lx + v.X, ly + v.Y
-		end
-		local px, py = at(0, 0)
-		wallMark(plateCF, "Hand", px, py, 0.62, 0.7, col, angle, 0.1)
-		local fingers = { { -0.27, 0.48, 0.12, 0.42, 0.35 }, { -0.1, 0.6, 0.12, 0.5, 0.1 }, { 0.07, 0.62, 0.12, 0.52, -0.05 }, { 0.23, 0.55, 0.11, 0.44, -0.2 }, { 0.38, 0.05, 0.12, 0.36, -0.9 } }
-		for _, f in fingers do
-			local fx, fy = at(f[1], f[2])
-			wallMark(plateCF, "Finger", fx, fy, f[3], f[4], col, angle + f[5], 0.15)
-		end
-		-- handen har sklidd nedover veggen
-		if smearLen > 0 then
-			for k = 1, 4 do
-				local sx, sy = at(-0.25 + k * 0.12, -smearLen / 2)
-				wallMark(plateCF, "Smear", sx, sy, 0.07, smearLen, col, angle, 0.45 + k * 0.08)
-			end
-		end
-	end
-
+	-- Blodskrift: ett usynlig "lerret" på veggen med bokstaver, renner, sprut og håndavtrykk.
+	-- Lerretet er større enn teksten, så rennene får plass under og håndavtrykkene ved siden av.
+	-- Returnerer lerretet; koordinatene har origo midt i teksten.
+	local PAD_SIDE, PAD_TOP, PAD_BOTTOM = 1.3, 0.6, 2.6
 	local function bloodWriting(x: number, y: number, dirName: string, text: string, height: number?, letterH: number?)
 		local d = ({ N = Vector3.new(0, 0, -1), S = Vector3.new(0, 0, 1), W = Vector3.new(-1, 0, 0), E = Vector3.new(1, 0, 0) })[dirName]
 		local lines = string.split(text, "\n")
@@ -956,33 +919,23 @@ return function(parent: any)
 		end
 		local W = math.max(6, longest * LH * 0.72 + 1.4)
 		local Hh = #lines * LH * 1.3 + 1.2
+		local Wc, Hc = W + PAD_SIDE * 2, Hh + PAD_TOP + PAD_BOTTOM
+		local textY = Hc / 2 - PAD_TOP - Hh / 2 -- tekstens midte, målt fra lerretets midte
 		local pos = cellCenter(x, y, height or 6.2) + d * (CELL / 2 - 0.03)
-		local plateCF = lib.lookAt(pos, pos - d)
-		local plate = lib.part(folders.Decor, "Writing", Vector3.new(W, Hh, 0.02), plateCF, rgb(0, 0, 0), nil, {
-			Transparency = 1,
-			CanCollide = false,
-			CanQuery = false,
-			CanTouch = false,
-			CastShadow = false,
-		})
-		local gui = lib.new("SurfaceGui", {
-			Name = "BloodText",
-			Face = Enum.NormalId.Front,
-			SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud,
-			PixelsPerStud = PPS,
-			LightInfluence = 1,
-			Brightness = 1,
-			ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
-		}, plate)
+		local canvas = Blood.canvas(folders.Decor, "Writing", lib.lookAt(pos, pos - d) * CFrame.new(0, -textY, 0), Wc, Hc, "Front", PPS)
+		canvas:setOrigin(0, textY)
+		canvas.gui.Name = "BloodText"
+		local gui = canvas.gui
 		local px = LH * PPS
 		local Wpx, Hpx = W * PPS, Hh * PPS
+		local offX, offY = PAD_SIDE * PPS, PAD_TOP * PPS -- tekstblokka sin plass på lerretet
 
 		-- utsmurte strøk bak teksten
 		for _ = 1, rng(2, 4) do
 			local smear = lib.new("Frame", {
 				Name = "Smear",
 				AnchorPoint = lib.Vector2.new(0.5, 0.5),
-				Position = lib.UDim2.new(0, Wpx * (0.2 + rng() * 0.6), 0, Hpx * (0.25 + rng() * 0.5)),
+				Position = lib.UDim2.new(0, offX + Wpx * (0.2 + rng() * 0.6), 0, offY + Hpx * (0.25 + rng() * 0.5)),
 				Size = lib.UDim2.new(0, px * (1.5 + rng() * 3), 0, px * (0.12 + rng() * 0.18)),
 				Rotation = rng() * 40 - 20,
 				BackgroundColor3 = bloodColor(),
@@ -1014,7 +967,7 @@ return function(parent: any)
 					lib.new("TextLabel", {
 						Name = "Letter",
 						AnchorPoint = lib.Vector2.new(0.5, 0.5),
-						Position = lib.UDim2.new(0, lx, 0, ly),
+						Position = lib.UDim2.new(0, offX + lx, 0, offY + ly),
 						Size = lib.UDim2.new(0, size * 1.2, 0, size * 1.3),
 						Rotation = rot,
 						BackgroundTransparency = 1,
@@ -1033,7 +986,7 @@ return function(parent: any)
 						lib.new("TextLabel", {
 							Name = "LetterSmear",
 							AnchorPoint = lib.Vector2.new(0.5, 0.5),
-							Position = lib.UDim2.new(0, lx + (rng() - 0.5) * 6, 0, ly + 3 + rng() * 5),
+							Position = lib.UDim2.new(0, offX + lx + (rng() - 0.5) * 6, 0, offY + ly + 3 + rng() * 5),
 							Size = lib.UDim2.new(0, size * 1.2, 0, size * 1.3),
 							Rotation = rot + (rng() - 0.5) * 8,
 							BackgroundTransparency = 1,
@@ -1047,24 +1000,26 @@ return function(parent: any)
 						}, gui)
 					end
 					-- renner fra bunnen av bokstaven
-					local wx = W / 2 - lx / PPS
+					local wx = lx / PPS - W / 2
 					local wy = Hh / 2 - (ly + size * 0.42) / PPS
 					if rng() < 0.5 then
-						drip(plateCF, -wx + (rng() - 0.5) * 0.25, wy)
+						local len = rng() < 0.3 and (1.2 + rng() * 1.2) or (0.25 + rng() * 0.8)
+						canvas:drip(wx + (rng() - 0.5) * 0.25, wy, len, 0.05 + rng() * 0.05, Blood.FRESH)
 					end
 					if rng() < 0.15 then
-						drip(plateCF, -wx + (rng() - 0.5) * 0.3, wy + 0.1)
+						canvas:drip(wx + (rng() - 0.5) * 0.3, wy + 0.1, 0.2 + rng() * 0.6, 0.04 + rng() * 0.04, Blood.FRESH)
 					end
 				end
 				cx += adv
 			end
 		end
 		-- sprut rundt teksten
-		for _ = 1, rng(8, 16) do
-			local r = 0.04 + rng() * 0.12
-			wallMark(plateCF, "Splatter", (rng() - 0.5) * W * 1.1, (rng() - 0.5) * Hh * 1.1, r, r * (1 + rng() * 0.6), bloodColor(), rng() * 3)
+		for _ = 1, rng(10, 18) do
+			local r = 0.03 + rng() * 0.09
+			local a = rng() * math.pi * 2
+			canvas:blob((rng() - 0.5) * W * 1.1, (rng() - 0.5) * Hh * 1.1, r * (1 + rng() * 1.6), r, a, bloodColor(), rng() * 0.2, 2)
 		end
-		return plateCF, W, Hh
+		return canvas, W, Hh
 	end
 
 	local writings = {
@@ -1086,13 +1041,20 @@ return function(parent: any)
 		{ 82, 44, "N", "ALMOST\nOUT :)" },
 		{ 30, 42, "S", "DON'T GO TO\nTHE DOCK" },
 	}
+	local nearWriting = {} -- ruter med blodskrift (ingen sprut oppå teksten)
 	for i, wr in writings do
-		local plateCF, W, Hh = bloodWriting(wr[1], wr[2], wr[3], wr[4], wr[5])
-		if i == 1 or i == 6 or i == 9 then
-			handprint(plateCF, W / 2 + 0.6, -Hh * 0.1, math.rad(rng(-25, 25)), 0.8 + rng() * 1.2)
+		for dy = -3, 3 do
+			for dx = -3, 3 do
+				nearWriting[key(wr[1] + dx, wr[2] + dy)] = true
+			end
 		end
-		if i == 3 then
-			handprint(plateCF, -W / 2 - 0.4, 0.4, math.rad(-15), 0)
+		local canvas, W, Hh = bloodWriting(wr[1], wr[2], wr[3], wr[4], wr[5])
+		if i == 1 or i == 6 or i == 9 or i == 13 then
+			canvas:hand(W / 2 + 0.6, -Hh * 0.1, math.rad(rng(-25, 25)), 0.8 + rng() * 1.2, Blood.FRESH, rng)
+		end
+		if i == 3 or i == 11 then
+			canvas:hand(-W / 2 - 0.4, 0.4, math.rad(15), 0, Blood.FRESH, rng)
+			canvas:hand(-W / 2 - 0.2, -0.9, math.rad(-10), 0.6, Blood.FRESH, rng)
 		end
 	end
 
@@ -1107,19 +1069,138 @@ return function(parent: any)
 			end
 		end
 	end
-	for i = 1, 28 do
-		local c = floorCells[rng(1, #floorCells)]
-		local p = cellCenter(c[1], c[2], 0.12) + Vector3.new((rng() - 0.5) * 2, 0, (rng() - 0.5) * 2)
-		local size = 1.2 + rng() * 2.5
-		lib.part(folders.Decor, "Stain", Vector3.new(0.02, size, size * (0.6 + rng() * 0.6)), CFrame.new(p) * CFrame.Angles(0, rng() * 3, math.pi / 2), COLORS.blood, Enum.Material.SmoothPlastic, {
-			Shape = Enum.PartType.Cylinder,
-			CanCollide = false,
-			CanQuery = false,
-			CanTouch = false,
-			CastShadow = false,
-			Transparency = 0.15,
-		})
+	-- Er dette punktet (i studs) ledig gulv?
+	local function freeAt(px: number, pz: number): boolean
+		local cx, cy = math.floor(px / CELL), math.floor(pz / CELL)
+		local row = grid[cy]
+		return row ~= nil and row[cx] == "." and not occupied[key(cx, cy)]
 	end
+	-- Finner en retning der hele sporet (lengde len) går over ledig gulv
+	local function clearDirection(p: any, len: number): number?
+		for _ = 1, 10 do
+			local yaw = rng() * math.pi * 2
+			local dx, dz = math.cos(yaw), math.sin(yaw)
+			local ok = true
+			for t = 0, len, 0.8 do
+				if not freeAt(p.X + dx * t, p.Z + dz * t) then
+					ok = false
+					break
+				end
+			end
+			if ok then
+				return yaw
+			end
+		end
+		return nil
+	end
+	local FLOOR_Y = 0.115
+	local function floorCanvas(center: any, yaw: number, w: number, h: number)
+		-- lerretets +x peker langs yaw (gulvplanet er x/z)
+		local cf = CFrame.new(center.X, FLOOR_Y, center.Z) * CFrame.Angles(0, -yaw, 0)
+		return Blood.canvas(folders.Decor, "Blood", cf, w, h, "Top", 32)
+	end
+	local function randomFloorPoint(): any
+		local c = floorCells[rng(1, #floorCells)]
+		return cellCenter(c[1], c[2]) + Vector3.new((rng() - 0.5) * 1.5, 0, (rng() - 0.5) * 1.5)
+	end
+	local poolCount = 0
+	-- vanlige pytter (noen ferske, noen inntørkede)
+	for _ = 1, 15 do
+		local p = randomFloorPoint()
+		local r = 0.7 + rng() * 1.1
+		local size = r * 4.2
+		local canvas = floorCanvas(p, rng() * math.pi * 2, size, size)
+		canvas:pool(0, 0, r, if rng() < 0.6 then Blood.FRESH else Blood.DRIED, rng)
+		if rng() < 0.4 then
+			canvas:pool((rng() - 0.5) * r * 1.6, (rng() - 0.5) * r * 1.6, r * 0.35, Blood.FRESH, rng, { gloss = false, drops = 5 })
+		end
+		poolCount += 1
+	end
+	-- slepespor: noen er dratt bortover gulvet
+	local placed = 0
+	for _ = 1, 40 do
+		if placed >= 7 then
+			break
+		end
+		local p = randomFloorPoint()
+		local r = 0.8 + rng() * 0.6
+		local len = 3.5 + rng() * 4
+		local yaw = clearDirection(p, len + r)
+		if yaw then
+			local w, h = r * 2.6 + len + 0.6, r * 2.8
+			local center = p + Vector3.new(math.cos(yaw), 0, math.sin(yaw)) * (w / 2 - r * 1.3)
+			local canvas = floorCanvas(center, yaw, w, h)
+			local x0 = -w / 2 + r * 1.3
+			local pal = if rng() < 0.5 then Blood.FRESH else Blood.DRIED
+			canvas:pool(x0, 0, r, pal, rng, { drops = 7 })
+			canvas:drag(x0 + r * 0.6, 0, len, r * 1.2, pal, rng)
+			placed += 1
+			poolCount += 1
+		end
+	end
+	-- bare fotspor som går ut av en pytt (pasienten går barbeint...)
+	placed = 0
+	for _ = 1, 40 do
+		if placed >= 7 then
+			break
+		end
+		local p = randomFloorPoint()
+		local r = 0.55 + rng() * 0.35
+		local steps = rng(6, 10)
+		local len = steps * 0.85 + 0.7
+		local yaw = clearDirection(p, len + r)
+		if yaw then
+			local w, h = r * 2.6 + len + 0.6, math.max(2.4, r * 2.8)
+			local center = p + Vector3.new(math.cos(yaw), 0, math.sin(yaw)) * (w / 2 - r * 1.3)
+			local canvas = floorCanvas(center, yaw, w, h)
+			local x0 = -w / 2 + r * 1.3
+			canvas:pool(x0, 0, r, Blood.FRESH, rng, { drops = 6 })
+			canvas:footprints(x0 + r + 0.4, 0, steps, Blood.FRESH, rng)
+			placed += 1
+			poolCount += 1
+		end
+	end
+	-- små dryppflekker spredt rundt (noen har blødd mens de gikk)
+	for _ = 1, 10 do
+		local p = randomFloorPoint()
+		local canvas = floorCanvas(p, rng() * math.pi * 2, 3, 3)
+		for _ = 1, rng(4, 8) do
+			local s = 0.06 + rng() * 0.12
+			canvas:blob((rng() - 0.5) * 2.2, (rng() - 0.5) * 2.2, s * (1 + rng() * 0.6), s, rng() * 3, Blood.FRESH.body, rng() * 0.2, 2)
+		end
+	end
+
+	-- Sprut på veggene (der det er en sammenhengende vegg på minst 3 ruter)
+	local sprays = 0
+	local DIRS = { N = { 0, -1 }, S = { 0, 1 }, W = { -1, 0 }, E = { 1, 0 } }
+	local dirNames = { "N", "S", "W", "E" }
+	for _ = 1, 400 do
+		if sprays >= 12 then
+			break
+		end
+		local c = floorCells[rng(1, #floorCells)]
+		local dn = dirNames[rng(1, 4)]
+		local dv = DIRS[dn]
+		local ok = true
+		for k = -1, 1 do
+			-- ruta langs veggen, og veggen bak den
+			local fx, fy = c[1] + dv[2] * k, c[2] + dv[1] * k
+			local row = grid[fy]
+			local wallRow = grid[fy + dv[2]]
+			if not row or row[fx] ~= "." or occupied[key(fx, fy)] or nearWriting[key(fx, fy)] or not wallRow or wallRow[fx + dv[1]] ~= "#" then
+				ok = false
+				break
+			end
+		end
+		if ok then
+			local d = Vector3.new(dv[1], 0, dv[2])
+			local pos = cellCenter(c[1], c[2], 4.2) + d * (CELL / 2 - 0.035)
+			local canvas = Blood.canvas(folders.Decor, "Spray", lib.lookAt(pos, pos - d), 7, 6.5, "Front", 32)
+			canvas:spray((rng() - 0.5) * 1.5, -0.6 + rng() * 1.2, (rng() - 0.5) * 1.2 + (if rng() < 0.5 then 0 else math.pi), 2.2 + rng() * 0.9, Blood.FRESH, rng)
+			sprays += 1
+		end
+	end
+	print(string.format("Blod: %d pytter/spor, %d sprut på vegger", poolCount, sprays))
 	for i = 1, 40 do
 		local c = floorCells[rng(1, #floorCells)]
 		local p = cellCenter(c[1], c[2], 0.13) + Vector3.new((rng() - 0.5) * 3, 0, (rng() - 0.5) * 3)

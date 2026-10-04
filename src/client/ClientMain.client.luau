@@ -20,6 +20,7 @@ local Controls = require(script:WaitForChild("Controls"))
 local Jumpscare = require(script:WaitForChild("Jumpscare"))
 local MonsterAnimator = require(script:WaitForChild("MonsterAnimator"))
 local Ending = require(script:WaitForChild("Ending"))
+local Scares = require(script:WaitForChild("Scares"))
 
 local player = Players.LocalPlayer
 
@@ -29,6 +30,7 @@ Controls.init(UI)
 Jumpscare.init(UI, Effects)
 MonsterAnimator.init()
 Ending.init(UI, Effects, Controls)
+Scares.init(UI, Effects, Ending.isPlaying)
 
 -- Ingen "Reset character" i et skrekkspill
 task.spawn(function()

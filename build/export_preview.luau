@@ -10,6 +10,7 @@ local serde = require("@lune/serde")
 local lib = require("./lib")
 local buildHospital = require("./hospital")
 local buildPatient = require("./patient")
+local buildKey = require("./key")
 
 local scene = process.args[1] or "patient"
 local outPath = process.args[2] or "preview.json"
@@ -192,6 +193,62 @@ elseif scene == "hospital" then
 		end
 	end
 	extra.monsterPivot = cfArray(m.PrimaryPart.CFrame)
+elseif scene == "blood" then
+	-- utstilling av blodet: pytter, slepespor og fotspor på gulvet, sprut og håndavtrykk på veggen
+	local Blood = require("./blood")
+	local rng = lib.rng(31)
+	local V3, CF = roblox.Vector3, roblox.CFrame
+	lib.part(container, "Floor", V3.new(80, 1, 30), CF.new(0, -0.5, 0), lib.rgb(140, 146, 136), roblox.Enum.Material.CeramicTiles)
+	lib.part(container, "Wall", V3.new(80, 14, 1), CF.new(0, 7, -10.5), lib.rgb(186, 174, 132), roblox.Enum.Material.Plaster)
+	lib.part(container, "WallLow", V3.new(80, 4, 1.1), CF.new(0, 2, -10.5), lib.rgb(84, 110, 96), roblox.Enum.Material.Plaster)
+	local function fc(x: number, z: number, yaw: number, w: number, h: number)
+		return Blood.canvas(container, "Blood", CF.new(x, 0.03, z) * CF.Angles(0, -yaw, 0), w, h, "Top", 32)
+	end
+	fc(-30, 0, 0.3, 7, 7):pool(0, 0, 1.5, Blood.FRESH, rng)
+	fc(-18, 0, 1.0, 6, 6):pool(0, 0, 1.2, Blood.DRIED, rng)
+	local drag = fc(-3, 0, 0.2, 9.6, 3)
+	drag:pool(-3.5, 0, 1, Blood.FRESH, rng, { drops = 7 })
+	drag:drag(-2.9, 0, 6, 1.2, Blood.FRESH, rng)
+	local steps = fc(14, 0, -0.15, 10.2, 2.6)
+	steps:pool(-4.2, 0, 0.7, Blood.FRESH, rng, { drops = 6 })
+	steps:footprints(-3.1, 0, 9, Blood.FRESH, rng)
+	local function wc(x: number, y: number, w: number, h: number)
+		local pos = V3.new(x, y, -9.965)
+		return Blood.canvas(container, "Wall", lib.lookAt(pos, pos + V3.new(0, 0, 1)), w, h, "Front", 40)
+	end
+	wc(-24, 4.2, 7, 6.5):spray(-0.5, 0, 0.25, 3, Blood.FRESH, rng)
+	local hands = wc(-8, 5, 5, 5)
+	hands:hand(-1, 0.5, math.rad(12), 1.4, Blood.FRESH, rng)
+	hands:hand(0.9, -0.6, math.rad(-18), 0, Blood.FRESH, rng)
+	hands:drip(-0.2, 1.4, 1.6, 0.08, Blood.FRESH)
+	hands:drip(1.4, 0.3, 0.9, 0.06, Blood.FRESH)
+elseif scene == "keyroom" then
+	-- en nøkkel som svever over et skap i et mørkt pasientrom (lampene der er av)
+	buildHospital(container)
+	local map = container:FindFirstChild("HospitalTemplate") or container
+	local spot
+	for _, m in map:FindFirstChild("KeySpots", true):GetChildren() do
+		if m:GetAttribute("Room") == (process.args[3] or "R101") then
+			spot = m
+		end
+	end
+	local base = spot.CFrame.Position
+	local key = buildKey(container)
+	local T = roblox.CFrame.new(base + roblox.Vector3.new(0, 1.55, 0)) * roblox.CFrame.Angles(0, 0.6, 0) * roblox.CFrame.Angles(-math.pi / 2, 0, 0)
+	for _, d in key:GetDescendants() do
+		if d.ClassName == "Part" then
+			d.CFrame = T * d.CFrame
+		end
+	end
+	for _, lamp in map:FindFirstChild("Lamps", true):GetChildren() do
+		local panel = lamp:FindFirstChild("Panel")
+		if panel and (panel.CFrame.Position - base).Magnitude < 26 then
+			panel.Material = roblox.Enum.Material.SmoothPlastic
+			panel.Color = lib.rgb(60, 64, 62)
+			panel:FindFirstChildOfClass("PointLight").Enabled = false
+		end
+	end
+	extra.key = { base.X, base.Y + 1.55, base.Z }
 elseif scene == "ending" then
 	-- sluttscenen: monsteret står i nødutgangen og vinker (samme formler som Ending.luau)
 	buildHospital(container)

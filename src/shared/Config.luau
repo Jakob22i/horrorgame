@@ -97,6 +97,18 @@ local Config = {
 		PowerUp = "rbxassetid://9117883108", -- Power Up And Down
 		Alarm = "rbxassetid://9119661709", -- Submarine Alarm Siren
 		StaticBurst = "rbxassetid://9126160991", -- Video Static Burst
+		KeyShimmer = "rbxassetid://9125986205", -- Sparkle Tone Constant High End Shimmer (nøklene)
+		-- Lyder i det fjerne (spilles tilfeldig rundt deg)
+		Knock = "rbxassetid://9114141413", -- Door Knock 5
+		FranticKnock = "rbxassetid://9114432636", -- Fire Door Frantic Knocks 1
+		DoorSlam = "rbxassetid://9114153270", -- Door Slams 2
+		DoorCreak = "rbxassetid://9114135682", -- Door Creak 1
+		Whisper = "rbxassetid://9126213995", -- Whisper Bursts Unintelligible Eerie
+		WhisperClose = "rbxassetid://9126214616", -- Whisper Bursts Reverberant
+		GurneyRoll = "rbxassetid://9114735770", -- Gurney Rolling 2
+		MetalScrape = "rbxassetid://9116818437", -- Metal Scrapes 1
+		DistantScream = "rbxassetid://9125438052", -- Child Scream Nightmare Distant
+		PowerHum = "rbxassetid://9125784811", -- Power Throb Tonal Hum Slow Pulse
 	},
 }
 

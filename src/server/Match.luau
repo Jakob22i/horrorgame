@@ -226,8 +226,9 @@ function Match:_setupLamps()
 		if (panel.Position - nearSpawn).Magnitude < 28 then
 			mode = "on"
 		else
+			-- "dim" = en svak, summende lampe (ingen blinking; klienten styrer lysnivået)
 			local r = math.random()
-			mode = r < 0.4 and "on" or (r < 0.68 and "flicker" or "off")
+			mode = r < 0.55 and "on" or (r < 0.78 and "dim" or "off")
 		end
 		lamp:SetAttribute("Mode", mode)
 		if mode == "off" then
@@ -236,7 +237,7 @@ function Match:_setupLamps()
 			if light then
 				light.Enabled = false
 			end
-		elseif mode == "flicker" and Config.Sounds.LampBuzz ~= "" then
+		elseif mode == "dim" and Config.Sounds.LampBuzz ~= "" then
 			local buzz = Instance.new("Sound")
 			buzz.Name = "Buzz"
 			buzz.SoundId = Config.Sounds.LampBuzz

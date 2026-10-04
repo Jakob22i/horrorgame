@@ -11,6 +11,7 @@ local lib = require("./lib")
 local buildLobby = require("./lobby")
 local buildHospital = require("./hospital")
 local buildPatient = require("./patient")
+local buildKey = require("./key")
 
 local Vector3, CFrame, Enum = lib.Vector3, lib.CFrame, lib.Enum
 local rgb = lib.rgb
@@ -118,31 +119,7 @@ jumpscareModel.Parent = assets
 ------------------------------------------------------------------
 -- Nøkkel
 ------------------------------------------------------------------
-do
-	local GOLD = rgb(214, 172, 60)
-	local key = lib.new("Model", { Name = "Key" })
-	local function keyPart(name: string, size: any, cf: any, color: any?)
-		return lib.part(key, name, size, cf, color or GOLD, Enum.Material.Metal, { CanCollide = false, CastShadow = false })
-	end
-	local bow = lib.cylinderY(key, "Bow", 1.1, 0.18, CFrame.new(0, 0, 0.8), GOLD, Enum.Material.Metal)
-	bow.CanCollide = false
-	lib.cylinderY(key, "BowHole", 0.5, 0.2, CFrame.new(0, 0, 0.8), rgb(40, 30, 12), Enum.Material.Metal).CanCollide = false
-	keyPart("Shaft", Vector3.new(0.22, 0.18, 1.7), CFrame.new(0, 0, -0.45))
-	keyPart("Tooth1", Vector3.new(0.45, 0.18, 0.22), CFrame.new(0.3, 0, -1.1))
-	keyPart("Tooth2", Vector3.new(0.35, 0.18, 0.2), CFrame.new(0.25, 0, -0.65))
-	lib.new("PointLight", { Range = 7, Brightness = 1.4, Color = rgb(255, 205, 110), Shadows = false }, bow)
-	lib.new("ProximityPrompt", {
-		Name = "PickupPrompt",
-		ActionText = "Pick up",
-		ObjectText = "Key",
-		HoldDuration = 0.25,
-		MaxActivationDistance = 8,
-		RequiresLineOfSight = false,
-		KeyboardKeyCode = Enum.KeyCode.E,
-	}, bow)
-	key.WorldPivotData = CFrame.new(0, 0, 0)
-	key.Parent = ServerStorage
-end
+buildKey(ServerStorage)
 
 ------------------------------------------------------------------
 -- RemoteEvents
@@ -200,7 +177,7 @@ if oldClient then
 	oldClient.Parent = nil
 end
 local client, smClient = script("LocalScript", "ClientMain", "src/client/ClientMain.client.luau", sps, smSPS)
-for _, name in { "UI", "Effects", "Controls", "Jumpscare", "MonsterAnimator", "Ending" } do
+for _, name in { "UI", "Effects", "Controls", "Jumpscare", "MonsterAnimator", "Ending", "Scares" } do
 	script("ModuleScript", name, "src/client/" .. name .. ".luau", client, smClient)
 end
 

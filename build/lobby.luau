@@ -147,7 +147,7 @@ return function(parent: any, spawnLocation: any)
 	for _, z in { -222, -204, -186 } do
 		for _, x in { -36, -12, 12, 36 } do
 			n += 1
-			local m = lib.new("Model", { Name = "Lamp", Tags = { "Lamp" }, Attributes = { Mode = flickerIndex[n] and "flicker" or "on" } }, lamps)
+			local m = lib.new("Model", { Name = "Lamp", Tags = { "Lamp" }, Attributes = { Mode = flickerIndex[n] and "dim" or "on" } }, lamps)
 			box(m, "Housing", x - 2.2, HEIGHT - 0.2, z - 1, x + 2.2, HEIGHT, z + 1, DARK, Enum.Material.Metal, { CanQuery = false, CastShadow = false })
 			local panel = box(m, "Panel", x - 2, HEIGHT - 0.35, z - 0.8, x + 2, HEIGHT - 0.2, z + 0.8, rgb(255, 244, 212), Enum.Material.Neon, { CanQuery = false, CastShadow = false })
 			lib.new("PointLight", { Name = "Light", Range = 26, Brightness = 0.9, Color = rgb(255, 230, 180), Shadows = true }, panel)
