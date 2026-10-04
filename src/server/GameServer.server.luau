@@ -63,6 +63,7 @@ end
 function Manager:SendToLobby(player: Player)
 	playerMatch[player] = nil
 	resetAttributes(player)
+	player.ReplicationFocus = nil
 	if player.Parent == Players then
 		MatchStateRemote:FireClient(player, "lobby")
 		player:LoadCharacter()
@@ -219,4 +220,10 @@ Shop.init(Manager)
 
 Lobby.init(function(group, mode)
 	Manager:StartMatch(group, mode)
+end, function()
+	local count = 0
+	for _ in matches do
+		count += 1
+	end
+	return count < Config.MaxMatches
 end)

@@ -8,6 +8,13 @@ local player = Players.LocalPlayer
 
 local UI = {}
 
+local UserInputService = game:GetService("UserInputService")
+
+-- Mobil/nettbrett: berøringsskjerm uten tastatur
+function UI.isTouch(): boolean
+	return UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+end
+
 local FONT_VHS = Enum.Font.RobotoMono
 local FONT_TEXT = Enum.Font.SpecialElite
 
@@ -1206,10 +1213,50 @@ function UI.startCooldown(name: string, seconds: number)
 	s.cooldownLength = seconds
 end
 
+local touchLayout: boolean? = nil
+
+-- Mobil: knappene nede til høyre, rett ved siden av Roblox sin hoppeknapp (der tommelen er),
+-- litt større, og uten tastene (1, 2, 3, SHIFT) på knappene
+local function applyTouchLayout(touch: boolean, view: Vector2)
+	if touch then
+		local minAxis = math.min(view.X, view.Y)
+		local jumpSize = if minAxis <= 500 then 70 else 120
+		local jumpLeft = jumpSize * 1.5 - 10 -- avstand fra høyre kant til venstre side av hoppeknappen
+		actionBar.AnchorPoint = Vector2.new(1, 1)
+		actionBar.Position = UDim2.new(1, -(jumpLeft + 14), 1, -10)
+	else
+		actionBar.AnchorPoint = Vector2.new(0.5, 1)
+		actionBar.Position = UDim2.new(0.5, 0, 1, -24)
+	end
+	if touchLayout ~= touch then
+		touchLayout = touch
+		local layout = actionBar:FindFirstChildOfClass("UIListLayout")
+		if layout then
+			layout.HorizontalAlignment = if touch then Enum.HorizontalAlignment.Right else Enum.HorizontalAlignment.Center
+		end
+		for _, s in slots do
+			local keyLabel = s.button:FindFirstChild("Key")
+			if keyLabel and keyLabel:IsA("TextLabel") then
+				keyLabel.Visible = not touch
+			end
+		end
+		leaveButton.Text = if touch then "LEAVE LOCKER" else "LEAVE LOCKER  [E]"
+	end
+end
+
 function UI.updateActionBar()
 	local cam = workspace.CurrentCamera
 	if cam then
-		actionScale.Scale = math.clamp(cam.ViewportSize.Y / 720, 0.75, 1.25)
+		local view = cam.ViewportSize
+		local touch = UI.isTouch()
+		local minScale = if touch then 0.9 else 0.75
+		actionScale.Scale = math.clamp(view.Y / 720, minScale, 1.25)
+		applyTouchLayout(touch, view)
+		-- menyene (YOU DIED osv.) krympes så de får plass på små mobilskjermer
+		local panelScale = panel:FindFirstChild("Scale")
+		if panelScale and panelScale:IsA("UIScale") then
+			panelScale.Scale = math.clamp(math.min(view.X / 560, view.Y / 500), 0.6, 1.2)
+		end
 	end
 	local now = os.clock()
 	for _, s in slots do

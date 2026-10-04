@@ -55,7 +55,13 @@ local baseplate = Workspace:FindFirstChild("Baseplate")
 if baseplate then
 	baseplate.Parent = nil
 end
-Workspace.StreamingEnabled = false
+-- Streaming: hver spiller laster bare det som er i nærheten. Rundene ligger 1600 studs fra
+-- hverandre og fra lobbyen, så du laster bare ditt eget sykehus (ikke de andre rundene).
+Workspace.StreamingEnabled = true
+Workspace.StreamingTargetRadius = 560
+Workspace.StreamingMinRadius = 160
+Workspace.StreamOutBehavior = Enum.StreamOutBehavior.Opportunistic
+Workspace.StreamingIntegrityMode = Enum.StreamingIntegrityMode.MinimumRadiusPause
 
 Lighting.Technology = Enum.Technology.Future
 Lighting.TimeOfDay = "00:00:00"
@@ -105,6 +111,7 @@ print(preview)
 print(string.format("Sykehus: %d veggblokker, %d patruljepunkter", stats.walls, stats.patrol))
 
 local monster = buildPatient(ServerStorage, "Monster")
+monster.ModelStreamingMode = Enum.ModelStreamingMode.Atomic -- hele monsteret lastes inn på én gang
 
 local assets = lib.new("Folder", { Name = "Assets" }, ReplicatedStorage)
 local jumpscareModel = monster:Clone()

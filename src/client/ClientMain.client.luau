@@ -153,7 +153,7 @@ MatchStateRemote.OnClientEvent:Connect(function(state, data)
 		UI.hidePanels()
 		task.delay(11, function()
 			if player:GetAttribute("InMatch") == true then
-				UI.notify("TIP: Hold SHIFT (or the RUN button) to run.", "info")
+				UI.notify(if UI.isTouch() then "TIP: Tap RUN (bottom right) to run." else "TIP: Hold SHIFT to run.", "info")
 			end
 		end)
 		local players = data and data.players or 1
@@ -163,7 +163,7 @@ MatchStateRemote.OnClientEvent:Connect(function(state, data)
 			"",
 			"Find 5 keys. Bring them to the emergency exit.",
 			"Hide in the lockers. Do not let it see you.",
-			"Hold SHIFT (or the RUN button) to run. Watch your stamina.",
+			if UI.isTouch() then "Tap RUN to run. Watch your stamina." else "Hold SHIFT to run. Watch your stamina.",
 			"",
 			players == 1 and "You are alone." or ("There are " .. players .. " of you."),
 			if data and data.mode == "Nightmare" then "\nNIGHTMARE MODE. One life. No mercy." else "",

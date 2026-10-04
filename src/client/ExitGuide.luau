@@ -23,15 +23,34 @@ local showUntil = 0
 local revealStart = 0
 local lastKeys = 0
 
+-- Et usynlig, lokalt punkt over døra som markøren henger på (døra selv er kanskje ikke
+-- lastet inn hos deg når du er langt unna, på grunn av streaming)
+local anchor: Part? = nil
 local function exitPart(): BasePart?
 	local folder = Effects.currentMatchFolder()
-	local map = folder and folder:FindFirstChild("Map")
-	local exit = map and map:FindFirstChild("ExitDoor")
-	local header = exit and exit:FindFirstChild("Header")
-	if header and header:IsA("BasePart") then
-		return header
+	local pos = folder and folder:GetAttribute("ExitPos")
+	if typeof(pos) ~= "Vector3" then
+		return nil
 	end
-	return nil
+	local part = anchor
+	if not part or not part.Parent then
+		local p = Instance.new("Part")
+		p.Name = "ExitMarkerAnchor"
+		p.Anchored = true
+		p.CanCollide = false
+		p.CanQuery = false
+		p.CanTouch = false
+		p.Transparency = 1
+		p.Size = Vector3.new(0.2, 0.2, 0.2)
+		p.Parent = workspace
+		anchor = p
+		part = p
+	end
+	local target = pos + Vector3.new(0, 13, 0)
+	if (part :: Part).Position ~= target then
+		(part :: Part).CFrame = CFrame.new(target)
+	end
+	return part
 end
 
 local function exitOpen(): boolean

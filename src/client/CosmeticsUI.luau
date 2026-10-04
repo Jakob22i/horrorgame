@@ -5,6 +5,7 @@ local Players = game:GetService("Players")
 local ProximityPromptService = game:GetService("ProximityPromptService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local SocialService = game:GetService("SocialService")
 local UserInputService = game:GetService("UserInputService")
 
 local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"))
@@ -22,6 +23,7 @@ local PANEL = Color3.fromRGB(14, 12, 10)
 local gui: ScreenGui
 local coinHud: Frame
 local coinHudLabel: TextLabel
+local inviteButton: TextButton
 local window: Frame
 local windowCoins: TextLabel
 local grid: ScrollingFrame
@@ -179,6 +181,7 @@ local function refresh()
 	coinHudLabel.Text = tostring(coins)
 	windowCoins.Text = tostring(coins) .. " COINS"
 	coinHud.Visible = attr("InMatch") ~= true and not window.Visible
+	inviteButton.Visible = attr("InMatch") ~= true and not window.Visible
 	if not window.Visible then
 		return
 	end
@@ -240,6 +243,39 @@ local function build()
 		Font = MONO,
 		Text = "0",
 	})
+
+	-- Inviter venner (Roblox sin egen invitasjonsmeny)
+	inviteButton = make("TextButton", {
+		Name = "Invite",
+		AnchorPoint = Vector2.new(1, 0),
+		Position = UDim2.new(1, -24, 0, 118),
+		Size = UDim2.fromOffset(170, 38),
+		BackgroundColor3 = Color3.fromRGB(40, 110, 60),
+		BackgroundTransparency = 0.1,
+		BorderSizePixel = 0,
+		Text = "",
+		AutoButtonColor = true,
+	}, gui)
+	make("UICorner", { CornerRadius = UDim.new(0, 8) }, inviteButton)
+	make("UIStroke", { Color = Color3.fromRGB(140, 230, 160), Thickness = 1.5, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, inviteButton)
+	label(inviteButton, {
+		Size = UDim2.new(1, -16, 0.62, 0),
+		Position = UDim2.fromScale(0.5, 0.5),
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Font = MONO,
+		Text = "INVITE FRIENDS",
+		TextColor3 = Color3.fromRGB(235, 255, 238),
+	})
+	inviteButton.Activated:Connect(function()
+		local ok, canInvite = pcall(function()
+			return SocialService:CanSendGameInviteAsync(player)
+		end)
+		if ok and canInvite then
+			pcall(function()
+				SocialService:PromptGameInvite(player)
+			end)
+		end
+	end)
 
 	-- selve butikken
 	window = make("Frame", {

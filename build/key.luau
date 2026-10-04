@@ -8,7 +8,7 @@ local rgb = lib.rgb
 
 return function(parent: any)
 	local GOLD = rgb(236, 190, 72)
-	local key = lib.new("Model", { Name = "Key", Tags = { "Key" } })
+	local key = lib.new("Model", { Name = "Key", Tags = { "Key" }, ModelStreamingMode = Enum.ModelStreamingMode.Atomic })
 	local function keyPart(name: string, size: any, cf: any, color: any?)
 		return lib.part(key, name, size, cf, color or GOLD, Enum.Material.Metal, { CanCollide = false, CastShadow = false, Reflectance = 0.15 })
 	end

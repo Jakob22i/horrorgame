@@ -6,6 +6,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local SoundService = game:GetService("SoundService")
+local UserInputService = game:GetService("UserInputService")
 
 local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"))
 
@@ -126,6 +127,10 @@ local function refreshLamps()
 					seen[panel] = true
 					if not lamps[panel] then
 						local light = panel:FindFirstChildWhichIsA("Light")
+						-- mobil: ingen skygger fra taklampene (mye raskere)
+						if light and UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled then
+							light.Shadows = false
+						end
 						-- husk de opprinnelige verdiene første gang vi ser lampa (vi endrer dem selv senere)
 						if panel:GetAttribute("BaseColor") == nil then
 							panel:SetAttribute("BaseColor", panel.Color)

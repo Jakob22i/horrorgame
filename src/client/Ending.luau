@@ -150,27 +150,23 @@ function Ending.play(_data: any)
 		return
 	end
 
-	-- Finn nødutgangen i kartet til runden din
+	-- Finn nødutgangen i runden din (posisjonen ligger som attributter på mappen, så den er
+	-- kjent selv om døra ikke er lastet inn hos deg ennå)
 	local folder = Effects.currentMatchFolder()
-	local map = folder and folder:FindFirstChild("Map")
-	local exit = map and map:FindFirstChild("ExitDoor")
-	local header = exit and exit:FindFirstChild("Header") :: BasePart?
-	local outside = exit and exit:FindFirstChild("OutsideFloor") :: BasePart?
+	local exitPos = folder and folder:GetAttribute("ExitPos")
+	local exitDir = folder and folder:GetAttribute("ExitDir")
 
 	UI.typeOnBlack({ "03:59 AM", "", "THE DOOR OPENED." }, 1.2)
 	if not alive() then
 		return
 	end
-	if not header or not outside then
+	if typeof(exitPos) ~= "Vector3" or typeof(exitDir) ~= "Vector3" then
 		outro(alive)
 		return
 	end
 
-	local hp = header.Position
-	local floorY = outside.Position.Y + outside.Size.Y / 2
-	local door = Vector3.new(hp.X, floorY, hp.Z)
-	local d = outside.Position - hp
-	local dir = Vector3.new(d.X, 0, d.Z).Unit
+	local door: Vector3 = exitPos
+	local dir: Vector3 = exitDir
 	local side = Vector3.new(-dir.Z, 0, dir.X)
 	local lookAt = door + Vector3.new(0, 6.5, 0)
 	local camStart = door + dir * 14 + side * 3 + Vector3.new(0, 5.2, 0)

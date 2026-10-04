@@ -34,6 +34,7 @@ type Elevator = {
 	order: { Player },
 	countdown: number?,
 	departing: boolean,
+	waitingForRoom: boolean?,
 }
 
 local Lobby = {}
@@ -82,6 +83,9 @@ local function updateSign(e: Elevator)
 		if e.departing then
 			e.timer.Text = "DEPARTING..."
 			e.timer.TextColor3 = RED
+		elseif e.waitingForRoom then
+			e.timer.Text = "ALL HOSPITALS BUSY"
+			e.timer.TextColor3 = RED
 		elseif e.countdown then
 			e.timer.Text = "LEAVING IN " .. math.max(0, math.ceil(e.countdown))
 			e.timer.TextColor3 = YELLOW
@@ -128,6 +132,10 @@ local function depart(e: Elevator, startMatch: ({ Player }, string) -> ())
 	updateSign(e)
 end
 
+local canStart: () -> boolean = function()
+	return true
+end
+
 local function step(e: Elevator, startMatch: ({ Player }, string) -> ())
 	if e.departing then
 		return
@@ -164,6 +172,7 @@ local function step(e: Elevator, startMatch: ({ Player }, string) -> ())
 
 	if #order == 0 then
 		e.countdown = nil
+		e.waitingForRoom = false
 		e.mode = "Normal" -- tom heis går tilbake til vanlig modus
 	else
 		e.countdown = (e.countdown or Config.ElevatorCountdown) - TICK
@@ -171,13 +180,28 @@ local function step(e: Elevator, startMatch: ({ Player }, string) -> ())
 			e.countdown = math.min(e.countdown :: number, Config.ElevatorFullCountdown)
 		end
 		if (e.countdown :: number) <= 0 then
-			task.spawn(depart, e, startMatch)
+			-- alle sykehusene er i bruk: vent til en runde er ferdig
+			if canStart() then
+				e.waitingForRoom = false
+				task.spawn(depart, e, startMatch)
+			else
+				if not e.waitingForRoom then
+					for _, p in order do
+						NotifyRemote:FireClient(p, "All hospitals are busy. You leave as soon as a round ends.", "info")
+					end
+				end
+				e.waitingForRoom = true
+				e.countdown = 0
+			end
 		end
 	end
 	updateSign(e)
 end
 
-function Lobby.init(startMatch: ({ Player }, string) -> ())
+function Lobby.init(startMatch: ({ Player }, string) -> (), canStartFn: (() -> boolean)?)
+	if canStartFn then
+		canStart = canStartFn
+	end
 	local lobby = workspace:WaitForChild("Lobby")
 	local folder = lobby:WaitForChild("Elevators")
 	for _, model in folder:GetChildren() do

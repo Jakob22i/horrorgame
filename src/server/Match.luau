@@ -17,7 +17,7 @@ local PushedRemote = Remotes:WaitForChild("Pushed") :: RemoteEvent
 local PushRemote = Remotes:WaitForChild("Push") :: RemoteEvent
 local PrankRemote = Remotes:WaitForChild("Prank") :: RemoteEvent
 
-local SLOT_SPACING = 1000
+local SLOT_SPACING = 1600 -- langt nok unna hverandre til at streaming aldri laster en annen runde
 local LOCK_ON = Color3.fromRGB(40, 230, 90)
 
 type PlayerState = {
@@ -74,6 +74,13 @@ function Match.new(manager: any, id: number, slot: number, players: { Player }, 
 	-- Gulvhøyden leses fra selve gulvet, så kartet kan flyttes/redigeres i Studio
 	local floor = self.map:WaitForChild("Floors"):WaitForChild("Floor") :: BasePart
 	self.floorY = floor.Position.Y + floor.Size.Y / 2
+	-- Hvor nødutgangen er (klientene bruker dette selv om døra ikke er lastet inn hos dem)
+	local exitDoor = self.map:WaitForChild("ExitDoor")
+	local header = exitDoor:WaitForChild("Header") :: BasePart
+	local outside = exitDoor:WaitForChild("OutsideFloor") :: BasePart
+	local out = outside.Position - header.Position
+	self.folder:SetAttribute("ExitPos", Vector3.new(header.Position.X, self.floorY, header.Position.Z))
+	self.folder:SetAttribute("ExitDir", Vector3.new(out.X, 0, out.Z).Unit)
 
 	self.keysFolder = Instance.new("Folder")
 	self.keysFolder.Name = "Keys"
@@ -210,6 +217,22 @@ function Match:Start()
 		end
 	end
 	self.monster:Teleport(farthest)
+
+	-- Be klientene laste inn resepsjonen før vi flytter dem dit (streaming), maks 3 sekunder
+	local pending = 0
+	for player in self.players do
+		pending += 1
+		task.spawn(function()
+			pcall(function()
+				player:RequestStreamAroundAsync(spawnPos, 3)
+			end)
+			pending -= 1
+		end)
+	end
+	local waitStart = os.clock()
+	while pending > 0 and os.clock() - waitStart < 3 do
+		task.wait(0.1)
+	end
 
 	for player in self.players do
 		self:_setPlayerAttributes(player)
@@ -817,6 +840,18 @@ function Match:Win(escaper: Player)
 		self.monster:Stop()
 		-- gjem det ekte monsteret; sluttscenen bruker sin egen kopi
 		self.monster.root.CFrame = self.monster.root.CFrame + Vector3.new(0, -150, 0)
+	end
+	-- sluttscenen filmes ved nødutgangen: sørg for at den er lastet inn hos alle (streaming)
+	local header = self.exit and self.exit:FindFirstChild("Header") :: BasePart?
+	for player in self.players do
+		if header then
+			player.ReplicationFocus = header
+			task.spawn(function()
+				pcall(function()
+					player:RequestStreamAroundAsync(header.Position, 3)
+				end)
+			end)
+		end
 	end
 	for player, st in self.players do
 		if st.closet then

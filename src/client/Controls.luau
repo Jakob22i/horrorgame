@@ -23,6 +23,7 @@ local UI: any
 local inMatch = false
 local frozen = false -- sluttscenen: ingen bevegelse
 local sprintHeld = false
+local sprintToggle = false -- mobil: RUN-knappen slår løping av/på
 local stamina = Config.StaminaMax
 local exhausted = false
 local lastSprint = 0
@@ -66,7 +67,7 @@ local function buildFlashlight()
 	flashLight.Range = 60
 	flashLight.Brightness = 3.1
 	flashLight.Color = Color3.fromRGB(255, 244, 220)
-	flashLight.Shadows = true
+	flashLight.Shadows = not (UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled)
 	flashLight.Enabled = false
 	flashLight.Parent = flashPart
 
@@ -113,7 +114,7 @@ local function updateOtherFlashlights()
 			l.Range = 52
 			l.Brightness = 2.6
 			l.Color = Color3.fromRGB(255, 244, 220)
-			l.Shadows = true
+			l.Shadows = not UI.isTouch()
 			l.Parent = head
 			light = l
 		end
@@ -238,7 +239,7 @@ end
 
 local function refreshHidden()
 	if attr("Hidden") == true then
-		UI.setHint("You are hiding. Press E or click LEAVE to get out.")
+		UI.setHint(if UI.isTouch() then "You are hiding. Tap LEAVE LOCKER to get out." else "You are hiding. Press E or click LEAVE to get out.")
 		UI.setLeaveButton(true)
 	else
 		UI.setHint(nil)
@@ -285,7 +286,7 @@ local function updateSpectate()
 			spectating = target
 		end
 		player.CameraMode = Enum.CameraMode.Classic
-		UI.setSpectate("WATCHING: " .. target.DisplayName .. "   (click to switch)")
+		UI.setSpectate("WATCHING: " .. target.DisplayName .. (if UI.isTouch() then "   (tap to switch)" else "   (click to switch)"))
 	else
 		if spectating then
 			spectating = nil
@@ -306,10 +307,20 @@ function Controls.init(ui: any)
 
 	-- (ingen egen mobilknapp her: RUN-knappen nederst på skjermen holdes inne i stedet)
 	ContextActionService:BindAction("Sprint", onSprintAction, false, Enum.KeyCode.LeftShift, Enum.KeyCode.RightShift, Enum.KeyCode.ButtonL3)
+	-- PC: hold inne. Mobil: trykk for å slå løping av/på (tommelen trenger du til å styre)
 	UI.onActionHold("Run", function()
-		sprintHeld = true
+		if not UI.isTouch() then
+			sprintHeld = true
+		end
 	end, function()
-		sprintHeld = false
+		if not UI.isTouch() then
+			sprintHeld = false
+		end
+	end)
+	UI.onAction("Run", function()
+		if UI.isTouch() then
+			sprintToggle = not sprintToggle
+		end
 	end)
 	ContextActionService:BindAction("Flashlight", keyAction("flashlight"), false, Enum.KeyCode.One, Enum.KeyCode.F, Enum.KeyCode.ButtonY)
 	ContextActionService:BindAction("Push", keyAction("push"), false, Enum.KeyCode.Two)
@@ -413,7 +424,10 @@ function Controls.init(ui: any)
 			return
 		end
 		local moving = hum.MoveDirection.Magnitude > 0.1
-		local canSprint = sprintHeld and moving and not exhausted and attr("Hidden") ~= true and attr("Out") ~= true
+		if exhausted or attr("Hidden") == true then
+			sprintToggle = false
+		end
+		local canSprint = (sprintHeld or sprintToggle) and moving and not exhausted and attr("Hidden") ~= true and attr("Out") ~= true
 		UI.setRunning(canSprint)
 		if canSprint then
 			stamina = math.max(0, stamina - Config.StaminaDrain * dt)
@@ -455,6 +469,7 @@ end
 function Controls.setFrozen(on: boolean)
 	frozen = on
 	sprintHeld = false
+	sprintToggle = false
 end
 
 -- Kalles når du får tilbake kontrollen etter å ha vært tilskuer
