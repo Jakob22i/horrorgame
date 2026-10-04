@@ -64,8 +64,8 @@ return function(parent: any)
 
 	-- Rom: id, navn, x1, y1, x2, y2, gulvfarge, gulvmateriale
 	local rooms = {
-		{ "R101", "PATIENT ROOM 101", 1, 1, 9, 10 },
-		{ "R102", "PATIENT ROOM 102", 11, 1, 19, 10 },
+		-- Stor hall i nordvest
+		{ "GYM", "PHYSIOTHERAPY", 1, 1, 19, 10, rgb(132, 100, 66), Enum.Material.WoodPlanks },
 		{ "STORAGE", "STORAGE", 21, 1, 28, 10, rgb(110, 108, 100), Enum.Material.Concrete },
 		{ "R103", "PATIENT ROOM 103", 30, 1, 37, 10 },
 		{ "CHILD", "PEDIATRICS", 39, 1, 47, 10, rgb(150, 120, 120), Enum.Material.CeramicTiles },
@@ -92,13 +92,15 @@ return function(parent: any)
 		{ "LAUNDRY", "LAUNDRY", 1, 44, 12, 54, rgb(150, 150, 140), Enum.Material.Concrete },
 		{ "CHAPEL", "CHAPEL", 14, 44, 26, 54, rgb(96, 40, 40), Enum.Material.Carpet },
 		{ "MAINT", "MAINTENANCE", 28, 44, 37, 54, rgb(96, 96, 92), Enum.Material.Concrete },
-		{ "LAB", "LABORATORY", 39, 44, 51, 54, rgb(170, 180, 178), Enum.Material.CeramicTiles },
-		{ "RECORDS", "RECORDS", 53, 44, 64, 54, rgb(110, 92, 74), Enum.Material.WoodPlanks },
+		-- Stor hall i sør
+		{ "ATRIUM", "ATRIUM", 39, 44, 64, 54, rgb(150, 146, 136), Enum.Material.Marble },
 		{ "DOCK", "LOADING DOCK", 66, 44, 86, 54, rgb(90, 90, 88), Enum.Material.Concrete },
-		-- Den nye østfløyen: tre store haller med møbler man kan løpe rundt
-		{ "GYM", "PHYSIOTHERAPY", 88, 1, 104, 17, rgb(132, 100, 66), Enum.Material.WoodPlanks },
-		{ "LECTURE", "LECTURE HALL", 88, 19, 104, 34, rgb(74, 62, 72), Enum.Material.Carpet },
-		{ "ATRIUM", "ATRIUM", 88, 36, 104, 54, rgb(150, 146, 136), Enum.Material.Marble },
+		-- Ytterste østfløy: to pasientrom, en stor hall i midten, lab og arkiv
+		{ "R101", "PATIENT ROOM 101", 88, 1, 95, 10 },
+		{ "R102", "PATIENT ROOM 102", 97, 1, 104, 10 },
+		{ "LECTURE", "LECTURE HALL", 88, 16, 104, 38, rgb(74, 62, 72), Enum.Material.Carpet },
+		{ "LAB", "LABORATORY", 88, 44, 95, 54, rgb(170, 180, 178), Enum.Material.CeramicTiles },
+		{ "RECORDS", "RECORDS", 97, 44, 104, 54, rgb(110, 92, 74), Enum.Material.WoodPlanks },
 	}
 	local corridors = {
 		{ 1, 12, 58, 14 }, -- nordre korridor
@@ -106,11 +108,11 @@ return function(parent: any)
 		{ 1, 15, 3, 24 }, -- vestre korridor
 		{ 56, 15, 58, 24 }, -- østre korridor
 		{ 28, 15, 30, 24 }, -- midtkorridor
-		{ 59, 12, 86, 14 }, -- nordre korridor, østfløyen
+		{ 59, 12, 104, 14 }, -- nordre korridor, østfløyen (helt ut)
 		{ 59, 25, 86, 27 }, -- søndre korridor, østfløyen
 		{ 60, 15, 62, 24 }, -- østre korridor, nord
 		{ 60, 28, 62, 42 }, -- østre korridor, sør
-		{ 1, 40, 86, 42 }, -- sørfløyens korridor
+		{ 1, 40, 104, 42 }, -- sørfløyens korridor (helt ut)
 	}
 	for _, c in corridors do
 		carve(c[1], c[2], c[3], c[4])
@@ -121,8 +123,8 @@ return function(parent: any)
 
 	-- Døråpninger: x1, y1, x2, y2, skilttekst, retning mot korridoren (for skiltet)
 	local doors = {
-		{ 4, 11, 5, 11, "101", "S" },
-		{ 14, 11, 15, 11, "102", "S" },
+		{ 4, 11, 5, 11, "PHYSIOTHERAPY", "S" },
+		{ 14, 11, 15, 11, "PHYSIOTHERAPY", "S" },
 		{ 24, 11, 25, 11, "STORAGE", "S" },
 		{ 33, 11, 34, 11, "103", "S" },
 		{ 42, 11, 43, 11, "PEDIATRICS", "S" },
@@ -160,22 +162,21 @@ return function(parent: any)
 		{ 6, 43, 7, 43, "LAUNDRY", "N" },
 		{ 19, 43, 21, 43, "CHAPEL", "N" },
 		{ 32, 43, 32, 43, "MAINT.", "N" },
-		{ 44, 43, 45, 43, "LAB", "N" },
-		{ 52, 49, 52, 49 },
-		{ 58, 43, 59, 43, "RECORDS", "N" },
+		{ 44, 43, 45, 43, "ATRIUM", "N" },
+		{ 58, 43, 59, 43, "ATRIUM", "N" },
+		{ 65, 49, 65, 50 }, -- atriet <-> lasterampen
 		{ 70, 43, 72, 43, "LOADING DOCK", "N" },
 		-- Ekstra dør i sengeposten, så man kan løpe runder
 		{ 40, 24, 41, 24 },
-		-- Østfløyen (hallene har flere dører, så man kan løpe rundt)
-		{ 87, 12, 87, 14, "PHYSIOTHERAPY", "W" },
-		{ 87, 7, 87, 8 },
-		{ 95, 18, 97, 18, "LECTURE HALL", "N" },
+		-- Ytterste østfløy (auditoriet har fire dører, så man kan løpe rundt)
+		{ 91, 11, 92, 11, "101", "S" },
+		{ 100, 11, 101, 11, "102", "S" },
+		{ 95, 15, 97, 15, "LECTURE HALL", "N" },
 		{ 87, 25, 87, 27, "LECTURE HALL", "W" },
-		{ 87, 32, 87, 32 },
-		{ 91, 35, 92, 35, "ATRIUM", "N" },
-		{ 100, 35, 101, 35 },
-		{ 87, 40, 87, 42, "ATRIUM", "W" },
-		{ 87, 48, 87, 49 },
+		{ 91, 39, 92, 39 },
+		{ 100, 39, 101, 39, "LECTURE HALL", "S" },
+		{ 91, 43, 92, 43, "LAB", "N" },
+		{ 100, 43, 101, 43, "RECORDS", "N" },
 	}
 	for _, d in doors do
 		carve(d[1], d[2], d[3], d[4])
@@ -738,20 +739,22 @@ return function(parent: any)
 	------------------------------------------------------------------
 	-- Plassering av møbler, skap og nøkkelplasser
 	------------------------------------------------------------------
-	-- Pasientrom 101
-	bed(2, 1, false)
-	bed(5, 1, false)
-	bed(8, 1, false)
-	keySpot(9, 6, "R101")
+	-- Treningssal (fysioterapi, stor hall i nordvest): søyler, benker og barre å løpe rundt
+	for _, p in { { 5, 3 }, { 15, 3 }, { 5, 8 }, { 15, 8 } } do
+		pillar(p[1], p[2])
+	end
+	parallelBars(9, 3)
+	bed(8, 7, true)
+	bed(11, 7, true)
+	gymMat(2, 5, 2, 3)
+	gymMat(17, 5, 2, 3)
+	bench(10, 1, true)
+	bench(19, 9, false)
+	shelf(1, 1, "N")
+	wheelchair(13, 9, 1.2)
+	keySpot(19, 7, "GYM")
 	closet(1, 9, "W")
-	chair(6, 7, math.pi)
-	-- Pasientrom 102
-	bed(12, 1, false)
-	bed(15, 1, false)
-	bed(18, 1, false)
-	keySpot(17, 8, "R102")
-	closet(11, 9, "W")
-	wheelchair(13, 7, 0.6)
+	closet(19, 1, "E")
 	-- Lager
 	for x = 21, 28, 2 do
 		shelf(x, 1, "N")
@@ -888,8 +891,8 @@ return function(parent: any)
 	keySpot(82, 23, "ISO4")
 	-- Korridorer i østfløyen
 	closet(62, 20, "E")
-	closet(86, 13, "E")
-	closet(86, 26, "E")
+	closet(104, 13, "E")
+	closet(75, 27, "S")
 	keySpot(60, 35, "EASTHALL2")
 	bed(74, 12, true, true)
 	wheelchair(70, 26, 0.4)
@@ -915,7 +918,7 @@ return function(parent: any)
 	-- SØRFLØYEN ---------------------------------------------------
 	closet(10, 40, "N")
 	closet(48, 40, "N")
-	closet(86, 41, "E")
+	closet(104, 41, "E")
 	closet(40, 42, "S")
 	keySpot(1, 41, "SOUTHHALL")
 	bed(20, 41, true, true)
@@ -948,27 +951,24 @@ return function(parent: any)
 	crate(33, 48)
 	keySpot(28, 53, "MAINT")
 	closet(37, 53, "E")
-	-- Laboratorium
-	desk(39, 46, true, "W")
-	desk(39, 50, true, "W")
-	opTable(42, 48)
-	opTable(46, 51)
-	sink(51, 46, "E")
-	shelf(51, 52, "E")
-	keySpot(48, 54, "LAB")
-	closet(51, 44, "N")
-	-- Arkiv
-	for _, yy in { 45, 47, 51 } do
-		shelf(53, yy, "W")
+	-- Atrium (stor hall i sør): tørr fontene, langbord, søyler og planter
+	fountain(51, 49)
+	longTable(41, 46, 4, true)
+	longTable(58, 46, 4, true)
+	longTable(41, 52, 4, true)
+	longTable(58, 52, 4, true)
+	for _, p in { { 46, 47 }, { 56, 47 }, { 46, 51 }, { 56, 51 } } do
+		pillar(p[1], p[2])
 	end
-	for _, yy in { 45, 47, 49, 51 } do
-		shelf(64, yy, "E")
+	for _, p in { { 39, 44 }, { 64, 44 }, { 39, 54 }, { 64, 54 } } do
+		planter(p[1], p[2])
 	end
-	for _, x in { 55, 57, 61 } do
-		shelf(x, 54, "S")
-	end
-	keySpot(63, 54, "RECORDS")
-	closet(53, 53, "W")
+	bench(51, 45, true)
+	bench(51, 53, true)
+	keySpot(64, 47, "ATRIUM")
+	closet(39, 49, "W")
+	closet(60, 54, "S")
+	tv(39, 46, "W", "PLEASE\nREMAIN\nCALM")
 	-- Lasterampe (utgangen er i sørveggen her)
 	for _, c in { { 68, 47 }, { 68, 48 }, { 74, 47 }, { 75, 47 }, { 83, 47 }, { 84, 50 }, { 70, 52 }, { 71, 52 }, { 85, 53 } } do
 		crate(c[1], c[2])
@@ -980,53 +980,51 @@ return function(parent: any)
 	closet(66, 53, "W")
 	closet(86, 51, "E")
 
-	-- ØSTFLØYEN: TRE STORE HALLER -------------------------------------
-	-- Treningssal (fysioterapi): søyler, behandlingsbenker og barre i midten
-	for _, p in { { 92, 5 }, { 100, 5 }, { 92, 13 }, { 100, 13 } } do
-		pillar(p[1], p[2])
+	-- YTTERSTE ØSTFLØY ------------------------------------------------
+	-- Pasientrom 101
+	bed(89, 1, false)
+	bed(92, 1, false)
+	bed(95, 1, false)
+	keySpot(95, 7, "R101")
+	closet(88, 9, "W")
+	chair(91, 7, math.pi)
+	-- Pasientrom 102
+	bed(98, 1, false)
+	bed(101, 1, false)
+	bed(104, 1, false)
+	keySpot(104, 8, "R102")
+	closet(97, 9, "W")
+	wheelchair(100, 7, 0.6)
+	-- Auditorium (stor hall i øst): rader med langbord, midtgang og tavle foran
+	for _, x in { 90, 93, 99, 102 } do
+		longTable(x, 18, 4, false)
+		longTable(x, 25, 4, false)
+		longTable(x, 32, 4, false)
 	end
-	bed(94, 9, true)
-	bed(97, 9, true)
-	parallelBars(95, 3)
-	gymMat(95, 12, 4, 3)
-	gymMat(89, 7, 2, 4)
-	bench(104, 8, false)
-	bench(104, 10, false)
-	bench(88, 3, false)
-	shelf(89, 1, "N")
-	shelf(103, 1, "N")
-	wheelchair(102, 15, 1.2)
-	keySpot(104, 16, "GYM")
-	closet(88, 16, "W")
-	closet(104, 3, "E")
-	-- Auditorium: rader med langbord, midtgang og tavle foran
-	for _, x in { 90, 93, 96, 99 } do
-		longTable(x, 20, 4, false)
-		longTable(x, 29, 4, false)
+	blackboard(104, 28, "E", "LESSON 1:\nHOW TO HIDE")
+	keySpot(88, 36, "LECTURE")
+	closet(104, 17, "E")
+	closet(104, 37, "E")
+	tv(88, 20, "W", "LIGHTS OUT\nAT 9")
+	-- Laboratorium
+	desk(88, 46, true, "W")
+	desk(88, 50, true, "W")
+	opTable(91, 48)
+	sink(95, 46, "E")
+	shelf(95, 52, "E")
+	keySpot(93, 54, "LAB")
+	closet(95, 44, "E")
+	-- Arkiv
+	for _, yy in { 45, 47, 51 } do
+		shelf(97, yy, "W")
 	end
-	blackboard(104, 26, "E", "LESSON 1:\nHOW TO HIDE")
-	keySpot(88, 34, "LECTURE")
-	closet(104, 20, "E")
-	closet(104, 33, "E")
-	tv(88, 22, "W", "LIGHTS OUT\nAT 9")
-	-- Atrium: tørr fontene, langbord, søyler og planter
-	fountain(96, 45)
-	longTable(90, 39, 4, true)
-	longTable(99, 39, 4, true)
-	longTable(90, 51, 4, true)
-	longTable(99, 51, 4, true)
-	for _, p in { { 93, 42 }, { 99, 42 }, { 93, 48 }, { 99, 48 } } do
-		pillar(p[1], p[2])
+	for _, yy in { 45, 47, 49, 51 } do
+		shelf(104, yy, "E")
 	end
-	for _, p in { { 89, 37 }, { 103, 37 }, { 89, 53 }, { 103, 53 }, { 91, 45 }, { 101, 45 } } do
-		planter(p[1], p[2])
-	end
-	bench(96, 42, true)
-	bench(96, 48, true)
-	keySpot(104, 45, "ATRIUM")
-	closet(88, 45, "W")
-	closet(104, 50, "E")
-	tv(104, 38, "E", "PLEASE\nREMAIN\nCALM")
+	shelf(99, 54, "S")
+	shelf(101, 54, "S")
+	keySpot(104, 53, "RECORDS")
+	closet(97, 53, "W")
 
 	------------------------------------------------------------------
 	-- Skapene: fjern de som står tettest (de mest unødvendige), og bygg resten
@@ -1273,8 +1271,9 @@ return function(parent: any)
 		{ 47, 44, "N", "PROJECT\n#0413" },
 		{ 82, 44, "N", "ALMOST\nOUT :)" },
 		{ 30, 42, "S", "DON'T GO TO\nTHE DOCK" },
-		{ 96, 54, "S", "NO WAY OUT" },
-		{ 97, 1, "N", "KEEP\nMOVING" },
+		{ 100, 54, "S", "NO WAY OUT" },
+		{ 92, 1, "N", "KEEP\nMOVING" },
+		{ 10, 1, "N", "ONE MORE\nREP :)" },
 	}
 	local nearWriting = {} -- ruter med blodskrift (ingen sprut oppå teksten)
 	local WALL_DIRS = { N = { 0, -1 }, S = { 0, 1 }, W = { -1, 0 }, E = { 1, 0 } }

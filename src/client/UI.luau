@@ -432,7 +432,8 @@ local function makeSlot(name: string, key: string, iconText: string, labelText: 
 		Name = "Key",
 		BackgroundTransparency = 1,
 		Position = UDim2.new(0, 5, 0, 3),
-		Size = UDim2.new(0, 12, 0, 12),
+		Size = UDim2.new(0, math.max(12, #key * 7), 0, 12),
+		TextXAlignment = Enum.TextXAlignment.Left,
 		Text = key,
 		TextScaled = true,
 		Font = Enum.Font.RobotoMono,
@@ -508,7 +509,7 @@ local function buildActionBar()
 		Name = "ActionBar",
 		AnchorPoint = Vector2.new(0.5, 1),
 		Position = UDim2.new(0.5, 0, 1, -24),
-		Size = UDim2.new(0, 222, 0, 92),
+		Size = UDim2.new(0, 300, 0, 92),
 		BackgroundTransparency = 1,
 		ZIndex = 6,
 	}, hud)
@@ -522,6 +523,8 @@ local function buildActionBar()
 	makeSlot("Flashlight", "1", "🔦", "FLASHLIGHT").button.Parent.LayoutOrder = 1
 	makeSlot("Push", "2", "✋", "PUSH").button.Parent.LayoutOrder = 2
 	makeSlot("Jumpscare", "3", "💀", "JUMPSCARE").button.Parent.LayoutOrder = 3
+	-- Løp: hold SHIFT (eller hold inne knappen på mobil)
+	makeSlot("Run", "SHIFT", "🏃", "RUN").button.Parent.LayoutOrder = 4
 end
 
 local function buildOverlays()
@@ -1158,6 +1161,25 @@ local function setLit(s: Slot, lit: boolean)
 	local stroke = s.button:FindFirstChild("Stroke") :: UIStroke
 	stroke.Color = lit and Color3.fromRGB(255, 214, 120) or Color3.fromRGB(206, 190, 140)
 	stroke.Transparency = lit and 0.05 or 0.45
+end
+
+-- Knapper som skal holdes inne (løp på mobil)
+function UI.onActionHold(name: string, onDown: () -> (), onUp: () -> ())
+	local button = slots[name].button
+	button.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+			onDown()
+		end
+	end)
+	button.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+			onUp()
+		end
+	end)
+end
+
+function UI.setRunning(on: boolean)
+	setLit(slots.Run, on)
 end
 
 function UI.setFlashlightOn(on: boolean)

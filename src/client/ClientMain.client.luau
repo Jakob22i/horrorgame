@@ -22,6 +22,7 @@ local MonsterAnimator = require(script:WaitForChild("MonsterAnimator"))
 local Ending = require(script:WaitForChild("Ending"))
 local Scares = require(script:WaitForChild("Scares"))
 local CosmeticsUI = require(script:WaitForChild("CosmeticsUI"))
+local ExitGuide = require(script:WaitForChild("ExitGuide"))
 
 local player = Players.LocalPlayer
 
@@ -33,6 +34,7 @@ MonsterAnimator.init()
 Ending.init(UI, Effects, Controls)
 Scares.init(UI, Effects, Ending.isPlaying)
 CosmeticsUI.init()
+ExitGuide.init(Effects, Ending.isPlaying)
 
 -- Ingen "Reset character" i et skrekkspill
 task.spawn(function()
@@ -149,6 +151,11 @@ end)
 MatchStateRemote.OnClientEvent:Connect(function(state, data)
 	if state == "start" then
 		UI.hidePanels()
+		task.delay(11, function()
+			if player:GetAttribute("InMatch") == true then
+				UI.notify("TIP: Hold SHIFT (or the RUN button) to run.", "info")
+			end
+		end)
 		local players = data and data.players or 1
 		task.spawn(UI.intro, {
 			"TAPE #" .. tostring(data and data.matchId or 1) .. "  —  ST. AGATHE HOSPITAL",
@@ -156,6 +163,7 @@ MatchStateRemote.OnClientEvent:Connect(function(state, data)
 			"",
 			"Find 5 keys. Bring them to the emergency exit.",
 			"Hide in the lockers. Do not let it see you.",
+			"Hold SHIFT (or the RUN button) to run. Watch your stamina.",
 			"",
 			players == 1 and "You are alone." or ("There are " .. players .. " of you."),
 			if data and data.mode == "Nightmare" then "\nNIGHTMARE MODE. One life. No mercy." else "",

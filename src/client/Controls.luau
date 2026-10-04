@@ -304,8 +304,13 @@ function Controls.init(ui: any)
 	UI = ui
 	buildFlashlight()
 
-	ContextActionService:BindAction("Sprint", onSprintAction, true, Enum.KeyCode.LeftShift, Enum.KeyCode.RightShift, Enum.KeyCode.ButtonL3)
-	ContextActionService:SetTitle("Sprint", "Run")
+	-- (ingen egen mobilknapp her: RUN-knappen nederst på skjermen holdes inne i stedet)
+	ContextActionService:BindAction("Sprint", onSprintAction, false, Enum.KeyCode.LeftShift, Enum.KeyCode.RightShift, Enum.KeyCode.ButtonL3)
+	UI.onActionHold("Run", function()
+		sprintHeld = true
+	end, function()
+		sprintHeld = false
+	end)
 	ContextActionService:BindAction("Flashlight", keyAction("flashlight"), false, Enum.KeyCode.One, Enum.KeyCode.F, Enum.KeyCode.ButtonY)
 	ContextActionService:BindAction("Push", keyAction("push"), false, Enum.KeyCode.Two)
 	ContextActionService:BindAction("JumpscareAll", keyAction("jumpscare"), false, Enum.KeyCode.Three)
@@ -409,6 +414,7 @@ function Controls.init(ui: any)
 		end
 		local moving = hum.MoveDirection.Magnitude > 0.1
 		local canSprint = sprintHeld and moving and not exhausted and attr("Hidden") ~= true and attr("Out") ~= true
+		UI.setRunning(canSprint)
 		if canSprint then
 			stamina = math.max(0, stamina - Config.StaminaDrain * dt)
 			lastSprint = os.clock()

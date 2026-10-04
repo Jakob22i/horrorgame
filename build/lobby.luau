@@ -253,7 +253,7 @@ return function(parent: any, spawnLocation: any)
 		BackgroundTransparency = 1,
 		Position = UDim2.fromScale(0.06, 0.06),
 		Size = UDim2.fromScale(0.88, 0.88),
-		Text = "HOW TO PLAY\n\n• Step into an elevator (max 4 per elevator)\n• Find 5 keys hidden in the hospital\n• Bring them to the EMERGENCY EXIT\n• Hide in the lockers when it comes\n• You have 3 lives. If you die, you drop your keys\n• Friends can help you up when you are down\n• Press E on the panel in the elevator for NIGHTMARE\n\n1 = flashlight    SHIFT = run    E = use",
+		Text = "HOW TO PLAY\n\n• Step into an elevator (max 4 per elevator)\n• Find 5 keys hidden in the hospital\n• Bring them to the EMERGENCY EXIT\n• Hide in the lockers when it comes\n• You have 3 lives. If you die, you drop your keys\n• Friends can help you up when you are down\n• Press E on the panel in the elevator for NIGHTMARE\n\nHOLD SHIFT TO RUN (watch your stamina)\n1 = flashlight    E = use / hide",
 		TextScaled = true,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		TextColor3 = rgb(225, 225, 205),

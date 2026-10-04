@@ -177,7 +177,7 @@ if oldClient then
 	oldClient.Parent = nil
 end
 local client, smClient = script("LocalScript", "ClientMain", "src/client/ClientMain.client.luau", sps, smSPS)
-for _, name in { "UI", "Effects", "Controls", "Jumpscare", "MonsterAnimator", "Ending", "Scares", "CosmeticsUI" } do
+for _, name in { "UI", "Effects", "Controls", "Jumpscare", "MonsterAnimator", "Ending", "Scares", "CosmeticsUI", "ExitGuide" } do
 	script("ModuleScript", name, "src/client/" .. name .. ".luau", client, smClient)
 end
 

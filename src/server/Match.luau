@@ -338,7 +338,7 @@ function Match:_pickupKey(player: Player, key: Model)
 	st.keys += 1
 	player:SetAttribute("Keys", st.keys)
 	Util.playSound(root, Config.Sounds.KeyPickup, 0.9, 40)
-	NotifyRemote:FireClient(player, "You found a key! Bring it to the emergency exit.", "good")
+	NotifyRemote:FireClient(player, "You found a key! Follow the green EXIT marker to the emergency exit.", "good")
 	if key:GetAttribute("Dropped") ~= true then
 		self.manager:AwardCoins(player, Config.Coins.KeyFound, "key found")
 	end

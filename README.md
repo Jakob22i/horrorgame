@@ -6,12 +6,13 @@ Et analog-horror-spill i Roblox for 1–4 spillere per gruppe. Alt i spillet er 
 
 - Alle spawner i **lobbyen**. Langs veggen står **4 heiser** med plass til maks 4 spillere hver.
   Gå inn i en heis, så starter en nedtelling (15 sek, eller 5 sek hvis heisen er full).
-- Gruppa havner i et mørkt, forlatt **sykehus**: hovedbygget, østfløyen (intensiv, apotek,
-  isolat og kantine), sørfløyen (vaskeri, kapell, lab, arkiv og lasterampe) og en ny fløy helt i
-  øst med **tre store haller** (treningssal, auditorium og atrium med fontene) fulle av søyler,
-  langbord og benker du kan løpe rundt. Hallene og flere rom har flere dører, så du kan løpe
-  runder unna monsteret. Målet er å finne **5 nøkler** som ligger tilfeldig plassert rundt i kartet, og
-  sette dem inn ved **nødutgangen** på lasterampen (LOADING DOCK) helt i sørøst.
+- Gruppa havner i et mørkt, forlatt **sykehus** med mange små rom og korridorer, og **tre store
+  haller** spredt utover kartet: treningssalen i nordvest, atriet med fontene i sør og
+  auditoriet i øst. Hallene er fulle av søyler, langbord og benker du kan løpe rundt, og har
+  flere dører, så du kan løpe runder unna monsteret. Målet er å finne **5 nøkler** som ligger tilfeldig plassert rundt i kartet, og
+  sette dem inn ved **nødutgangen** på lasterampen (LOADING DOCK) i sørøst. Hver gang du finner
+  en nøkkel, vises en grønn **EXIT-markør** gjennom veggene i 12 sekunder, med avstanden dit.
+  Når døra er åpen, står markøren fast.
 - **Patient #0413** jakter på dere: en høy, utmagret pasient med et altfor bredt, sydd glis,
   svarte øyehuler og et dryppstativ med blodpose som den drar etter seg. Den ser dere, hører
   dere når dere løper, halter, rykker i hodet, klaprer med kjeven når den jakter, og du kan
@@ -58,7 +59,8 @@ Et analog-horror-spill i Roblox for 1–4 spillere per gruppe. Alt i spillet er 
 - Når du kommer inn i spillet, vises en **VHS-loading screen** («PLEASE STAND BY») mens lyder
   og monsteret lastes inn.
 
-**Taster:** `1` lommelykt (eller `F`) · `2` push · `3` jumpscare everyone · `Shift` løp ·
+**Taster:** `1` lommelykt (eller `F`) · `2` push · `3` jumpscare everyone · hold `Shift` for å løpe
+(eller hold inne RUN-knappen) ·
 `E` bruk / gjem deg / gå ut av skap. Musa er bare fri når en meny er åpen.
 Knappene nederst på skjermen kan trykkes på (mobil).
 
