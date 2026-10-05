@@ -50,12 +50,18 @@ Et analog-horror-spill i Roblox for 1–4 spillere per gruppe. Alt i spillet er 
 - Monsteret blir **raskere for hver nøkkel** som settes inn.
 - **Nightmare-modus**: verten velger den i heismenyen.
   Nightmare har 1 liv, et raskere monster, mørkere ganger, færre skap og dobbelt så mange
-  mynter.
+  mynter. I Normal har du **15 % mer sprint-energi**, så du kan løpe lenger før du blir sliten.
 - **Mynter og kosmetikk**: du får mynter for å finne nøkler, sette dem inn, hjelpe venner opp,
   spille en runde og komme deg ut (dobbelt i Nightmare). Bruk dem i **GIFT SHOP** i lobbyen
   (neonskilt, lyspærer under markisen og en vegg med lommelykter som lyser i sine farger) på
   **8 lommelykter** og **8 titler** som vises over hodet ditt. I butikkvinduet ser du hver
   lommelykt i 3D med lyset den sender ut. Alt lagres.
+- **Community-plakaten** står rett foran spawn i lobbyen: en opplyst plakat på stativ med
+  «JOIN & GET 15 COINS». Gå bort til den og trykk **Join**, så kommer en pop-up der den store
+  knappen åpner Roblox sin egen «Join»-boks for **Deezire Studios**. Når du er med, henter
+  pop-upen de **15 myntene** av seg selv (serveren sjekker at du faktisk er med i gruppa).
+  Myntene gis bare én gang per spiller, og etterpå får plakaten et grønt «CLAIMED ✓»-stempel hos
+  deg. Gruppe-ID og antall mynter står i `Config.Community`.
 - Etter **3 nøkler** begynner strømmen å svikte: hvert 30.–50. sekund dempes lyset sakte ned i
   10–16 sekunder (bare noen svake, røde nødlys står igjen) før det sakte kommer tilbake. Da
   trenger du lommelykta.
@@ -167,8 +173,8 @@ Last dem opp på create.roblox.com → spillet ditt → **Places** → **Configu
 | Monsteret (Patient #0413) | `ServerStorage/Monster` |
 | Nøkkelen | `ServerStorage/Key` |
 | Innstillinger | `ReplicatedStorage/Shared/Config` |
-| Serverscript | `ServerScriptService/GameServer` (+ modulene Lobby, Match, Monster, Shop, Leaderboard, Util) |
-| Klientscript | `StarterPlayer/StarterPlayerScripts/ClientMain` (+ Screen, UI, Effects, Controls, Jumpscare, MonsterAnimator, Ending, Scares, CosmeticsUI, ExitGuide, ElevatorUI) |
+| Serverscript | `ServerScriptService/GameServer` (+ modulene Lobby, Match, Monster, Shop, Leaderboard, Community, Util) |
+| Klientscript | `StarterPlayer/StarterPlayerScripts/ClientMain` (+ Screen, UI, Effects, Controls, Jumpscare, MonsterAnimator, Ending, Scares, CosmeticsUI, ExitGuide, ElevatorUI, CommunityUI) |
 | Loading screen | `ReplicatedFirst/LoadingScreen` |
 
 Sykehuset ligger i `ServerStorage` og klones inn i `Workspace/Matches` for hver gruppe.
@@ -195,6 +201,8 @@ hvor fort monsteret går, hvor langt det ser, lyder osv. Noen nyttige:
 - `Closet`: hvor lenge du kan være i et skap, og pausen før du kan gjemme deg igjen
 - `Downed`: hvor lenge du ligger nede, og hvor lenge en venn må holde E
 - `Nightmare`: liv, monsterfart, andel skap og lamper, myntbonus
+- `StaminaMax` / `NormalStaminaBonus`: sprint-energi (Nightmare) og hvor mye mer du har i Normal
+- `Community`: gruppe-ID, navn og antall mynter for community-plakaten
 - `Coins` og `Cosmetics`: hvor mange mynter du får, og alt som kan kjøpes (navn, farge, pris)
 
 Monsteret er bygget av ca. 800 deler som er sveiset til et "skjelett" (mappen `Rig`).

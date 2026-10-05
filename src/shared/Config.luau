@@ -28,7 +28,8 @@ local Config = {
 	-- Spiller
 	WalkSpeed = 12,
 	SprintSpeed = 20,
-	StaminaMax = 100,
+	StaminaMax = 100, -- i Nightmare
+	NormalStaminaBonus = 1.15, -- Normal: 15 % mer sprint-energi enn Nightmare
 	StaminaDrain = 24, -- per sekund mens du løper
 	StaminaRegen = 14, -- per sekund når du ikke løper
 	StaminaRegenDelay = 1.2,
@@ -111,6 +112,13 @@ local Config = {
 		KeyInserted = 5,
 		HelpUp = 10, -- for å hjelpe en venn opp
 		Escape = 50, -- alle i runden får dette når noen kommer seg ut
+	},
+
+	-- Communityet (Roblox-gruppa): bli med via plakaten ved spawn i lobbyen og få mynter, én gang
+	Community = {
+		GroupId = 145979375, -- Deezire Studios
+		Name = "Deezire Studios",
+		Reward = 15,
 	},
 
 	-- Kosmetikk som kan kjøpes for mynter i butikken i lobbyen

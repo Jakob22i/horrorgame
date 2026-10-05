@@ -29,6 +29,7 @@ type Data = {
 	title: string,
 	escapes: number,
 	best: number, -- raskeste flukt i sekunder (0 = ingen ennå)
+	community: boolean, -- har fått myntene for å bli med i communityet
 }
 
 -- Finn en kosmetikk-ting i katalogen ("Flashlights" eller "Titles")
@@ -102,6 +103,7 @@ local function sync(player: Player)
 		local flash = findItem(d.flash)
 		player:SetAttribute("FlashColor", flash and flash.color or Color3.fromRGB(255, 244, 220))
 		player:SetAttribute("TitleId", d.title)
+		player:SetAttribute("CommunityClaimed", d.community)
 	end
 end
 
@@ -124,13 +126,14 @@ local function save(player: Player): boolean
 			title = d.title,
 			escapes = d.escapes,
 			best = d.best,
+			community = d.community,
 		})
 	end)
 	return ok
 end
 
 local function load(player: Player)
-	local d: Data = { revive = 0, jumpscare = 0, coins = 0, owned = { warm = true, none = true }, flash = "warm", title = "none", escapes = 0, best = 0 }
+	local d: Data = { revive = 0, jumpscare = 0, coins = 0, owned = { warm = true, none = true }, flash = "warm", title = "none", escapes = 0, best = 0, community = false }
 	if store then
 		local ok, value = pcall(function()
 			return (store :: DataStore):GetAsync(key(player))
@@ -141,6 +144,7 @@ local function load(player: Player)
 			d.coins = math.max(0, math.floor(tonumber(value.coins) or 0))
 			d.escapes = math.max(0, math.floor(tonumber(value.escapes) or 0))
 			d.best = math.max(0, math.floor(tonumber(value.best) or 0))
+			d.community = value.community == true
 			if type(value.owned) == "table" then
 				for _, id in value.owned do
 					if type(id) == "string" and findItem(id) then
@@ -317,6 +321,33 @@ function Shop.getStats(player: Player): (number, number)
 		return 0, 0
 	end
 	return d.escapes, d.best
+end
+
+-- Myntene for å bli med i communityet (Community.luau sjekker medlemskapet først).
+-- Gis bare én gang, og bare hvis det kan lagres.
+function Shop.isLoaded(player: Player): boolean
+	return data[player] ~= nil
+end
+
+function Shop.hasCommunityReward(player: Player): boolean
+	local d = data[player]
+	return d ~= nil and d.community
+end
+
+function Shop.grantCommunityReward(player: Player, amount: number): boolean
+	local d = data[player]
+	if not d or d.community then
+		return false
+	end
+	d.community = true
+	d.coins += math.floor(amount)
+	if not save(player) then
+		d.community = false
+		d.coins -= math.floor(amount)
+		return false
+	end
+	sync(player)
+	return true
 end
 
 function Shop.save(player: Player)

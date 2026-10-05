@@ -9,6 +9,7 @@ local Lobby = require(script:WaitForChild("Lobby"))
 local Match = require(script:WaitForChild("Match"))
 local Shop = require(script:WaitForChild("Shop"))
 local Leaderboard = require(script:WaitForChild("Leaderboard"))
+local Community = require(script:WaitForChild("Community"))
 
 local Remotes = ReplicatedStorage:WaitForChild("Remotes")
 local MatchStateRemote = Remotes:WaitForChild("MatchState") :: RemoteEvent
@@ -229,6 +230,7 @@ end)
 
 Shop.init(Manager)
 Leaderboard.init(Shop.getStats)
+Community.init(Shop)
 
 Lobby.init(function(group, mode)
 	Manager:StartMatch(group, mode)

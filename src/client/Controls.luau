@@ -36,6 +36,16 @@ local spectating: Player? = nil
 
 local LOBBY_SPEED = 16
 
+-- Hvor mye sprint-energi du har: 15 % mer i Normal enn i Nightmare
+local function maxStamina(): number
+	local matches = workspace:FindFirstChild("Matches")
+	local folder = matches and matches:FindFirstChild("Match_" .. tostring(player:GetAttribute("MatchId")))
+	if folder and folder:GetAttribute("Mode") == "Nightmare" then
+		return Config.StaminaMax
+	end
+	return Config.StaminaMax * Config.NormalStaminaBonus
+end
+
 local function getHumanoid(): Humanoid?
 	local character = player.Character
 	return character and character:FindFirstChildOfClass("Humanoid")
@@ -423,6 +433,7 @@ function Controls.init(ui: any)
 			UI.setStamina(1, false)
 			return
 		end
+		local maxEnergy = maxStamina()
 		local moving = hum.MoveDirection.Magnitude > 0.1
 		if exhausted or attr("Hidden") == true then
 			sprintToggle = false
@@ -439,19 +450,20 @@ function Controls.init(ui: any)
 		else
 			hum.WalkSpeed = Config.WalkSpeed
 			if os.clock() - lastSprint > Config.StaminaRegenDelay then
-				stamina = math.min(Config.StaminaMax, stamina + Config.StaminaRegen * dt)
+				stamina = math.min(maxEnergy, stamina + Config.StaminaRegen * dt)
 			end
-			if exhausted and stamina >= Config.StaminaMax * 0.35 then
+			if exhausted and stamina >= maxEnergy * 0.35 then
 				exhausted = false
 			end
 		end
-		UI.setStamina(stamina / Config.StaminaMax, stamina < Config.StaminaMax)
+		stamina = math.min(stamina, maxEnergy)
+		UI.setStamina(stamina / maxEnergy, stamina < maxEnergy)
 	end)
 end
 
 function Controls.setMode(matchMode: boolean)
 	inMatch = matchMode
-	stamina = Config.StaminaMax
+	stamina = Config.StaminaMax * Config.NormalStaminaBonus -- kuttes ned til Nightmare-maks av seg selv
 	exhausted = false
 	if matchMode then
 		player.CameraMode = Enum.CameraMode.LockFirstPerson

@@ -1266,6 +1266,97 @@ return function(parent: any, spawnLocation: any)
 	end
 
 	------------------------------------------------------------------
+	-- Plakat ved spawn: bli med i communityet og få 15 mynter. Et innrammet, gulnet papir på
+	-- et stativ med en lampe over, skrått mot spawn så det er det første du ser. Pop-upen og
+	-- "CLAIMED"-stempelet styres av CommunityUI på klienten.
+	------------------------------------------------------------------
+	do
+		local m = lib.new("Model", { Name = "CommunityPoster" }, lobby)
+		local base = Vector3.new(-9, 0, -187)
+		local cf = lib.lookAt(base, base + Vector3.new(9, 0, 15)) -- fremsiden (-Z) mot spawn
+		local function piece(name: string, size: any, offset: any, color: any, material: any?, extra: any?)
+			return lib.part(m, name, size, cf * offset, color, material, extra)
+		end
+		-- stativ: to messingstolper med føtter, og en mørk bakplate
+		for _, x in { -2.45, 2.45 } do
+			piece("Foot", Vector3.new(0.5, 0.2, 2.4), CFrame.new(x, 0.1, 0.1), BRASS_DARK, Enum.Material.Metal)
+			piece("Post", Vector3.new(0.22, 9.6, 0.22), CFrame.new(x, 4.9, 0.12), BRASS, Enum.Material.Metal)
+		end
+		piece("Board", Vector3.new(5.2, 6.9, 0.18), CFrame.new(0, 5.95, 0.12), WALNUT, Enum.Material.Wood)
+		-- messingramme rundt papiret
+		piece("Frame", Vector3.new(5.3, 0.18, 0.16), CFrame.new(0, 2.5, -0.02), BRASS, Enum.Material.Metal, NO_HIT)
+		piece("Frame", Vector3.new(5.3, 0.18, 0.16), CFrame.new(0, 9.4, -0.02), BRASS, Enum.Material.Metal, NO_HIT)
+		piece("Frame", Vector3.new(0.18, 6.9, 0.16), CFrame.new(-2.56, 5.95, -0.02), BRASS, Enum.Material.Metal, NO_HIT)
+		piece("Frame", Vector3.new(0.18, 6.9, 0.16), CFrame.new(2.56, 5.95, -0.02), BRASS, Enum.Material.Metal, NO_HIT)
+		local paper = piece("Paper", Vector3.new(4.8, 6.4, 0.04), CFrame.new(0, 5.95, -0.03), CREAM_PAPER, Enum.Material.SmoothPlastic, NO_HIT)
+
+		-- lampe på en arm over plakaten, som lyser ned på papiret
+		piece("LampArm", Vector3.new(0.12, 0.12, 1.5), CFrame.new(0, 9.85, -0.65), BRASS, Enum.Material.Metal, DECOR)
+		local shadeCf = CFrame.new(0, 9.75, -1.45) * CFrame.Angles(-0.6, 0, 0)
+		piece("LampShade", Vector3.new(1.8, 0.35, 0.7), shadeCf, BRASS_DARK, Enum.Material.Metal, DECOR)
+		local bulb = piece("LampBulb", Vector3.new(1.5, 0.06, 0.45), shadeCf * CFrame.new(0, -0.2, 0), rgb(255, 236, 196), Enum.Material.Neon, DECOR)
+		lib.new("SpotLight", { Name = "Light", Face = Enum.NormalId.Bottom, Angle = 75, Range = 12, Brightness = 2.4, Color = rgb(255, 226, 170), Shadows = false }, bulb)
+
+		-- selve plakaten
+		local g = gui(paper, nil, 0.3, 1.3)
+		g.PixelsPerStud = 64
+		local RED = rgb(178, 26, 26)
+		local tape = rgb(232, 226, 200)
+		local border = frame(g, 0.5, 0.5, 0.92, 0.95, CREAM_PAPER)
+		border.BackgroundTransparency = 1
+		lib.new("UIStroke", { Color = INK, Thickness = 2, Transparency = 0.55 }, border)
+		frame(g, 0.12, 0.025, 0.24, 0.05, tape, -35).BackgroundTransparency = 0.3
+		frame(g, 0.88, 0.025, 0.24, 0.05, tape, 35).BackgroundTransparency = 0.3
+		label(g, "Studio", 0.08, 0.06, 0.84, 0.055, "DEEZIRE STUDIOS", INK, Enum.Font.GothamBold)
+		frame(g, 0.5, 0.135, 0.7, 0.006, RED)
+		label(g, "Join", 0.06, 0.15, 0.88, 0.17, "JOIN", RED, Enum.Font.GothamBlack)
+		label(g, "Get", 0.2, 0.32, 0.6, 0.075, "& GET", INK, Enum.Font.GothamBold)
+		-- stor gullmynt med 15 på
+		local coin = frame(g, 0.5, 0.56, 0.4, 0.3, rgb(232, 178, 62))
+		lib.new("UICorner", { CornerRadius = lib.UDim.new(1, 0) }, coin)
+		lib.new("UIStroke", { Color = rgb(130, 86, 24), Thickness = 4 }, coin)
+		local inner = lib.new("Frame", {
+			BorderSizePixel = 0,
+			BackgroundColor3 = rgb(212, 150, 44),
+			AnchorPoint = lib.Vector2.new(0.5, 0.5),
+			Position = UDim2.fromScale(0.5, 0.5),
+			Size = UDim2.fromScale(0.74, 0.74),
+		}, coin)
+		lib.new("UICorner", { CornerRadius = lib.UDim.new(1, 0) }, inner)
+		label(inner, "Amount", 0.1, 0.2, 0.8, 0.6, "15", rgb(96, 58, 14), Enum.Font.GothamBlack)
+		label(g, "Coins", 0.1, 0.72, 0.8, 0.1, "COINS", rgb(150, 96, 20), Enum.Font.GothamBlack)
+		label(g, "Small", 0.08, 0.835, 0.84, 0.045, "JOIN OUR COMMUNITY  •  ONE TIME ONLY", INK, Enum.Font.Gotham)
+		label(g, "Hint", 0.08, 0.89, 0.84, 0.04, "STEP CLOSER TO JOIN", RED, Enum.Font.GothamBold)
+		-- stempel som vises hos deg når du har fått myntene (CommunityUI)
+		local stamp = lib.new("Frame", {
+			Name = "Claimed",
+			BorderSizePixel = 0,
+			BackgroundColor3 = rgb(40, 150, 70),
+			BackgroundTransparency = 0.85,
+			AnchorPoint = lib.Vector2.new(0.5, 0.5),
+			Position = UDim2.fromScale(0.5, 0.52),
+			Size = UDim2.fromScale(0.88, 0.22),
+			Rotation = -12,
+			ZIndex = 5,
+			Visible = false,
+		}, g)
+		lib.new("UIStroke", { Color = rgb(36, 140, 64), Thickness = 6 }, stamp)
+		label(stamp, "Text", 0.04, 0.06, 0.92, 0.58, "CLAIMED ✓", rgb(30, 130, 58), Enum.Font.GothamBlack).ZIndex = 6
+		label(stamp, "Thanks", 0.1, 0.64, 0.8, 0.28, "THANK YOU FOR JOINING", rgb(30, 130, 58), Enum.Font.GothamBold).ZIndex = 6
+
+		local promptPart = lib.marker(m, "PromptPart", cf * CFrame.new(0, 3.6, -0.8))
+		lib.new("ProximityPrompt", {
+			Name = "CommunityPrompt",
+			ActionText = "Join",
+			ObjectText = "Community · +15 coins",
+			HoldDuration = 0,
+			MaxActivationDistance = 10,
+			RequiresLineOfSight = false,
+			KeyboardKeyCode = Enum.KeyCode.E,
+		}, promptPart)
+	end
+
+	------------------------------------------------------------------
 	-- Spawn: dørmatte innenfor inngangen
 	------------------------------------------------------------------
 	if spawnLocation then

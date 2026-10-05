@@ -132,7 +132,7 @@ buildKey(ServerStorage)
 -- RemoteEvents
 ------------------------------------------------------------------
 local remotes = lib.new("Folder", { Name = "Remotes" }, ReplicatedStorage)
-for _, name in { "Notify", "Jumpscare", "MatchState", "Transition", "ToggleFlashlight", "LeaveCloset", "GameOverChoice", "Shop", "Push", "Pushed", "Prank", "Cosmetics", "Elevator" } do
+for _, name in { "Notify", "Jumpscare", "MatchState", "Transition", "ToggleFlashlight", "LeaveCloset", "GameOverChoice", "Shop", "Push", "Pushed", "Prank", "Cosmetics", "Elevator", "Community" } do
 	lib.new("RemoteEvent", { Name = name }, remotes)
 end
 
@@ -171,7 +171,7 @@ smChild(smAssets, "MonsterJumpscare", "Model")
 -- Server
 local smSSS = smService("ServerScriptService", "ServerScriptService")
 local server, smServer = script("Script", "GameServer", "src/server/GameServer.server.luau", ServerScriptService, smSSS)
-for _, name in { "Util", "Monster", "Match", "Lobby", "Shop", "Leaderboard" } do
+for _, name in { "Util", "Monster", "Match", "Lobby", "Shop", "Leaderboard", "Community" } do
 	script("ModuleScript", name, "src/server/" .. name .. ".luau", server, smServer)
 end
 
@@ -184,7 +184,7 @@ if oldClient then
 	oldClient.Parent = nil
 end
 local client, smClient = script("LocalScript", "ClientMain", "src/client/ClientMain.client.luau", sps, smSPS)
-for _, name in { "Screen", "UI", "Effects", "Controls", "Jumpscare", "MonsterAnimator", "Ending", "Scares", "CosmeticsUI", "ExitGuide", "ElevatorUI" } do
+for _, name in { "Screen", "UI", "Effects", "Controls", "Jumpscare", "MonsterAnimator", "Ending", "Scares", "CosmeticsUI", "ExitGuide", "ElevatorUI", "CommunityUI" } do
 	script("ModuleScript", name, "src/client/" .. name .. ".luau", client, smClient)
 end
 
