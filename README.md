@@ -101,6 +101,18 @@ Så lenge en ID er `0`, er kjøpet gratis i Studio, slik at du kan teste. Kjøpt
 jumpscares som ikke ble brukt med en gang, lagres og blir gratis neste gang (krever at
 **Enable Studio Access to API Services** er på hvis du vil teste lagringen i Studio).
 
+## Thumbnails og ikon
+
+Ferdige bilder til spillsiden ligger i `thumbnails/`:
+
+- `thumbnail-1-face.png` … `thumbnail-4-doorway.png` (1920×1080, med tittel)
+- `icon-512.png` (512×512, spillikonet)
+- `no-text/` er de samme bildene uten tittel, hvis du vil skrive noe annet selv
+
+Bildene er rendret fra spillets egne modeller (monsteret, sykehuset og skapene) med
+`lune run build/export_preview.luau thumb ...` (posituren og plasseringen styres med argumentene).
+Last dem opp på create.roblox.com → spillet ditt → **Places** → **Configure Place** → *Thumbnails* og *Icon*.
+
 ## Åpne spillet i Roblox Studio
 
 1. Last ned `horrorgame.rbxl`.

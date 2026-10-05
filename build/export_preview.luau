@@ -249,6 +249,103 @@ elseif scene == "keyroom" then
 		end
 	end
 	extra.key = { base.X, base.Y + 1.55, base.Z }
+elseif scene == "thumb" then
+	-- Thumbnails: monsteret i en positur, enten fritt (x,z,yaw) eller foran et skap (closet=N)
+	-- Bruk: lune run build/export_preview.luau thumb out.json <positur> <x,z,yaw | closet=N> [med-kart 0/1]
+	local CF = roblox.CFrame
+	local V3 = roblox.Vector3
+	local preset = process.args[3] or "stare"
+	local where = process.args[4] or "0,0,0"
+	local withMap = process.args[5] ~= "0"
+	local map
+	if withMap then
+		buildHospital(container)
+		map = container:FindFirstChild("HospitalTemplate")
+	end
+	local m = buildPatient(container, "Monster")
+	local poses = {
+		stare = { Neck = CF.Angles(0.1, 0, 0.45), Jaw = CF.Angles(-0.3, 0, 0), RShoulder = CF.Angles(0.15, 0, 0), RElbow = CF.Angles(0.2, 0, 0) },
+		lean = {
+			Spine = CF.Angles(-1.05, 0, 0.1),
+			Neck = CF.Angles(0.9, 0, 0.5),
+			Jaw = CF.Angles(-0.4, 0, 0),
+			RShoulder = CF.Angles(1.5, 0, 0.15),
+			RElbow = CF.Angles(0.5, 0, 0),
+			LShoulder = CF.Angles(0.7, 0, -0.1),
+		},
+		peek = {
+			Spine = CF.Angles(-1.45, 0, 0.1),
+			Neck = CF.Angles(1.6, 0.12, 0.42),
+			LHip = CF.Angles(0.25, 0, 0),
+			RHip = CF.Angles(0.25, 0, 0),
+			LKnee = CF.Angles(-0.5, 0, 0),
+			RKnee = CF.Angles(-0.5, 0, 0),
+			Jaw = CF.Angles(-0.45, 0, 0),
+			RShoulder = CF.Angles(1.0, 0, 0.35),
+			RElbow = CF.Angles(1.1, 0, 0),
+			LShoulder = CF.Angles(0.9, 0, -0.3),
+			LElbow = CF.Angles(1.0, 0, 0),
+		},
+		reach = {
+			Spine = CF.Angles(-0.2, 0, 0),
+			Neck = CF.Angles(0.2, 0.15, 0.35),
+			Jaw = CF.Angles(-0.42, 0, 0),
+			RShoulder = CF.Angles(1.25, 0, -0.08),
+			RElbow = CF.Angles(0.3, 0, 0),
+			LShoulder = CF.Angles(0.35, 0, 0),
+			LHip = CF.Angles(0.35, 0, 0),
+			LKnee = CF.Angles(-0.5, 0, 0),
+			RHip = CF.Angles(-0.2, 0, 0.07),
+		},
+		wave = { Neck = CF.Angles(0.12, 0, 0.55), RShoulder = CF.Angles(1.2, 0, 0.6), RElbow = CF.Angles(1.0, 0, 0), Jaw = CF.Angles(-0.15, 0, 0) },
+	}
+	for name, cf in poses[preset] or {} do
+		local w = m.Joints:FindFirstChild(name)
+		if w then
+			w.C0 = w.C0 * cf
+		end
+	end
+	-- plassering
+	local rootCF
+	if string.sub(where, 1, 7) == "closet=" then
+		local index = tonumber(string.sub(where, 8)) or 1
+		local closet = map.Closets:GetChildren()[index]
+		local hide = closet:FindFirstChild("HidePoint").CFrame
+		local outp = closet:FindFirstChild("OutPoint").CFrame
+		local toward = (hide.Position - outp.Position)
+		local flat = V3.new(toward.X, 0, toward.Z).Unit
+		local base = V3.new(outp.Position.X, 1, outp.Position.Z) + flat * (tonumber(process.args[6]) or 0.6)
+		rootCF = lib.lookAt(base, base + flat)
+		extra.hide = { hide.Position.X, hide.Position.Y, hide.Position.Z }
+		extra.flat = { flat.X, flat.Y, flat.Z }
+	else
+		local a = string.split(where, ",")
+		rootCF = CF.new(tonumber(a[1]) or 0, 1, tonumber(a[2]) or 0) * CF.Angles(0, math.rad(tonumber(a[3]) or 0), 0)
+	end
+	local T = rootCF * m.Root.CFrame:Inverse()
+	m.Root.CFrame = rootCF
+	-- løs sveisene fra Root og utover
+	local byPart0 = {}
+	for _, d in m:GetDescendants() do
+		if d.ClassName == "Weld" then
+			byPart0[d.Part0] = byPart0[d.Part0] or {}
+			table.insert(byPart0[d.Part0], d)
+		end
+	end
+	local queue = { m.Root }
+	while #queue > 0 do
+		local p0 = table.remove(queue, 1)
+		for _, w in byPart0[p0] or {} do
+			w.Part1.CFrame = p0.CFrame * w.C0 * w.C1:Inverse()
+			table.insert(queue, w.Part1)
+		end
+	end
+	local _ = T
+	local face = m:FindFirstChild("Face", true)
+	extra.face = { face.CFrame.Position.X, face.CFrame.Position.Y, face.CFrame.Position.Z }
+	local lv = face.CFrame.LookVector
+	extra.faceLook = { lv.X, lv.Y, lv.Z }
+	extra.monsterPivot = cfArray(m.Root.CFrame)
 elseif scene == "ending" then
 	-- sluttscenen: monsteret står i nødutgangen og vinker (samme formler som Ending.luau)
 	buildHospital(container)
