@@ -186,8 +186,8 @@ return function(parent: any, spawnLocation: any)
 			-- platen henger fortsatt i den ene kanten
 			local hinge = CFrame.new(hx + 2, HEIGHT - 0.05, hz + 0.1) * CFrame.Angles(math.rad(70 + rng() * 15), 0, (rng() - 0.5) * 0.2)
 			lib.part(props, "HangingTile", Vector3.new(3.8, 0.12, 3.8), hinge * CFrame.new(0, 0, 1.9), CEIL, Enum.Material.SmoothPlastic, DECOR)
-		else
-			-- platen ligger knust på gulvet
+		elseif i == 5 then
+			-- platen ligger knust på gulvet (bare én, borte ved resepsjonen)
 			for k = 1, 3 do
 				local cf = CFrame.new(hx + 2 + (rng() - 0.5) * 3, 0.1 + k * 0.03, hz + 2 + (rng() - 0.5) * 3) * CFrame.Angles((rng() - 0.5) * 0.1, rng() * 3, (rng() - 0.5) * 0.1)
 				lib.part(props, "TileShard", Vector3.new(1 + rng() * 1.4, 0.12, 0.8 + rng() * 1.2), cf, CEIL, Enum.Material.SmoothPlastic, { CanCollide = false, CanQuery = false })
@@ -1166,13 +1166,11 @@ return function(parent: any, spawnLocation: any)
 			x += if ch == " " then 0.4 else 0.62
 		end
 	end
-	-- slepespor fra midten av rommet inn i heis 3, og en pytt ved stolene
+	-- slepespor fra midten av rommet inn i heis 3
 	do
 		local drag = Blood.canvas(decor, "Blood", CFrame.new(11, 0.06, -211) * CFrame.Angles(0, math.pi / 2, 0), 26, 4, "Top", 32)
 		drag:pool(-9.5, 0, 1.1, Blood.DRIED, rng, { drops = 8 })
 		drag:drag(-8.6, 0, 17, 1.0, Blood.DRIED, rng)
-		local pool = Blood.canvas(decor, "Blood", CFrame.new(-6, 0.06, -186) * CFrame.Angles(0, 0.7, 0), 6, 6, "Top", 32)
-		pool:pool(0, 0, 1.2, Blood.DRIED, rng, { drops = 10 })
 		-- bare fotspor ut av heis 1, bort mot resepsjonen
 		local steps = Blood.canvas(decor, "Blood", CFrame.new(-36, 0.06, -214) * CFrame.Angles(0, math.rad(-58), 0), 14, 3, "Top", 32)
 		steps:footprints(-6, 0, 12, Blood.DRIED, rng)
@@ -1203,11 +1201,11 @@ return function(parent: any, spawnLocation: any)
 		end
 	end
 	-- papirer strødd utover gulvet
-	for _ = 1, 46 do
+	for _ = 1, 14 do
 		local x = x0 + 3 + rng() * (x1 - x0 - 16)
 		local z = z0 + 4 + rng() * (z1 - z0 - 8)
-		if math.abs(x) < 6 and z > -184 then
-			continue
+		if math.abs(x) < 9 or z < -220 then
+			continue -- midtgangen og plassen foran heisene holdes ryddig
 		end
 		lib.part(decor, "Paper", Vector3.new(0.85, 0.02, 1.1), CFrame.new(x, 0.06 + rng() * 0.02, z) * CFrame.Angles((rng() - 0.5) * 0.06, rng() * 6, (rng() - 0.5) * 0.06), if rng() < 0.2 then rgb(196, 186, 150) else rgb(220, 214, 196), Enum.Material.SmoothPlastic, DECOR)
 	end
@@ -1244,7 +1242,7 @@ return function(parent: any, spawnLocation: any)
 		lib.part(decor, "IVBag", Vector3.new(0.6, 0.9, 0.2), CFrame.new(iv + Vector3.new(0.45, 5.65, 0)), rgb(110, 20, 20), Enum.Material.Glass, { Transparency = 0.25, CanCollide = false, CanQuery = false })
 	end
 	do
-		local wf = Vector3.new(6.5, 0, -214)
+		local wf = Vector3.new(-46, 0, -179)
 		local m = lib.new("Model", { Name = "WetFloor" }, decor)
 		for _, sgn in { -1, 1 } do
 			local cf = CFrame.new(wf + Vector3.new(0, 1.3, sgn * 0.35)) * CFrame.Angles(sgn * 0.27, 0, 0)
@@ -1260,15 +1258,6 @@ return function(parent: any, spawnLocation: any)
 	for i, b in { { -44.6, -181.5, 0.1 }, { -42.3, -181.3, -0.2 }, { -43.6, -181.4, 0.4 } } do
 		local h = if i == 3 then 4.1 else 1.4
 		lib.part(decor, "Box", Vector3.new(2, 1.4, 2), CFrame.new(b[1], h - 0.7, b[2]) * CFrame.Angles(0, b[3], 0), rgb(150, 116, 76), Enum.Material.Cardboard)
-	end
-	-- to stoler som har veltet ved stolradene
-	for _, c in { { -8.6, -203, 1.2 }, { 33.4, -199, -0.6 } } do
-		local cf = CFrame.new(c[1], 0, c[2]) * CFrame.Angles(0, c[3], 0)
-		local m = lib.new("Model", { Name = "FallenChair" }, decor)
-		lib.part(m, "Seat", Vector3.new(2.1, 1.9, 0.45), cf * CFrame.new(0, 0.95, 0), SEAT, Enum.Material.Leather)
-		lib.part(m, "Back", Vector3.new(2.1, 0.35, 2.2), cf * CFrame.new(0, 0.2, 1.3), SEAT, Enum.Material.Leather)
-		lib.part(m, "Leg", Vector3.new(0.2, 0.2, 1.4), cf * CFrame.new(-0.8, 1.5, -0.8), CHROME, Enum.Material.Metal, DECOR)
-		lib.part(m, "Leg", Vector3.new(0.2, 0.2, 1.4), cf * CFrame.new(0.8, 1.5, -0.8), CHROME, Enum.Material.Metal, DECOR)
 	end
 	-- lys ved toppliste-tavla: små lys på en hylle (som et minnested)
 	do

@@ -36,6 +36,7 @@ type PlayerState = {
 	revivePrompt: ProximityPrompt?,
 	downedGui: BillboardGui?,
 	lastPush: number?,
+	deathPos: Vector3?, -- der du sist ble tatt (revive starter deg her)
 }
 
 local Match = {}
@@ -373,7 +374,7 @@ function Match:_dropKeys(count: number, position: Vector3)
 	for i = 1, count do
 		local angle = (i / count) * math.pi * 2
 		local offset = count > 1 and Vector3.new(math.cos(angle), 0, math.sin(angle)) * 1.5 or Vector3.zero
-		local pos = Vector3.new(position.X, self.floorY + 0.25, position.Z) + offset
+		local pos = Vector3.new(position.X, self.floorY + 0.12, position.Z) + offset
 		self:_spawnKey(CFrame.new(pos) * CFrame.Angles(0, math.random() * math.pi * 2, 0), true)
 	end
 end
@@ -768,6 +769,7 @@ function Match:_loseLife(player: Player, pos: Vector3?, withScare: boolean)
 		player:SetAttribute("Keys", 0)
 	end
 	st.lives -= 1
+	st.deathPos = pos
 	player:SetAttribute("Lives", st.lives)
 	Util.setAnchored(player, true)
 	if withScare then
@@ -931,7 +933,20 @@ function Match:Revive(player: Player): boolean
 	st.keys = 0
 	st.protectedUntil = os.clock() + Config.ReviveProtection
 	self:_setPlayerAttributes(player)
-	self:_spawnPlayer(player)
+	-- du kommer tilbake der du døde (nøklene du mistet ligger der), og monsteret flyttes langt unna
+	local deathPos: Vector3? = st.deathPos
+	if deathPos then
+		Util.placeCharacter(player, CFrame.new(Vector3.new(deathPos.X, self.floorY + 3.2, deathPos.Z)), false)
+	else
+		self:_spawnPlayer(player)
+	end
+	if self.monster and not wasOver then
+		local far = self:GetFarPatrolPoint()
+		if far then
+			self.monster:Teleport(far)
+		end
+		self.monster:Activate()
+	end
 	if wasOver then
 		-- runden fortsetter: avbryt game over-nedtellingen og vekk monsteret igjen
 		self.state = "playing"

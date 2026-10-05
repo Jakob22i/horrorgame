@@ -1,5 +1,5 @@
--- Nøkkelen spillerne skal finne. Den skinner (lys + glitter + svak klingende lyd);
--- klienten får den til å sveve og snurre (se Effects.updateKeys).
+-- Nøkkelen spillerne skal finne. Den ligger flatt på bordet (eller gulvet) og skinner:
+-- varmt lys som pulserer, glitter, en gyllen glød rundt kanten og en klingende lyd.
 
 local roblox = require("@lune/roblox")
 local lib = require("./lib")
@@ -20,11 +20,20 @@ return function(parent: any)
 	keyPart("Tooth1", Vector3.new(0.45, 0.18, 0.22), CFrame.new(0.3, 0, -1.1))
 	keyPart("Tooth2", Vector3.new(0.35, 0.18, 0.2), CFrame.new(0.25, 0, -0.65))
 	-- Nøkkelen skinner: varmt lys rundt seg, glitter og en svak, klingende lyd (hjelper deg å finne den)
-	lib.new("PointLight", { Name = "Glow", Range = 12, Brightness = 2.2, Color = rgb(255, 200, 100), Shadows = false }, bow)
+	lib.new("PointLight", { Name = "Glow", Range = 15, Brightness = 2.8, Color = rgb(255, 200, 100), Shadows = false }, bow)
+	-- gyllen kant og fyll, så nøkkelen synes godt på bordet (bare når du har den i synsfeltet)
+	lib.new("Highlight", {
+		Name = "Shine",
+		FillColor = rgb(255, 210, 110),
+		FillTransparency = 0.6,
+		OutlineColor = rgb(255, 236, 170),
+		OutlineTransparency = 0.25,
+		DepthMode = Enum.HighlightDepthMode.Occluded,
+	}, key)
 	lib.new("ParticleEmitter", {
 		Name = "Sparkles",
 		Texture = "rbxasset://textures/particles/sparkles_main.dds",
-		Rate = 6,
+		Rate = 11,
 		Lifetime = roblox.NumberRange.new(0.8, 1.6),
 		Speed = roblox.NumberRange.new(0.2, 0.7),
 		SpreadAngle = lib.Vector2.new(180, 180),
@@ -47,12 +56,12 @@ return function(parent: any)
 	lib.new("Sound", {
 		Name = "Shimmer",
 		SoundId = "rbxassetid://9125986205", -- Sparkle Tone Constant High End Shimmer (samme som Config.Sounds.KeyShimmer)
-		Volume = 0.22,
+		Volume = 0.6,
 		Looped = true,
 		Playing = true,
 		RollOffMode = Enum.RollOffMode.InverseTapered,
-		RollOffMinDistance = 3,
-		RollOffMaxDistance = 26,
+		RollOffMinDistance = 6,
+		RollOffMaxDistance = 48,
 	}, bow)
 	lib.new("ProximityPrompt", {
 		Name = "PickupPrompt",

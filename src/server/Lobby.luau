@@ -132,12 +132,18 @@ local function depart(e: Elevator, startMatch: ({ Player }, string) -> ())
 	end
 	e.countdown = nil
 	updateSign(e)
+	-- dørene lukker seg mens dere står inne (dere står stille så ingen går ut i siste liten),
+	-- viseren begynner å gå ned, og først da blir skjermen svart
+	for _, player in group do
+		Util.setAnchored(player, true)
+	end
 	setDoors(e, false)
-	moveNeedle(e, e.needleDown, 3)
+	moveNeedle(e, e.needleDown, 3.4)
+	task.wait(1.7)
 	for _, player in group do
 		TransitionRemote:FireClient(player, "Going down...")
 	end
-	task.wait(2.2)
+	task.wait(1.6)
 	local stillHere = {}
 	for _, player in group do
 		if player.Parent == Players and not player:GetAttribute("InMatch") then
@@ -146,6 +152,11 @@ local function depart(e: Elevator, startMatch: ({ Player }, string) -> ())
 	end
 	if #stillHere > 0 then
 		startMatch(stillHere, mode)
+	end
+	for _, player in group do
+		if player.Parent == Players and not player:GetAttribute("InMatch") then
+			Util.setAnchored(player, false)
+		end
 	end
 	task.wait(1.5)
 	moveNeedle(e, e.needleUp, 2.2)

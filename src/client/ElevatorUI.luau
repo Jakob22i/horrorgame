@@ -109,8 +109,8 @@ local function build()
 
 	panel = make("Frame", {
 		Name = "Panel",
-		AnchorPoint = Vector2.new(1, 0.5),
-		Position = UDim2.new(1, -24, 0.5, 0),
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.fromScale(0.5, 0.5),
 		Size = UDim2.fromOffset(300, 352),
 		BackgroundColor3 = Color3.fromRGB(14, 12, 10),
 		BackgroundTransparency = 0.06,

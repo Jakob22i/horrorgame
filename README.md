@@ -13,8 +13,9 @@ Et analog-horror-spill i Roblox for 1–4 spillere per gruppe. Alt i spillet er 
   (L, B1, B2, B3) og en lampe ved siden av døra: **grønn** = gå inn, **gul** = noen venter,
   **rød** = full eller på vei ned. Skiltet over døra viser heisnummer, modus, antall spillere
   og nedtellingen. Når heisen går, svinger viseren ned til B3. Maks 4 spillere per heis.
-  Gå inn i en heis, så starter en nedtelling (15 sek, eller 5 sek hvis heisen er full).
-- **Heismenyen**: står du i en heis, kommer det opp en meny med hvem som er med. Den første
+  Gå inn i en heis, så starter en nedtelling (30 sek, eller 5 sek hvis heisen er full).
+  Når heisen går, lukker dørene seg mens dere står inne, før skjermen blir svart.
+- **Heismenyen**: står du i en heis, kommer det opp en meny midt på skjermen med hvem som er med. Den første
   som gikk inn er **verten** og kan velge **NORMAL/NIGHTMARE**, hvor mange som får bli med
   (**1–4**, f.eks. 1 for å spille alene) og trykke **START NOW**. Alle kan trykke **LEAVE**.
 - **HALL OF SURVIVORS**: topplista på østveggen viser **raskeste flukt** og **flest flukter**
@@ -40,8 +41,8 @@ Et analog-horror-spill i Roblox for 1–4 spillere per gruppe. Alt i spillet er 
   15 sekunder (med en rød markør som vennene ser gjennom vegger). En venn kan holde E på deg for
   å hjelpe deg opp, da mister du ikke liv og beholder nøklene. Rekker ingen det (eller du er
   alene), mister du et liv, nøklene faller der du var, og du starter på nytt i resepsjonen.
-- Bruker du opp alle livene, får du valget **REVIVE** (39 Robux, du kommer tilbake i
-  resepsjonen med 1 liv) eller **SPECTATE**. Har alle mistet alle liv, kan hver spiller
+- Bruker du opp alle livene, får du valget **REVIVE** (39 Robux, du kommer tilbake **der du
+  døde** med 1 liv, og monsteret flyttes langt unna) eller **SPECTATE**. Har alle mistet alle liv, kan hver spiller
   velge **REVIVE**, **Try again** (ny runde fra starten) eller **To lobby**.
 - Monsteret blir **raskere for hver nøkkel** som settes inn.
 - **Nightmare-modus**: verten velger den i heismenyen (eller trykker E på panelet inne i heisen).
@@ -62,8 +63,8 @@ Et analog-horror-spill i Roblox for 1–4 spillere per gruppe. Alt i spillet er 
   - en mørk skikkelse med lysende øyne som står langt borte og ser på deg, og forsvinner med et
     støyglimt når du ser rett på den
   - lampene slukner én etter én med et «klonk» bortover gangen mot deg, og kommer tilbake etterpå
-- **Nøklene skinner**: de svever og snurrer over der de ligger, lyser varmt gult, glitrer og har
-  en svak klingende lyd, så de er lette å finne.
+- **Nøklene skinner**: de ligger på nattbordene (eller på gulvet der noen døde), lyser varmt
+  gult og pulserer, har en gyllen glød rundt kanten, glitrer og klinger, så de er lette å finne.
 - **Blodet** er tegnet med myke, organiske former: mørke, våte pytter som har rent ut, inntørkede
   brune flekker, slepespor, bare fotspor som går ut av en pytt, sprut og renner på veggene og
   flekkete håndavtrykk.
@@ -102,7 +103,7 @@ mobil så spillet går jevnere.
 
 | Kjøp | Type | Pris | Hva det gjør |
 | --- | --- | --- | --- |
-| Revive | Developer Product | 39 | Tilbake i resepsjonen med 1 liv og 5 sek beskyttelse |
+| Revive | Developer Product | 39 | Tilbake der du døde med 1 liv og 5 sek beskyttelse (monsteret flyttes langt unna) |
 | Push | Game Pass | 49 | Låser opp Push: dytter spilleren foran deg (5 sek ventetid) |
 | Jumpscare everyone | Developer Product | 49 | Jumpscarer alle de andre i runden din (ikke lobbyen) |
 

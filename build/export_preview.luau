@@ -224,7 +224,7 @@ elseif scene == "blood" then
 	hands:drip(-0.2, 1.4, 1.6, 0.08, Blood.FRESH)
 	hands:drip(1.4, 0.3, 0.9, 0.06, Blood.FRESH)
 elseif scene == "keyroom" then
-	-- en nøkkel som svever over et skap i et mørkt pasientrom (lampene der er av)
+	-- en nøkkel som ligger på et skap i et mørkt pasientrom (lampene der er av)
 	buildHospital(container)
 	local map = container:FindFirstChild("HospitalTemplate") or container
 	local spot
@@ -235,7 +235,7 @@ elseif scene == "keyroom" then
 	end
 	local base = spot.CFrame.Position
 	local key = buildKey(container)
-	local T = roblox.CFrame.new(base + roblox.Vector3.new(0, 1.55, 0)) * roblox.CFrame.Angles(0, 0.6, 0) * roblox.CFrame.Angles(-math.pi / 2, 0, 0)
+	local T = spot.CFrame
 	for _, d in key:GetDescendants() do
 		if d.ClassName == "Part" then
 			d.CFrame = T * d.CFrame
@@ -249,7 +249,7 @@ elseif scene == "keyroom" then
 			panel:FindFirstChildOfClass("PointLight").Enabled = false
 		end
 	end
-	extra.key = { base.X, base.Y + 1.55, base.Z }
+	extra.key = { base.X, base.Y, base.Z }
 elseif scene == "thumb" then
 	-- Thumbnails: monsteret i en positur, enten fritt (x,z,yaw) eller foran et skap (closet=N)
 	-- Bruk: lune run build/export_preview.luau thumb out.json <positur> <x,z,yaw | closet=N> [med-kart 0/1]

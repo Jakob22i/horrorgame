@@ -395,7 +395,7 @@ function Effects.darkWave(from: Vector3, radius: number)
 	end
 end
 
--- Nøklene svever, snurrer sakte og pulserer i lyset, så de er lette å få øye på
+-- Nøklene ligger på bordet og pulserer i lyset (og glitrer og klinger), så de er lette å finne
 local keyBase: { [Model]: CFrame } = {}
 local function updateKeys()
 	local folder = mode == "match" and currentMatchFolder() or nil
@@ -421,12 +421,14 @@ local function updateKeys()
 				end
 			end
 			local phase = (base.Position.X + base.Position.Z) * 0.37
-			local bob = math.sin(t * 2 + phase) * 0.18
-			-- stående nøkkel (kammen opp) som svever litt over der den ligger
-			model:PivotTo(CFrame.new(base.Position + Vector3.new(0, 1.55 + bob, 0)) * CFrame.Angles(0, t * 1.3 + phase, 0) * CFrame.Angles(-math.pi / 2, 0, 0))
+			local pulse = 0.5 + 0.5 * math.sin(t * 2.6 + phase)
 			local glow = model:FindFirstChild("Glow", true)
 			if glow and glow:IsA("PointLight") then
-				glow.Brightness = 1.9 + math.sin(t * 3 + phase) * 0.5
+				glow.Brightness = 2.2 + pulse * 1.4
+			end
+			local shine = model:FindFirstChild("Shine")
+			if shine and shine:IsA("Highlight") then
+				shine.FillTransparency = 0.72 - pulse * 0.22
 			end
 		end
 	end

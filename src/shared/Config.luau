@@ -5,7 +5,7 @@ local Config = {
 	-- Lobby og heiser
 	MaxPlayersPerElevator = 4,
 	MaxMatches = 6, -- hvor mange runder som kan gå samtidig i én server
-	ElevatorCountdown = 15, -- sekunder fra første spiller går inn til heisen går
+	ElevatorCountdown = 30, -- sekunder fra første spiller går inn til heisen går
 	ElevatorFullCountdown = 5, -- nedtelling når heisen er full
 
 	-- Spillregler
