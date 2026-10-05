@@ -51,8 +51,8 @@ Et analog-horror-spill i Roblox for 1–4 spillere per gruppe. Alt i spillet er 
   brune flekker, slepespor, bare fotspor som går ut av en pytt, sprut og renner på veggene og
   flekkete håndavtrykk.
 - Når alle 5 nøklene er satt inn, starter **LOCKDOWN**: alarmen går, alle lamper blinker rødt,
-  monsteret jakter på nærmeste spiller, og døra åpner seg først etter **60 sekunder**.
-  Overlev, og løp ut når den åpner seg.
+  monsteret jakter på nærmeste spiller, og døra åpner seg først etter **30 sekunder**.
+  Overlev, og løp ut når den åpner seg: bak døra er det hvitt, glødende lys.
 - Kommer noen seg ut, spilles **sluttscenen** for alle i runden: dere er ute... men noe står i
   døråpningen bak dere. Den slutter med en cliffhanger og **PART 2 – COMING SOON**, og så går
   alle tilbake til lobbyen.

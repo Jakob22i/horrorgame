@@ -11,6 +11,7 @@ local lib = require("./lib")
 local buildHospital = require("./hospital")
 local buildPatient = require("./patient")
 local buildKey = require("./key")
+local buildLobby = require("./lobby")
 
 local scene = process.args[1] or "patient"
 local outPath = process.args[2] or "preview.json"
@@ -346,6 +347,8 @@ elseif scene == "thumb" then
 	local lv = face.CFrame.LookVector
 	extra.faceLook = { lv.X, lv.Y, lv.Z }
 	extra.monsterPivot = cfArray(m.Root.CFrame)
+elseif scene == "lobby" then
+	buildLobby(container, nil)
 elseif scene == "ending" then
 	-- sluttscenen: monsteret står i nødutgangen og vinker (samme formler som Ending.luau)
 	buildHospital(container)

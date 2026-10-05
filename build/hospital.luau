@@ -1099,14 +1099,19 @@ return function(parent: any)
 		KeyboardKeyCode = Enum.KeyCode.E,
 	}, panel)
 
-	-- Utsiden (synlig når døra åpnes)
+	-- Utsiden: et hvitt, glødende rom som lyser inn når døra åpnes
 	local outZ1 = (EXIT_Y + 1) * CELL
-	lib.part(exitModel, "OutsideFloor", Vector3.new(32, 1, 16), CFrame.new(doorCX, -0.5, outZ1 + 8), rgb(40, 40, 42), Enum.Material.Asphalt)
+	local WHITE = rgb(238, 238, 232)
+	lib.part(exitModel, "OutsideFloor", Vector3.new(32, 1, 16), CFrame.new(doorCX, -0.5, outZ1 + 8), WHITE, Enum.Material.SmoothPlastic)
 	for _, sx in { -1, 1 } do
-		lib.part(exitModel, "OutsideWall", Vector3.new(1, 14, 16), CFrame.new(doorCX + sx * 16.5, 7, outZ1 + 8), rgb(60, 58, 55), Enum.Material.Brick)
+		lib.part(exitModel, "OutsideWall", Vector3.new(1, 14, 16), CFrame.new(doorCX + sx * 16.5, 7, outZ1 + 8), WHITE, Enum.Material.SmoothPlastic)
 	end
-	local light = lib.part(exitModel, "OutsideLight", Vector3.new(1, 1, 1), CFrame.new(doorCX, 10, outZ1 + 10), rgb(255, 255, 255), Enum.Material.Neon, { Transparency = 1, CanCollide = false, CanQuery = false })
-	lib.new("PointLight", { Range = 30, Brightness = 3, Color = rgb(200, 220, 255) }, light)
+	lib.part(exitModel, "OutsideRoof", Vector3.new(34, 1, 17), CFrame.new(doorCX, 14.5, outZ1 + 8), WHITE, Enum.Material.SmoothPlastic)
+	-- bakveggen gløder (Neon), så åpningen ser hvit og lysende ut innenfra
+	lib.part(exitModel, "OutsideGlow", Vector3.new(34, 15, 1), CFrame.new(doorCX, 7, outZ1 + 16.5), rgb(255, 252, 244), Enum.Material.Neon, { CastShadow = false })
+	local light = lib.part(exitModel, "OutsideLight", Vector3.new(1, 1, 1), CFrame.new(doorCX, 8, outZ1 + 6), rgb(255, 255, 255), Enum.Material.Neon, { Transparency = 1, CanCollide = false, CanQuery = false })
+	-- slås på når døra åpnes (Match:_openExit), ellers lyser det gjennom den lukkede døra
+	lib.new("PointLight", { Name = "Glow", Range = 40, Brightness = 0, Color = rgb(255, 250, 238), Enabled = false, Shadows = false }, light)
 	lib.part(exitModel, "ExitZone", Vector3.new(16, 12, 12), CFrame.new(doorCX, 6, outZ1 + 8), rgb(0, 255, 0), nil, {
 		Transparency = 1,
 		CanCollide = false,

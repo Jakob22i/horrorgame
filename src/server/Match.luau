@@ -510,6 +510,14 @@ function Match:_openExit()
 		prompt.Enabled = false
 	end
 	local info = TweenInfo.new(2.5, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
+	-- hvitt lys strømmer inn gjennom døra
+	local outsideLight = exit:FindFirstChild("OutsideLight")
+	local glow = outsideLight and outsideLight:FindFirstChild("Glow")
+	if glow and glow:IsA("PointLight") then
+		glow.Enabled = true
+		glow.Brightness = 0
+		TweenService:Create(glow, info, { Brightness = 5 }):Play()
+	end
 	for _, name in { "DoorL", "DoorR" } do
 		local door = exit:FindFirstChild(name) :: BasePart?
 		if door then
