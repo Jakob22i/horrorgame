@@ -1,0 +1,33 @@
+KJØP SOM SKAL LAGES PÅ create.roblox.com -> spillet -> Monetization
+(bildene ligger i thumbnails/store/, ID-ene skrives inn i src/shared/Config.luau)
+
+=====================================================================
+1) GAME PASS: Push  (Monetization -> Passes -> Create a Pass)
+=====================================================================
+Bilde:       thumbnails/store/gamepass-push.png
+Name:        Push
+Description:
+Shove other players out of your way. Push a friend into the dark, or push them away from the monster and save their life. Press 2 on PC or tap PUSH on mobile. Bought once, yours forever.
+Category:    Gameplay (eller det som ligner mest)
+Pris:        49 Robux  (slå på "Item for Sale" etter at passet er laget)
+Config:      PushGamePassId = <ID-en til passet>
+
+=====================================================================
+2) DEVELOPER PRODUCT: Revive  (Monetization -> Developer Products -> Create)
+=====================================================================
+Bilde:       thumbnails/store/product-revive.png
+Name:        Revive
+Description:
+Out of lives? Come back right where you were caught with 1 life and a few seconds of safety while the monster is moved far away. Can be bought every time you die.
+Pris:        39 Robux
+Config:      ReviveProductId = <ID-en til produktet>
+
+=====================================================================
+3) DEVELOPER PRODUCT: Jumpscare Everyone
+=====================================================================
+Bilde:       thumbnails/store/product-jumpscare.png
+Name:        Jumpscare Everyone
+Description:
+Scare every other player in your round at the same time with a full screen jumpscare. Press 3 on PC or tap JUMPSCARE on mobile. One use per purchase.
+Pris:        49 Robux
+Config:      JumpscareProductId = <ID-en til produktet>
