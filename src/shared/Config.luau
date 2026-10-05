@@ -107,13 +107,14 @@ local Config = {
 	-- Kosmetikk som kan kjøpes for mynter i butikken i lobbyen
 	Cosmetics = {
 		Flashlights = {
-			{ id = "warm", name = "Warm", color = Color3.fromRGB(255, 244, 220), price = 0 },
-			{ id = "white", name = "Cold White", color = Color3.fromRGB(215, 232, 255), price = 100 },
-			{ id = "green", name = "Night Vision", color = Color3.fromRGB(130, 255, 140), price = 250 },
-			{ id = "red", name = "Blood Red", color = Color3.fromRGB(255, 80, 66), price = 300 },
-			{ id = "blue", name = "Deep Blue", color = Color3.fromRGB(110, 160, 255), price = 300 },
-			{ id = "purple", name = "Ultraviolet", color = Color3.fromRGB(190, 110, 255), price = 450 },
-			{ id = "gold", name = "Golden", color = Color3.fromRGB(255, 205, 90), price = 700 },
+			{ id = "warm", name = "Warm", color = Color3.fromRGB(255, 244, 220), price = 0, desc = "The old hospital torch. Soft and warm." },
+			{ id = "white", name = "Cold White", color = Color3.fromRGB(215, 232, 255), price = 100, desc = "Hard, cold light that reaches far." },
+			{ id = "green", name = "Night Vision", color = Color3.fromRGB(130, 255, 140), price = 250, desc = "Like an old night-vision camera." },
+			{ id = "red", name = "Blood Red", color = Color3.fromRGB(255, 80, 66), price = 300, desc = "Everything looks like it is bleeding." },
+			{ id = "blue", name = "Deep Blue", color = Color3.fromRGB(110, 160, 255), price = 300, desc = "Cold and deep, like the morgue." },
+			{ id = "purple", name = "Ultraviolet", color = Color3.fromRGB(190, 110, 255), price = 450, desc = "Shows things that should not be there." },
+			{ id = "gold", name = "Golden", color = Color3.fromRGB(255, 205, 90), price = 700, desc = "For the ones who keep coming back." },
+			{ id = "spectral", name = "Spectral", color = Color3.fromRGB(120, 255, 230), price = 900, desc = "Pale, ghostly light. The rarest one." },
 		},
 		Titles = {
 			{ id = "none", name = "No title", text = "", color = Color3.fromRGB(200, 200, 200), price = 0 },
@@ -122,6 +123,7 @@ local Config = {
 			{ id = "patient", name = "Patient", text = "PATIENT", color = Color3.fromRGB(235, 235, 220), price = 300 },
 			{ id = "ghost", name = "Ghost", text = "GHOST", color = Color3.fromRGB(200, 200, 230), price = 400 },
 			{ id = "visitor", name = "Late Visitor", text = "LATE VISITOR", color = Color3.fromRGB(255, 200, 120), price = 500 },
+			{ id = "ward13", name = "Ward 13", text = "WARD 13", color = Color3.fromRGB(190, 140, 255), price = 750 },
 			{ id = "p0413", name = "#0413", text = "#0413", color = Color3.fromRGB(235, 50, 50), price = 1000 },
 		},
 	},

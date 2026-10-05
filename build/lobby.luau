@@ -1,9 +1,11 @@
--- Bygger lobbyen: sykehusets venterom slik det var før alt gikk galt. Rene fliser, varmt lys,
--- stolrader, resepsjon med "NOW SERVING"-skjerm, gavebutikk, toppliste og fire gamle
--- sykehusheiser med messingrammer og viserur over døra. Litt for rolig.
+-- Bygger lobbyen: venterommet i det samme forlatte sykehuset som i spillet (grønne fliser,
+-- gulnet puss, mørkt tak), men bygd som en ordentlig lobby: fire gamle heiser med messingramme
+-- og viserur, resepsjon med "NOW SERVING"-skjerm, stolrader, toppliste og en gavebutikk der
+-- lommelyktene lyser i sine farger. Hull i taket, papirer på gulvet, blod og spikret inngang.
 -- Hver heis tar maks 4 spillere og starter sitt eget skrekkspill.
 
 local lib = require("./lib")
+local Blood = require("./blood")
 local Vector3, CFrame, Enum, UDim2 = lib.Vector3, lib.CFrame, lib.Enum, lib.UDim2
 local rgb = lib.rgb
 
@@ -12,30 +14,30 @@ local HALF_X, HALF_Z = 48, 32
 local HEIGHT = 20
 local ELEVATOR_X = { -33, -11, 11, 33 }
 
--- Fargepalett
-local FLOOR_A = rgb(226, 219, 199) -- krem
-local FLOOR_B = rgb(184, 196, 178) -- blek salvie
-local TEAL = rgb(58, 104, 98)
-local TEAL_DARK = rgb(36, 70, 66)
-local WAINSCOT = rgb(118, 160, 146)
-local TRIM = rgb(238, 232, 214)
-local WALL = rgb(232, 224, 203)
-local CEIL = rgb(238, 236, 228)
-local GRID = rgb(204, 202, 194)
-local BRASS = rgb(214, 172, 90)
-local BRASS_DARK = rgb(160, 120, 58)
-local WALNUT = rgb(104, 70, 46)
-local WALNUT_LIGHT = rgb(150, 106, 68)
-local SEAT = rgb(196, 110, 58)
-local CHROME = rgb(196, 200, 204)
-local STEEL = rgb(170, 172, 174)
+-- Fargepalett (samme som sykehuset i spillet, bare litt mer pent bygd)
+local FLOOR_A = rgb(140, 146, 136)
+local FLOOR_B = rgb(118, 126, 116)
+local TEAL = rgb(64, 92, 80)
+local TEAL_DARK = rgb(40, 58, 52)
+local WAINSCOT = rgb(84, 110, 96)
+local TRIM = rgb(150, 140, 108)
+local WALL = rgb(186, 174, 132)
+local CEIL = rgb(112, 106, 86)
+local GRID = rgb(84, 80, 66)
+local BRASS = rgb(156, 126, 72)
+local BRASS_DARK = rgb(106, 84, 48)
+local WALNUT = rgb(92, 70, 52)
+local WALNUT_LIGHT = rgb(124, 94, 66)
+local SEAT = rgb(104, 44, 38)
+local CHROME = rgb(150, 152, 150)
+local STEEL = rgb(128, 130, 128)
+local DARK_METAL = rgb(80, 84, 84)
 local GLASS_BLACK = rgb(16, 16, 18)
 local LED_RED = rgb(255, 64, 44)
-local CREAM_PAPER = rgb(240, 234, 216)
+local CREAM_PAPER = rgb(214, 204, 170)
 local INK = rgb(40, 36, 32)
-local LEAF = rgb(64, 116, 60)
-local LEAF_LIGHT = rgb(98, 150, 78)
-local POT_WHITE = rgb(232, 228, 216)
+local DEAD = rgb(70, 60, 40)
+local POT = rgb(96, 70, 54)
 
 local FLASHLIGHTS = {
 	{ name = "WARM", color = rgb(255, 244, 220), price = 0 },
@@ -45,6 +47,7 @@ local FLASHLIGHTS = {
 	{ name = "DEEP BLUE", color = rgb(110, 160, 255), price = 300 },
 	{ name = "ULTRAVIOLET", color = rgb(190, 110, 255), price = 450 },
 	{ name = "GOLDEN", color = rgb(255, 205, 90), price = 700 },
+	{ name = "SPECTRAL", color = rgb(120, 255, 230), price = 900 },
 }
 local TITLES = {
 	{ text = "SURVIVOR", color = rgb(70, 150, 84) },
@@ -52,6 +55,7 @@ local TITLES = {
 	{ text = "PATIENT", color = rgb(90, 86, 76) },
 	{ text = "GHOST", color = rgb(120, 120, 160) },
 	{ text = "LATE VISITOR", color = rgb(200, 130, 40) },
+	{ text = "WARD 13", color = rgb(130, 80, 200) },
 	{ text = "#0413", color = rgb(200, 30, 30) },
 }
 
@@ -144,14 +148,14 @@ return function(parent: any, spawnLocation: any)
 	------------------------------------------------------------------
 	-- Gulv: rutete fliser med en mørk kant langs veggene
 	------------------------------------------------------------------
-	box(walls, "Floor", x0 - 2, -1, z0 - 2, x1 + 2, 0, z1 + 2, FLOOR_A, Enum.Material.SmoothPlastic, { Reflectance = 0.03 })
+	box(walls, "Floor", x0 - 2, -1, z0 - 2, x1 + 2, 0, z1 + 2, FLOOR_A, Enum.Material.CeramicTiles)
 	local tiles = lib.new("Model", { Name = "FloorTiles" }, walls)
 	local TILE = 4
 	for i = 0, (x1 - x0) / TILE - 1 do
 		for j = 0, (z1 - z0) / TILE - 1 do
 			if (i + j) % 2 == 1 then
 				local tx, tz = x0 + i * TILE, z0 + j * TILE
-				box(tiles, "Tile", tx, 0, tz, tx + TILE, 0.03, tz + TILE, FLOOR_B, Enum.Material.SmoothPlastic, { Reflectance = 0.03, CastShadow = false })
+				box(tiles, "Tile", tx, 0, tz, tx + TILE, 0.03, tz + TILE, FLOOR_B, Enum.Material.CeramicTiles, { CastShadow = false })
 			end
 		end
 	end
@@ -171,6 +175,25 @@ return function(parent: any, spawnLocation: any)
 	for z = z0 + 4, z1 - 4, 4 do
 		box(walls, "CeilingGrid", x0, HEIGHT - 0.06, z - 0.08, x1, HEIGHT, z + 0.08, GRID, Enum.Material.SmoothPlastic, DECOR)
 	end
+	-- plater som mangler (svart hull med ledninger) og plater som henger ned
+	local holes = { { -28, -228 }, { -4, -200 }, { 24, -216 }, { 28, -180 }, { -40, -184 }, { 8, -172 }, { -20, -212 } }
+	for i, h in holes do
+		local hx, hz = h[1], h[2]
+		box(walls, "CeilingHole", hx + 0.1, HEIGHT - 0.03, hz + 0.1, hx + 3.9, HEIGHT - 0.01, hz + 3.9, rgb(8, 7, 6), Enum.Material.SmoothPlastic, DECOR)
+		local wire = Vector3.new(hx + 1 + rng() * 2, HEIGHT - 1.4, hz + 1 + rng() * 2)
+		lib.part(props, "Wire", Vector3.new(0.08, 2.8, 0.08), CFrame.new(wire) * CFrame.Angles(rng() * 0.4, 0, rng() * 0.4), rgb(30, 30, 30), Enum.Material.SmoothPlastic, DECOR)
+		if i % 2 == 0 then
+			-- platen henger fortsatt i den ene kanten
+			local hinge = CFrame.new(hx + 2, HEIGHT - 0.05, hz + 0.1) * CFrame.Angles(math.rad(70 + rng() * 15), 0, (rng() - 0.5) * 0.2)
+			lib.part(props, "HangingTile", Vector3.new(3.8, 0.12, 3.8), hinge * CFrame.new(0, 0, 1.9), CEIL, Enum.Material.SmoothPlastic, DECOR)
+		else
+			-- platen ligger knust på gulvet
+			for k = 1, 3 do
+				local cf = CFrame.new(hx + 2 + (rng() - 0.5) * 3, 0.1 + k * 0.03, hz + 2 + (rng() - 0.5) * 3) * CFrame.Angles((rng() - 0.5) * 0.1, rng() * 3, (rng() - 0.5) * 0.1)
+				lib.part(props, "TileShard", Vector3.new(1 + rng() * 1.4, 0.12, 0.8 + rng() * 1.2), cf, CEIL, Enum.Material.SmoothPlastic, { CanCollide = false, CanQuery = false })
+			end
+		end
+	end
 
 	------------------------------------------------------------------
 	-- Vegger: grønne fliser nederst, kremfarget over, lister
@@ -187,12 +210,12 @@ return function(parent: any, spawnLocation: any)
 		slab("Wall", alongX, a, b, face, face - 2 * dir, bottom, HEIGHT, WALL, Enum.Material.Plaster)
 		if bottom < 4.5 then
 			slab("Wainscot", alongX, a, b, face, face + 0.12 * dir, bottom, 4.5, WAINSCOT, Enum.Material.CeramicTiles, { CastShadow = false })
-			slab("ChairRail", alongX, a, b, face, face + 0.26 * dir, 4.5, 4.9, TRIM, Enum.Material.Wood, { CastShadow = false })
+			slab("ChairRail", alongX, a, b, face, face + 0.26 * dir, 4.5, 4.9, TEAL_DARK, Enum.Material.Wood, { CastShadow = false })
 		end
 		if bottom < 0.7 then
 			slab("Baseboard", alongX, a, b, face, face + 0.2 * dir, 0, 0.7, TEAL_DARK, Enum.Material.SmoothPlastic, { CastShadow = false })
 		end
-		slab("Crown", alongX, a, b, face, face + 0.22 * dir, HEIGHT - 0.5, HEIGHT, TRIM, Enum.Material.SmoothPlastic, { CastShadow = false })
+		slab("Crown", alongX, a, b, face, face + 0.22 * dir, HEIGHT - 0.5, HEIGHT, rgb(150, 138, 100), Enum.Material.Plaster, { CastShadow = false })
 	end
 
 	-- sør (med åpning til inngangsdørene), vest, øst
@@ -216,50 +239,59 @@ return function(parent: any, spawnLocation: any)
 	end
 
 	------------------------------------------------------------------
-	-- Lysrør i himlingen (varme)
+	-- Lysrør i himlingen, som i sykehuset (noen er svake, ett er dødt og henger ned)
 	------------------------------------------------------------------
+	local lampModes = { ["-36,-204"] = "dim", ["12,-186"] = "dim", ["-12,-174"] = "off" }
 	for _, z in { -222, -204, -186, -174 } do
 		for _, x in { -36, -12, 12, 36 } do
-			if z == -174 and math.abs(x) < 20 then
-				continue -- over inngangen holder det med de andre
+			if z == -174 and x == 12 then
+				continue
 			end
-			local m = lib.new("Model", { Name = "Lamp", Tags = { "Lamp" }, Attributes = { Mode = "on" } }, lamps)
-			box(m, "Housing", x - 2.2, HEIGHT - 0.12, z - 1.1, x + 2.2, HEIGHT, z + 1.1, TRIM, Enum.Material.Metal, DECOR)
-			local panel = box(m, "Panel", x - 2, HEIGHT - 0.2, z - 0.9, x + 2, HEIGHT - 0.1, z + 0.9, rgb(255, 242, 214), Enum.Material.Neon, DECOR)
-			lib.new("PointLight", { Name = "Light", Range = 30, Brightness = 0.85, Color = rgb(255, 228, 186), Shadows = true }, panel)
+			local key = x .. "," .. z
+			if key == "36,-174" then
+				-- lampen har løsnet i den ene enden og henger skjevt, uten lys
+				local hinge = CFrame.new(x - 1.8, HEIGHT - 0.2, z) * CFrame.Angles(0, 0, math.rad(-38))
+				lib.part(props, "BrokenLamp", Vector3.new(3.6, 0.2, 1.6), hinge * CFrame.new(1.8, -0.1, 0), DARK_METAL, Enum.Material.Metal, DECOR)
+				lib.part(props, "BrokenTube", Vector3.new(3.2, 0.12, 1.2), hinge * CFrame.new(1.8, -0.26, 0), rgb(60, 64, 62), Enum.Material.SmoothPlastic, DECOR)
+				continue
+			end
+			local m = lib.new("Model", { Name = "Lamp", Tags = { "Lamp" }, Attributes = { Mode = lampModes[key] or "on" } }, lamps)
+			box(m, "Housing", x - 1.8, HEIGHT - 0.2, z - 0.8, x + 1.8, HEIGHT, z + 0.8, DARK_METAL, Enum.Material.Metal, DECOR)
+			local panel = box(m, "Panel", x - 1.6, HEIGHT - 0.32, z - 0.6, x + 1.6, HEIGHT - 0.2, z + 0.6, rgb(255, 238, 190), Enum.Material.Neon, DECOR)
+			lib.new("PointLight", { Name = "Light", Range = 30, Brightness = 1.0, Color = rgb(255, 226, 160), Shadows = true }, panel)
 		end
 	end
 
 	------------------------------------------------------------------
-	-- Planter (friske, nesten for friske)
+	-- Døde planter (som i sykehuset)
 	------------------------------------------------------------------
 	local function snakePlant(pos: any, scale: number?)
-		local s = scale or 1
-		local m = lib.new("Model", { Name = "Plant" }, props)
-		lib.cylinderY(m, "Pot", 2.2 * s, 2.4 * s, CFrame.new(pos + Vector3.new(0, 1.2 * s, 0)), POT_WHITE, Enum.Material.SmoothPlastic)
-		lib.cylinderY(m, "PotRim", 2.4 * s, 0.25 * s, CFrame.new(pos + Vector3.new(0, 2.3 * s, 0)), POT_WHITE, Enum.Material.SmoothPlastic)
-		lib.cylinderY(m, "Soil", 2 * s, 0.1, CFrame.new(pos + Vector3.new(0, 2.38 * s, 0)), rgb(60, 44, 32), Enum.Material.Sand, DECOR)
-		for i = 1, 9 do
-			local a = (i / 9) * math.pi * 2 + rng() * 0.5
-			local r = 0.35 * s + rng() * 0.3 * s
-			local h = (3 + rng() * 2.2) * s
-			local base = pos + Vector3.new(math.cos(a) * r, 2.4 * s, math.sin(a) * r)
-			local cf = CFrame.new(base) * CFrame.Angles(0, -a, 0) * CFrame.Angles(0, 0, (rng() - 0.5) * 0.25) * CFrame.Angles((rng() - 0.3) * 0.3, 0, 0)
-			lib.part(m, "Leaf", Vector3.new(0.12, h, 0.55 * s), cf * CFrame.new(0, h / 2, 0), i % 2 == 0 and LEAF or LEAF_LIGHT, Enum.Material.SmoothPlastic, DECOR)
+		local sc = scale or 1
+		local m = lib.new("Model", { Name = "DeadPlant" }, props)
+		lib.cylinderY(m, "Pot", 2.4 * sc, 2.4 * sc, CFrame.new(pos + Vector3.new(0, 1.2 * sc, 0)), POT, Enum.Material.Concrete)
+		lib.cylinderY(m, "Soil", 2.1 * sc, 0.1, CFrame.new(pos + Vector3.new(0, 2.42 * sc, 0)), rgb(40, 30, 22), Enum.Material.Ground, DECOR)
+		for i = 1, 6 do
+			local a = i * 1.1 + rng()
+			local h = (2 + rng() * 1.6) * sc
+			local stem = CFrame.new(pos + Vector3.new(math.cos(a) * 0.3, 2.4 * sc, math.sin(a) * 0.3)) * CFrame.Angles(math.cos(a) * 0.55, 0, math.sin(a) * 0.55)
+			lib.part(m, "Stem", Vector3.new(0.12, h, 0.12), stem * CFrame.new(0, h / 2, 0), DEAD, Enum.Material.Wood, DECOR)
+			if rng() < 0.5 then
+				-- et visnet blad som henger
+				lib.part(m, "Leaf", Vector3.new(0.08, 0.7, 0.35), stem * CFrame.new(0, h * 0.8, 0) * CFrame.Angles(0, 0, 2.4), rgb(96, 84, 50), Enum.Material.SmoothPlastic, DECOR)
+			end
 		end
 		return m
 	end
 	local function ficus(pos: any)
-		local m = lib.new("Model", { Name = "Ficus" }, props)
-		lib.cylinderY(m, "Pot", 3, 2.6, CFrame.new(pos + Vector3.new(0, 1.3, 0)), rgb(176, 98, 64), Enum.Material.Concrete)
-		lib.cylinderY(m, "Soil", 2.7, 0.1, CFrame.new(pos + Vector3.new(0, 2.62, 0)), rgb(60, 44, 32), Enum.Material.Sand, DECOR)
-		lib.cylinderY(m, "Trunk", 0.35, 5, CFrame.new(pos + Vector3.new(0, 5, 0)) * CFrame.Angles(0.05, 0, 0.04), rgb(110, 84, 60), Enum.Material.Wood, DECOR)
-		for i = 1, 9 do
+		local m = lib.new("Model", { Name = "DeadTree" }, props)
+		lib.cylinderY(m, "Pot", 3, 2.6, CFrame.new(pos + Vector3.new(0, 1.3, 0)), POT, Enum.Material.Concrete)
+		lib.cylinderY(m, "Soil", 2.7, 0.1, CFrame.new(pos + Vector3.new(0, 2.62, 0)), rgb(40, 30, 22), Enum.Material.Ground, DECOR)
+		lib.cylinderY(m, "Trunk", 0.35, 5, CFrame.new(pos + Vector3.new(0, 5, 0)) * CFrame.Angles(0.05, 0, 0.04), rgb(84, 66, 48), Enum.Material.Wood, DECOR)
+		for i = 1, 7 do
 			local a = i * 2.4
-			local y = 6.2 + rng() * 3.2
-			local r = 0.6 + rng() * 1.1
-			local d = 2 + rng() * 1.4
-			ball(m, "Leaves", d, pos + Vector3.new(math.cos(a) * r, y, math.sin(a) * r), i % 3 == 0 and LEAF_LIGHT or LEAF, Enum.Material.Grass, DECOR)
+			local len = 1.6 + rng() * 1.6
+			local cf = CFrame.new(pos + Vector3.new(0, 5.5 + rng() * 2, 0)) * CFrame.Angles(0, a, 0) * CFrame.Angles(0, 0, 0.9 + rng() * 0.4)
+			lib.part(m, "Branch", Vector3.new(0.12, len, 0.12), cf * CFrame.new(0, len / 2, 0), DEAD, Enum.Material.Wood, DECOR)
 		end
 		return m
 	end
@@ -505,7 +537,7 @@ return function(parent: any, spawnLocation: any)
 			for k = 1, 3 do
 				local h = 1.4 + rng() * 1.6
 				local cf = CFrame.new(x + (rng() - 0.5) * 0.6, 2.8, z + (rng() - 0.5) * 0.8) * CFrame.Angles((rng() - 0.5) * 0.6, rng() * 3, (rng() - 0.5) * 0.6)
-				lib.part(m, "Leaf", Vector3.new(0.1, h, 0.45), cf * CFrame.new(0, h / 2, 0), k == 2 and LEAF_LIGHT or LEAF, Enum.Material.SmoothPlastic, DECOR)
+				lib.part(m, "Stem", Vector3.new(0.1, h, 0.1), cf * CFrame.new(0, h / 2, 0), if k == 2 then rgb(96, 84, 50) else DEAD, Enum.Material.Wood, DECOR)
 			end
 		end
 	end
@@ -557,8 +589,8 @@ return function(parent: any, spawnLocation: any)
 		for i = 1, 5 do
 			local a = i * 1.26
 			local top = vase + Vector3.new(math.cos(a) * 0.35, 1.6 + rng() * 0.4, math.sin(a) * 0.35)
-			lib.part(m, "Stem", Vector3.new(0.05, 0.9, 0.05), CFrame.new((vase + Vector3.new(0, 1.1, 0) + top) / 2), LEAF, Enum.Material.SmoothPlastic, DECOR)
-			ball(m, "Flower", 0.32, top, i % 2 == 0 and rgb(236, 236, 230) or rgb(240, 196, 80), Enum.Material.SmoothPlastic, DECOR)
+			lib.part(m, "Stem", Vector3.new(0.05, 0.9, 0.05), CFrame.new((vase + Vector3.new(0, 1.1, 0) + top) / 2), DEAD, Enum.Material.SmoothPlastic, DECOR)
+			ball(m, "Flower", 0.28, top - Vector3.new(0, 0.25, 0), if i % 2 == 0 then rgb(120, 96, 70) else rgb(140, 110, 60), Enum.Material.SmoothPlastic, DECOR)
 		end
 		local cardPos = Vector3.new(fx - 0.2, 4.45, -193)
 		local card = facing(m, "Card", Vector3.new(1.6, 0.7, 0.04), cardPos, Vector3.new(1, 0, 0), CREAM_PAPER, Enum.Material.SmoothPlastic, DECOR)
@@ -676,95 +708,192 @@ return function(parent: any, spawnLocation: any)
 	end
 
 	------------------------------------------------------------------
-	-- Gavebutikken (østveggen): markise, hyller med lommelykter, glassdisk
+	-- Gavebutikken (østveggen): det eneste stedet i lobbyen som fortsatt lyser varmt.
+	-- Neonskilt, lyspærer under markisen, og en vegg med lommelykter som lyser i sine farger.
 	------------------------------------------------------------------
+	local function wedge(parentObj: any, name: string, size: any, cf: any, color: any, material: any?, extra: any?)
+		local w = lib.new("WedgePart", {
+			Name = name,
+			Anchored = true,
+			Size = size,
+			CFrame = cf,
+			Color = color,
+			Material = material or Enum.Material.SmoothPlastic,
+			TopSurface = Enum.SurfaceType.Smooth,
+			BottomSurface = Enum.SurfaceType.Smooth,
+		})
+		if extra then
+			for k, v in extra do
+				w[k] = v
+			end
+		end
+		w.Parent = parentObj
+		return w
+	end
+	-- Lavpoly lommelykt (samme form som i butikkvinduet på skjermen). Peker langs +X i `base`.
+	local FL_BODY, FL_DARK = rgb(104, 72, 92), rgb(62, 42, 56)
+	local function octagon(parentObj: any, base: any, xa: number, xb: number, a: number, color: any, material: any?)
+		local len = xb - xa
+		local side = 2 * a * math.tan(math.pi / 8)
+		local d = a - side / 2
+		local center = base * CFrame.new((xa + xb) / 2, 0, 0)
+		lib.part(parentObj, "Oct", Vector3.new(len, 2 * a, side), center, color, material, DECOR)
+		lib.part(parentObj, "Oct", Vector3.new(len, side, 2 * a), center, color, material, DECOR)
+		for k = 0, 3 do
+			local cf = center * CFrame.Angles(k * math.pi / 2, 0, 0) * CFrame.new(0, side / 2 + d / 2, side / 2 + d / 2) * CFrame.Angles(0, math.pi, 0)
+			wedge(parentObj, "Oct", Vector3.new(len, d, d), cf, color, material, DECOR)
+		end
+	end
+	local function flashlight(parentObj: any, base: any, color: any, sc: number)
+		local m = lib.new("Model", { Name = "Flashlight" }, parentObj)
+		local b = base * CFrame.new(0, 0, 0)
+		local function seg(xa: number, xb: number, a: number, c: any, mat: any?)
+			octagon(m, b, xa * sc, xb * sc, a * sc, c, mat)
+		end
+		seg(-2.25, -2.0, 0.53, FL_DARK)
+		seg(-2.0, 1.2, 0.5, FL_BODY)
+		seg(1.2, 1.5, 0.6, FL_DARK)
+		seg(1.5, 1.8, 0.78, FL_BODY)
+		seg(1.8, 2.7, 0.98, FL_BODY)
+		seg(2.7, 2.76, 0.84, color, Enum.Material.Neon)
+		lib.part(m, "Grip", Vector3.new(2.3 * sc, 0.04, 0.42 * sc), b * CFrame.new(-0.45 * sc, 0.52 * sc, 0), FL_DARK, nil, DECOR)
+		lib.part(m, "Switch", Vector3.new(0.35 * sc, 0.18 * sc, 0.28 * sc), b * CFrame.new(0.72 * sc, 0.58 * sc, 0), rgb(180, 170, 204), nil, DECOR)
+		return m, b * CFrame.new(2.78 * sc, 0, 0)
+	end
+
 	do
 		local m = lib.new("Model", { Name = "CosmeticsShop" }, props)
 		local za, zb = -206, -176
 		local front = 37 -- markisens forkant
-		box(m, "ShopFloor", front + 0.5, 0, za + 1, x1, 0.05, zb - 1, rgb(150, 108, 70), Enum.Material.WoodPlanks, { CastShadow = false })
-		-- sidevegger
+		box(m, "ShopFloor", front + 0.5, 0, za + 1, x1, 0.05, zb - 1, rgb(110, 82, 58), Enum.Material.WoodPlanks, { CastShadow = false })
+		-- sidevegger i mørkt tre med messingkant
 		for _, z in { za, zb - 1 } do
 			box(m, "Partition", front + 1, 0, z, x1, 12.5, z + 1, WALNUT, Enum.Material.Wood)
 			box(m, "PartitionTop", front + 0.8, 12.5, z - 0.1, x1, 12.8, z + 1.1, BRASS, Enum.Material.Metal)
 		end
-		-- bakvegg i mørk teal med hyller
-		box(m, "BackWall", x1 - 0.3, 0, za + 1, x1, 12.5, zb - 1, TEAL_DARK, Enum.Material.SmoothPlastic)
+		-- bakveggen: mørk, med to hyller lommelykter som lyser ut i rommet
+		box(m, "BackWall", x1 - 0.3, 0, za + 1, x1, 12.5, zb - 1, rgb(30, 36, 34), Enum.Material.SmoothPlastic)
+		local cols = 4
 		for i, f in FLASHLIGHTS do
-			local z = za + 3.3 + (i - 1) * 3.9
-			-- lite hylleskap per lykt med lys i sin farge
-			box(m, "Shelf", x1 - 1.6, 6.2, z - 1.6, x1 - 0.3, 6.4, z + 1.6, TRIM, Enum.Material.Wood)
-			box(m, "Shelf", x1 - 1.6, 9.4, z - 1.6, x1 - 0.3, 9.6, z + 1.6, TRIM, Enum.Material.Wood)
-			-- lommelykt som peker ut i rommet
-			local p = Vector3.new(x1 - 1.0, 6.83, z)
-			disc(m, "Torch", 0.55, 1.5, p, Vector3.new(-1, 0, 0), rgb(46, 46, 50), Enum.Material.Metal, NO_HIT)
-			disc(m, "TorchHead", 0.85, 0.5, p + Vector3.new(-0.9, 0, 0), Vector3.new(-1, 0, 0), rgb(46, 46, 50), Enum.Material.Metal, NO_HIT)
-			local lens = disc(m, "Lens", 0.7, 0.06, p + Vector3.new(-1.17, 0, 0), Vector3.new(-1, 0, 0), f.color, Enum.Material.Neon, DECOR)
-			lib.new("PointLight", { Range = 6, Brightness = 1.1, Color = f.color }, lens)
-			-- prislapp
-			local tag = facing(m, "PriceTag", Vector3.new(2.6, 0.9, 0.04), Vector3.new(x1 - 1.62, 5.75, z), Vector3.new(-1, 0, 0), CREAM_PAPER, Enum.Material.SmoothPlastic, DECOR)
-			local tg = gui(tag, nil, 0.4)
-			label(tg, "Name", 0.04, 0.04, 0.92, 0.48, f.name, INK, Enum.Font.GothamBold)
-			label(tg, "Price", 0.04, 0.52, 0.92, 0.44, if f.price == 0 then "FREE" else (f.price .. " COINS"), rgb(160, 110, 20), Enum.Font.Gotham)
-			-- eske på hylla over
-			box(m, "Box", x1 - 1.4, 9.6, z - 0.7, x1 - 0.4, 11.0, z + 0.7, f.color:Lerp(rgb(255, 255, 255), 0.35), Enum.Material.SmoothPlastic, DECOR)
+			local col = (i - 1) % cols
+			local row = math.floor((i - 1) / cols)
+			local z = za + 4.5 + col * 7
+			local y = if row == 0 then 9.6 else 6.0
+			-- hylle og brakett
+			box(m, "Shelf", x1 - 2.6, y - 0.95, z - 2.6, x1 - 0.3, y - 0.75, z + 2.6, WALNUT_LIGHT, Enum.Material.Wood)
+			box(m, "ShelfEdge", x1 - 2.66, y - 1.0, z - 2.6, x1 - 2.56, y - 0.7, z + 2.6, BRASS, Enum.Material.Metal, DECOR)
+			-- lommelykt på skrå: peker ut i rommet og litt ned, så lyset treffer disken og gulvet
+			local pos = Vector3.new(x1 - 1.6, y + 0.18, z)
+			local base = lib.lookAt(pos, pos + Vector3.new(-1, -0.32, 0)) * CFrame.Angles(0, math.pi / 2, 0)
+			local _, lensCF = flashlight(m, base, f.color, 0.55)
+			local lens = lib.part(m, "Beam", Vector3.new(0.1, 0.1, 0.1), lensCF, f.color, nil, { Transparency = 1, CanCollide = false, CanQuery = false, CanTouch = false, CastShadow = false })
+			lib.new("SpotLight", { Face = Enum.NormalId.Right, Range = 18, Angle = 44, Brightness = 3.2, Color = f.color, Shadows = false }, lens)
+			lib.new("PointLight", { Range = 3, Brightness = 1.2, Color = f.color }, lens)
+			-- prislapp på hyllekanten
+			local tag = facing(m, "PriceTag", Vector3.new(2.8, 0.75, 0.04), Vector3.new(x1 - 2.7, y - 1.3, z), Vector3.new(-1, 0, 0), CREAM_PAPER, Enum.Material.SmoothPlastic, DECOR)
+			local tg = gui(tag, nil, 0.6)
+			label(tg, "Name", 0.04, 0.04, 0.6, 0.92, f.name, INK, Enum.Font.GothamBold, Enum.TextXAlignment.Left)
+			label(tg, "Price", 0.64, 0.12, 0.32, 0.76, if f.price == 0 then "FREE" else tostring(f.price), rgb(150, 100, 20), Enum.Font.Code, Enum.TextXAlignment.Right)
 		end
+
 		-- navneskilt-tavle på den nordre sideveggen
 		do
-			local bp = Vector3.new(42.3, 8.5, za + 1.04)
-			local board = facing(m, "TitleBoard", Vector3.new(7.4, 6.4, 0.06), bp, Vector3.new(0, 0, 1), CREAM_PAPER, Enum.Material.SmoothPlastic, NO_HIT)
-			local g = gui(board, nil, 0.5)
-			label(g, "Head", 0.06, 0.04, 0.88, 0.13, "NAME TAGS", TEAL_DARK, Enum.Font.GothamBold)
-			label(g, "Sub", 0.06, 0.17, 0.88, 0.07, "WORN ABOVE YOUR HEAD", rgb(120, 116, 104), Enum.Font.Gotham)
+			local bp = Vector3.new(42.3, 8.2, za + 1.04)
+			local board = facing(m, "TitleBoard", Vector3.new(7.4, 6.8, 0.06), bp, Vector3.new(0, 0, 1), CREAM_PAPER, Enum.Material.SmoothPlastic, NO_HIT)
+			local g = gui(board, nil, 0.6)
+			label(g, "Head", 0.06, 0.03, 0.88, 0.12, "NAME TAGS", TEAL_DARK, Enum.Font.GothamBold)
+			label(g, "Sub", 0.06, 0.15, 0.88, 0.06, "WORN ABOVE YOUR HEAD", rgb(110, 100, 80), Enum.Font.Gotham)
 			for i, t in TITLES do
 				local col = (i - 1) % 2
 				local row = math.floor((i - 1) / 2)
 				local x = 0.06 + col * 0.46
-				local y = 0.3 + row * 0.22
-				frame(g, x + 0.21, y + 0.08, 0.42, 0.16, rgb(255, 252, 244))
-				label(g, "Tag" .. i, x + 0.02, y + 0.025, 0.38, 0.11, t.text, t.color, Enum.Font.GothamBold)
+				local y = 0.25 + row * 0.18
+				frame(g, x + 0.21, y + 0.07, 0.42, 0.14, rgb(236, 230, 210))
+				label(g, "Tag" .. i, x + 0.02, y + 0.02, 0.38, 0.1, t.text, t.color, Enum.Font.GothamBold)
 			end
-			box(m, "TitleBoardFrame", 38.2, 5.1, za + 1, 46.4, 11.9, za + 1.02, BRASS, Enum.Material.Metal, DECOR)
+			box(m, "TitleBoardFrame", 38.2, 4.6, za + 1, 46.4, 11.8, za + 1.02, BRASS, Enum.Material.Metal, DECOR)
 		end
-		-- "OPEN"-skilt på den søndre sideveggen
+		-- "OPEN 24H" i neon på den søndre sideveggen
 		do
-			local sp = Vector3.new(43, 8.5, zb - 1.04)
-			box(m, "OpenBack", 41.4, 7.7, zb - 1.06, 44.6, 9.3, zb - 1, rgb(20, 18, 18), Enum.Material.SmoothPlastic, DECOR)
-			local s = facing(m, "OpenSign", Vector3.new(3, 1.4, 0.04), sp - Vector3.new(0, 0, 0.04), Vector3.new(0, 0, -1), rgb(20, 18, 18), Enum.Material.SmoothPlastic, DECOR)
-			lib.sign(s, "OPEN", { Color = rgb(255, 70, 90), Font = Enum.Font.GothamBold, Brightness = 2.4 })
-			lib.new("PointLight", { Range = 6, Brightness = 0.6, Color = rgb(255, 70, 90) }, s)
+			local sp = Vector3.new(43, 8.6, zb - 1.04)
+			box(m, "OpenBack", 40.6, 7.6, zb - 1.06, 45.4, 9.6, zb - 1, rgb(16, 14, 14), Enum.Material.SmoothPlastic, DECOR)
+			local sg = facing(m, "OpenSign", Vector3.new(4.6, 1.8, 0.04), sp - Vector3.new(0, 0, 0.04), Vector3.new(0, 0, -1), rgb(16, 14, 14), Enum.Material.SmoothPlastic, DECOR)
+			local og = gui(sg, nil, 0, 2.6)
+			label(og, "Text", 0.06, 0.06, 0.88, 0.6, "OPEN", rgb(255, 80, 110), Enum.Font.GothamBold)
+			label(og, "Sub", 0.06, 0.66, 0.88, 0.28, "ALL NIGHT", rgb(255, 170, 90), Enum.Font.GothamBold)
+			lib.new("PointLight", { Range = 7, Brightness = 0.8, Color = rgb(255, 80, 110) }, sg)
 		end
 
-		-- markise med striper
+		-- slitt markise (en stripe mangler, en henger ned)
 		local stripeW = 2
 		local n = 0
 		for z = za, zb - stripeW, stripeW do
 			n += 1
-			local color = if n % 2 == 0 then TRIM else rgb(70, 132, 120)
+			local color = if n % 2 == 0 then rgb(180, 168, 136) else rgb(120, 40, 40)
 			local topPos = Vector3.new(front + 5, 14.4, z + stripeW / 2)
 			local lowPos = Vector3.new(front - 0.3, 12.6, z + stripeW / 2)
+			if n == 9 then
+				continue
+			end
+			if n == 4 then
+				-- løsnet stripe som henger rett ned
+				lib.part(m, "Awning", Vector3.new(0.15, 3.2, stripeW), CFrame.new(front + 0.2, 11.3, z + stripeW / 2) * CFrame.Angles(0, 0, 0.12), color, Enum.Material.Fabric, DECOR)
+				continue
+			end
 			local mid = (topPos + lowPos) / 2
 			local len = (topPos - lowPos).Magnitude
-			local cf = lib.lookAt(mid, topPos) -- -Z langs markisen
-			lib.part(m, "Awning", Vector3.new(stripeW, 0.15, len), cf, color, Enum.Material.Fabric, { CanQuery = false })
+			lib.part(m, "Awning", Vector3.new(stripeW, 0.15, len), lib.lookAt(mid, topPos), color, Enum.Material.Fabric, { CanQuery = false })
 			lib.part(m, "Valance", Vector3.new(0.12, 0.9, stripeW), CFrame.new(front - 0.35, 12.15, z + stripeW / 2), color, Enum.Material.Fabric, DECOR)
 		end
-		box(m, "AwningBack", front + 5, 14.2, za, x1, 14.6, zb, TRIM, Enum.Material.SmoothPlastic)
-		-- skiltet "GIFT SHOP" over markisen
-		local signPos = Vector3.new(front + 5.2, 16.4, (za + zb) / 2)
-		box(m, "SignFrame", front + 5.3, 14.4, -199, front + 5.5, 18.4, -183, BRASS, Enum.Material.Metal, NO_HIT)
-		local sign = facing(m, "ShopSign", Vector3.new(15, 3.6, 0.2), signPos, Vector3.new(-1, 0, 0), TEAL_DARK, Enum.Material.SmoothPlastic, NO_HIT)
-		local sg = gui(sign, nil, 0.1, 1.3)
-		label(sg, "Title", 0.05, 0.08, 0.9, 0.56, "GIFT SHOP", rgb(250, 236, 200), Enum.Font.GothamBold)
-		label(sg, "Sub", 0.05, 0.66, 0.9, 0.24, "FLASHLIGHTS  •  NAME TAGS  •  COINS ONLY", rgb(236, 192, 110), Enum.Font.Gotham)
-		for _, z in { -200.6, -181.4 } do
-			disc(m, "Coin", 2.2, 0.25, Vector3.new(front + 5.1, 16.4, z), Vector3.new(-1, 0, 0), rgb(232, 182, 60), Enum.Material.Metal, DECOR)
-			disc(m, "CoinInner", 1.6, 0.27, Vector3.new(front + 5.05, 16.4, z), Vector3.new(-1, 0, 0), rgb(250, 208, 96), Enum.Material.Metal, DECOR)
+		box(m, "AwningBack", front + 5, 14.2, za, x1, 14.6, zb, rgb(60, 50, 40), Enum.Material.SmoothPlastic)
+		-- rullegitter (sikkerhetsgitter) som er halvveis oppe
+		box(m, "ShutterBox", front + 0.6, 11.2, za + 1, front + 1.4, 12.4, zb - 1, DARK_METAL, Enum.Material.Metal)
+		for k = 0, 3 do
+			local y = 10.9 - k * 0.32
+			box(m, "ShutterSlat", front + 0.85, y - 0.12, za + 1, front + 1.0, y + 0.12, zb - 1, rgb(110, 112, 108), Enum.Material.DiamondPlate, DECOR)
 		end
-		-- lys under markisen
-		for _, z in { -201, -191, -181 } do
-			local l = box(m, "AwningLight", front + 1.6, 12.9, z - 1.5, front + 2.2, 13.1, z + 1.5, rgb(255, 238, 206), Enum.Material.Neon, DECOR)
-			lib.new("PointLight", { Range = 14, Brightness = 0.9, Color = rgb(255, 218, 170) }, l)
+		for _, z in { za + 1, zb - 1.15 } do
+			box(m, "ShutterRail", front + 0.75, 0, z, front + 1.1, 11.2, z + 0.15, DARK_METAL, Enum.Material.Metal)
+		end
+		-- lyspærer langs markisen
+		for k = 0, 19 do
+			local z = za + 0.8 + k * 1.5
+			local sag = math.sin((k % 5) / 5 * math.pi) * 0.35
+			local p = Vector3.new(front - 0.5, 11.55 - sag, z)
+			local bulb = ball(m, "Bulb", 0.32, p, rgb(255, 214, 150), Enum.Material.Neon, DECOR)
+			if k % 4 == 1 then
+				lib.new("PointLight", { Range = 9, Brightness = 0.7, Color = rgb(255, 200, 130) }, bulb)
+			end
+			if k < 19 then
+				local q = Vector3.new(front - 0.5, 11.55 - math.sin(((k + 1) % 5) / 5 * math.pi) * 0.35, z + 1.5)
+				lib.part(m, "Wire", Vector3.new(0.04, 0.04, (q - p).Magnitude), lib.lookAt((p + q) / 2, q), rgb(20, 20, 20), nil, DECOR)
+			end
+		end
+
+		-- neonskiltet "GIFT SHOP" over markisen
+		local signPos = Vector3.new(front + 5.2, 16.4, (za + zb) / 2)
+		box(m, "SignFrame", front + 5.3, 14.4, -199.4, front + 5.5, 18.6, -182.6, rgb(20, 18, 18), Enum.Material.SmoothPlastic, NO_HIT)
+		local sign = facing(m, "ShopSign", Vector3.new(16.4, 3.8, 0.2), signPos, Vector3.new(-1, 0, 0), rgb(14, 12, 12), Enum.Material.SmoothPlastic, NO_HIT)
+		local sgg = gui(sign, nil, 0, 2.4)
+		label(sgg, "Title", 0.05, 0.08, 0.9, 0.58, "GIFT SHOP", rgb(255, 120, 160), Enum.Font.GothamBold)
+		label(sgg, "Sub", 0.05, 0.68, 0.9, 0.22, "FLASHLIGHTS  •  NAME TAGS", rgb(255, 196, 120), Enum.Font.GothamBold)
+		lib.new("PointLight", { Range = 16, Brightness = 1.1, Color = rgb(255, 110, 150) }, sign)
+		-- neonrør rundt skiltet (ett stykke er dødt)
+		local tubeX = front + 5.06
+		local tubes = {
+			{ Vector3.new(tubeX, 18.15, -190.8), Vector3.new(0.12, 0.12, 15.6) },
+			{ Vector3.new(tubeX, 14.65, -195), Vector3.new(0.12, 0.12, 7.2) },
+			{ Vector3.new(tubeX, 14.65, -186.6), Vector3.new(0.12, 0.12, 7.2) },
+			{ Vector3.new(tubeX, 16.4, -198.6), Vector3.new(0.12, 3.6, 0.12) },
+			{ Vector3.new(tubeX, 16.4, -183), Vector3.new(0.12, 3.6, 0.12) },
+		}
+		for i, t in tubes do
+			local dead = i == 3
+			lib.part(m, "NeonTube", t[2], CFrame.new(t[1]), if dead then rgb(70, 50, 56) else rgb(255, 90, 140), if dead then Enum.Material.Glass else Enum.Material.Neon, DECOR)
+		end
+		for _, z in { -201, -180.6 } do
+			disc(m, "Coin", 2.2, 0.25, Vector3.new(front + 5.1, 16.4, z), Vector3.new(-1, 0, 0), rgb(200, 156, 52), Enum.Material.Metal, DECOR)
+			disc(m, "CoinInner", 1.6, 0.27, Vector3.new(front + 5.05, 16.4, z), Vector3.new(-1, 0, 0), rgb(226, 180, 80), Enum.Material.Metal, DECOR)
 		end
 
 		-- glassdisk med lommelykter og mynter
@@ -775,45 +904,57 @@ return function(parent: any, spawnLocation: any)
 		for z = ca + 2, cb - 2, 4 do
 			box(m, "CounterPanel", cx1 - 0.06, 0.8, z - 1.6, cx1, 2.2, z + 1.6, WALNUT_LIGHT, Enum.Material.Wood, DECOR)
 		end
-		box(m, "CaseFloor", cx1, 2.6, ca, cx2, 2.7, cb, rgb(240, 236, 226), Enum.Material.SmoothPlastic)
-		box(m, "CaseGlass", cx1 + 0.05, 2.7, ca + 0.05, cx2 - 0.05, 3.9, cb - 0.05, rgb(200, 230, 235), Enum.Material.Glass, { Transparency = 0.75 })
+		box(m, "CaseFloor", cx1, 2.6, ca, cx2, 2.7, cb, rgb(40, 36, 34), Enum.Material.Fabric)
+		box(m, "CaseGlass", cx1 + 0.05, 2.7, ca + 0.05, cx2 - 0.05, 3.9, cb - 0.05, rgb(200, 220, 215), Enum.Material.Glass, { Transparency = 0.75 })
 		for _, z in { ca, cb } do
 			box(m, "CaseEdge", cx1, 2.7, z - 0.06, cx2, 3.9, z + 0.06, BRASS, Enum.Material.Metal, DECOR)
 		end
 		box(m, "CaseEdge", cx1 - 0.06, 3.9, ca, cx1 + 0.06, 4.0, cb, BRASS, Enum.Material.Metal, DECOR)
-		box(m, "CaseEdge", cx1 - 0.06, 2.6, ca, cx1 + 0.06, 2.7, cb, BRASS, Enum.Material.Metal, DECOR)
 		for i, f in FLASHLIGHTS do
-			local z = ca + 1.6 + (i - 1) * 2.1
-			local p = Vector3.new(cx1 + 1.2, 2.95, z)
-			lib.part(m, "CaseTorch", Vector3.new(1.3, 0.38, 0.38), CFrame.new(p) * CFrame.Angles(0, 0.5, 0), rgb(46, 46, 50), Enum.Material.Metal, { Shape = Enum.PartType.Cylinder, CanCollide = false, CanQuery = false, CastShadow = false })
-			local tip = p + (CFrame.Angles(0, 0.5, 0) * CFrame.new(-0.67, 0, 0)).Position
-			lib.part(m, "CaseLens", Vector3.new(0.04, 0.34, 0.34), CFrame.new(tip) * CFrame.Angles(0, 0.5, 0), f.color, Enum.Material.Neon, { Shape = Enum.PartType.Cylinder, CanCollide = false, CanQuery = false, CastShadow = false })
+			local z = ca + 1.4 + (i - 1) * 1.9
+			local p = Vector3.new(cx1 + 1.25, 2.95, z)
+			flashlight(m, CFrame.new(p) * CFrame.Angles(0, 0.6, 0), f.color, 0.22)
 		end
-		local caseLight = box(m, "CaseLight", cx1 + 0.4, 3.82, ca + 0.5, cx2 - 0.4, 3.88, cb - 0.5, rgb(255, 246, 224), Enum.Material.Neon, DECOR)
-		lib.new("PointLight", { Range = 7, Brightness = 0.6, Color = rgb(255, 236, 200) }, caseLight)
-		box(m, "CounterTop", cx1 - 0.1, 3.9, ca - 0.1, cx2 + 0.1, 4.0, cb + 0.1, rgb(210, 236, 240), Enum.Material.Glass, { Transparency = 0.55 })
-		-- kasseapparat og myntkrukke
+		local caseLight = box(m, "CaseLight", cx1 + 0.4, 3.82, ca + 0.5, cx2 - 0.4, 3.88, cb - 0.5, rgb(255, 238, 206), Enum.Material.Neon, DECOR)
+		lib.new("PointLight", { Range = 7, Brightness = 0.6, Color = rgb(255, 226, 180) }, caseLight)
+		box(m, "CounterTop", cx1 - 0.1, 3.9, ca - 0.1, cx2 + 0.1, 4.0, cb + 0.1, rgb(200, 220, 215), Enum.Material.Glass, { Transparency = 0.55 })
+		-- kasseapparat, myntkrukke og en bamse som har mistet et øye
 		local reg = Vector3.new(cx1 + 1.4, 4.0, cb - 1.6)
-		box(m, "Register", reg.X - 0.9, reg.Y, reg.Z - 1, reg.X + 0.9, reg.Y + 1.0, reg.Z + 1, rgb(206, 196, 172), Enum.Material.SmoothPlastic)
-		lib.part(m, "RegisterTop", Vector3.new(1.4, 0.7, 1.8), CFrame.new(reg + Vector3.new(0.2, 1.3, 0)) * CFrame.Angles(0, 0, 0.35), rgb(206, 196, 172), Enum.Material.SmoothPlastic, DECOR)
+		box(m, "Register", reg.X - 0.9, reg.Y, reg.Z - 1, reg.X + 0.9, reg.Y + 1.0, reg.Z + 1, rgb(150, 142, 120), Enum.Material.SmoothPlastic)
+		lib.part(m, "RegisterTop", Vector3.new(1.4, 0.7, 1.8), CFrame.new(reg + Vector3.new(0.2, 1.3, 0)) * CFrame.Angles(0, 0, 0.35), rgb(150, 142, 120), Enum.Material.SmoothPlastic, DECOR)
 		local rd = facing(m, "RegisterDisplay", Vector3.new(1.2, 0.36, 0.04), reg + Vector3.new(-0.55, 1.75, 0), Vector3.new(-1, 0, 0), GLASS_BLACK, Enum.Material.SmoothPlastic, DECOR)
 		lib.sign(rd, "0413", { Color = rgb(120, 255, 140), Font = Enum.Font.Code, Brightness = 2 })
 		local jar = Vector3.new(cx1 + 1.0, 4.0, ca + 1.6)
-		lib.cylinderY(m, "Jar", 0.9, 1.2, CFrame.new(jar + Vector3.new(0, 0.6, 0)), rgb(220, 236, 240), Enum.Material.Glass, { Transparency = 0.6, CanCollide = false, CanQuery = false, CastShadow = false })
+		lib.cylinderY(m, "Jar", 0.9, 1.2, CFrame.new(jar + Vector3.new(0, 0.6, 0)), rgb(200, 216, 214), Enum.Material.Glass, { Transparency = 0.6, CanCollide = false, CanQuery = false, CastShadow = false })
 		for i = 1, 8 do
-			lib.part(m, "JarCoin", Vector3.new(0.08, 0.36, 0.36), CFrame.new(jar + Vector3.new((rng() - 0.5) * 0.4, 0.1 + i * 0.09, (rng() - 0.5) * 0.4)) * CFrame.Angles(rng() * 3, 0, rng() * 0.5 + 1.3), rgb(240, 196, 70), Enum.Material.Metal, { Shape = Enum.PartType.Cylinder, CanCollide = false, CanQuery = false, CastShadow = false })
-		end
-		-- ballonger ("GET WELL SOON") festet til disken, en av dem har mistet lufta
-		local balloonColors = { rgb(236, 120, 140), rgb(130, 190, 230), rgb(250, 214, 110) }
-		for i, c in balloonColors do
-			local anchor = Vector3.new(cx1 + 0.6, 4.0, ca + 3.6 + i * 0.3)
-			local top = anchor + Vector3.new(-0.4 + i * 0.35, 5.2 + (i % 2) * 0.8, (i - 2) * 0.9)
-			lib.part(m, "String", Vector3.new(0.03, (top - anchor).Magnitude, 0.03), lib.lookAt((anchor + top) / 2, top) * CFrame.Angles(math.pi / 2, 0, 0), rgb(230, 230, 230), Enum.Material.SmoothPlastic, DECOR)
-			lib.ellipsoid(m, "Balloon", Vector3.new(1.4, 1.7, 1.4), CFrame.new(top + Vector3.new(0, 0.8, 0)), c, Enum.Material.SmoothPlastic)
+			lib.part(m, "JarCoin", Vector3.new(0.08, 0.36, 0.36), CFrame.new(jar + Vector3.new((rng() - 0.5) * 0.4, 0.1 + i * 0.09, (rng() - 0.5) * 0.4)) * CFrame.Angles(rng() * 3, 0, rng() * 0.5 + 1.3), rgb(220, 176, 60), Enum.Material.Metal, { Shape = Enum.PartType.Cylinder, CanCollide = false, CanQuery = false, CastShadow = false })
 		end
 		do
-			local floorPos = Vector3.new(cx1 - 0.8, 0.25, ca + 4.3)
-			lib.ellipsoid(m, "DeflatedBalloon", Vector3.new(1.1, 0.5, 1.0), CFrame.new(floorPos) * CFrame.Angles(0.2, 0.4, 0.1), rgb(200, 60, 60), Enum.Material.SmoothPlastic)
+			local bear = Vector3.new(cx1 + 1.1, 4.0, -190.6)
+			local fur = rgb(120, 86, 58)
+			ball(m, "BearBody", 1.0, bear + Vector3.new(0, 0.5, 0), fur, Enum.Material.Fabric, DECOR)
+			ball(m, "BearHead", 0.8, bear + Vector3.new(-0.05, 1.25, 0), fur, Enum.Material.Fabric, DECOR)
+			for _, sz in { -0.3, 0.3 } do
+				ball(m, "BearEar", 0.3, bear + Vector3.new(0, 1.6, sz), fur, Enum.Material.Fabric, DECOR)
+			end
+			ball(m, "BearEye", 0.12, bear + Vector3.new(-0.42, 1.32, -0.15), rgb(15, 15, 15), Enum.Material.SmoothPlastic, DECOR)
+			lib.part(m, "BearStitch", Vector3.new(0.02, 0.14, 0.03), CFrame.new(bear + Vector3.new(-0.43, 1.32, 0.15)) * CFrame.Angles(0.8, 0, 0), rgb(40, 20, 20), nil, DECOR)
+			ball(m, "BearSnout", 0.3, bear + Vector3.new(-0.4, 1.15, 0), rgb(170, 140, 110), Enum.Material.Fabric, DECOR)
+		end
+		-- en ballong henger fortsatt under markisen, resten ligger flate på gulvet
+		do
+			local anchor = Vector3.new(cx1 + 0.6, 4.0, ca + 3.6)
+			local top = anchor + Vector3.new(-0.2, 6.2, -0.3)
+			lib.part(m, "String", Vector3.new(0.03, (top - anchor).Magnitude, 0.03), lib.lookAt((anchor + top) / 2, top) * CFrame.Angles(math.pi / 2, 0, 0), rgb(200, 200, 200), Enum.Material.SmoothPlastic, DECOR)
+			lib.ellipsoid(m, "Balloon", Vector3.new(1.4, 1.7, 1.4), CFrame.new(top + Vector3.new(0, 0.8, 0)), rgb(150, 50, 60), Enum.Material.SmoothPlastic)
+			for i, c in { rgb(150, 110, 60), rgb(90, 110, 140) } do
+				lib.ellipsoid(m, "DeflatedBalloon", Vector3.new(1.1, 0.45, 1.0), CFrame.new(cx1 - 0.8 - i * 0.7, 0.25, ca + 4.3 + i * 1.3) * CFrame.Angles(0.2, i, 0.1), c, Enum.Material.SmoothPlastic)
+			end
+		end
+		-- lys under markisen
+		for _, z in { -201, -191, -181 } do
+			local l = box(m, "AwningLight", front + 1.6, 12.9, z - 1.5, front + 2.2, 13.1, z + 1.5, rgb(255, 230, 190), Enum.Material.Neon, DECOR)
+			lib.new("PointLight", { Range = 14, Brightness = 0.8, Color = rgb(255, 210, 160) }, l)
 		end
 		-- knappen som åpner butikken (midt på disken)
 		local promptPart = lib.part(m, "PromptPart", Vector3.new(1, 1, 1), CFrame.new(cx1 - 0.6, 4.4, (ca + cb) / 2), rgb(0, 0, 0), nil, { Transparency = 1, CanCollide = false, CanQuery = false })
@@ -882,7 +1023,7 @@ return function(parent: any, spawnLocation: any)
 		box(m, "Body", vx - 2.6, 0, vz - 1.6, vx + 2.6, 9, vz + 1.6, rgb(150, 30, 36), Enum.Material.SmoothPlastic)
 		local glass = facing(m, "Window", Vector3.new(3.4, 6, 0.04), Vector3.new(vx - 0.6, 5.2, vz - 1.62), Vector3.new(0, 0, -1), rgb(230, 240, 250), Enum.Material.Neon, DECOR)
 		box(m, "WindowGlass", vx - 2.3, 2.2, vz - 1.8, vx + 1.1, 8.2, vz - 1.76, rgb(220, 236, 245), Enum.Material.Glass, { Transparency = 0.75, CastShadow = false })
-		lib.new("PointLight", { Range = 10, Brightness = 0.7, Color = rgb(220, 236, 255) }, glass)
+		lib.new("PointLight", { Range = 10, Brightness = 0.45, Color = rgb(200, 220, 255) }, glass)
 		local snack = { rgb(230, 60, 40), rgb(250, 200, 60), rgb(60, 130, 220), rgb(80, 180, 90), rgb(240, 130, 40) }
 		for r = 0, 4 do
 			for c = 0, 3 do
@@ -895,7 +1036,7 @@ return function(parent: any, spawnLocation: any)
 		lib.sign(top, "COLD DRINKS", { Color = rgb(255, 240, 230), Font = Enum.Font.GothamBold, Brightness = 1.4 })
 
 		local wx, wz = -31.5, z1 - 1.5
-		box(m, "CoolerBody", wx - 0.9, 0, wz - 0.9, wx + 0.9, 3.6, wz + 0.9, POT_WHITE, Enum.Material.SmoothPlastic)
+		box(m, "CoolerBody", wx - 0.9, 0, wz - 0.9, wx + 0.9, 3.6, wz + 0.9, rgb(196, 190, 172), Enum.Material.SmoothPlastic)
 		box(m, "CoolerTap", wx - 0.2, 2.6, wz - 1.0, wx + 0.2, 2.9, wz - 0.9, rgb(70, 120, 200), Enum.Material.SmoothPlastic, DECOR)
 		lib.cylinderY(m, "Bottle", 1.5, 2.2, CFrame.new(wx, 4.7, wz), rgb(140, 190, 230), Enum.Material.Glass, { Transparency = 0.35 })
 		lib.cylinderY(m, "Cups", 0.4, 1.2, CFrame.new(wx + 1.2, 2.6, wz - 0.4), rgb(244, 244, 240), Enum.Material.SmoothPlastic, DECOR)
@@ -908,23 +1049,19 @@ return function(parent: any, spawnLocation: any)
 		box(m, "Cabinet", tx - 4, 0, tz - 1.4, tx + 4, 3.2, tz + 1.4, WALNUT, Enum.Material.Wood)
 		box(m, "CabinetTop", tx - 4.1, 3.2, tz - 1.5, tx + 4.1, 3.4, tz + 1.5, TRIM, Enum.Material.Wood)
 		box(m, "Gravel", tx - 3.7, 3.4, tz - 1.1, tx + 3.7, 3.8, tz + 1.1, rgb(196, 176, 140), Enum.Material.Sand, DECOR)
-		local water = box(m, "Water", tx - 3.7, 3.8, tz - 1.1, tx + 3.7, 6.6, tz + 1.1, rgb(70, 150, 190), Enum.Material.Glass, { Transparency = 0.55, CanCollide = false, CanQuery = false, CastShadow = false })
-		lib.new("PointLight", { Range = 9, Brightness = 0.8, Color = rgb(110, 190, 230) }, water)
+		local water = box(m, "Water", tx - 3.7, 3.8, tz - 1.1, tx + 3.7, 6.2, tz + 1.1, rgb(70, 96, 60), Enum.Material.Glass, { Transparency = 0.35, CanCollide = false, CanQuery = false, CastShadow = false })
+		lib.new("PointLight", { Range = 7, Brightness = 0.4, Color = rgb(120, 170, 110) }, water)
 		box(m, "Glass", tx - 3.8, 3.4, tz - 1.2, tx + 3.8, 7.0, tz + 1.2, rgb(220, 240, 245), Enum.Material.Glass, { Transparency = 0.85 })
 		box(m, "Lid", tx - 3.9, 7.0, tz - 1.3, tx + 3.9, 7.25, tz + 1.3, rgb(30, 30, 32), Enum.Material.SmoothPlastic)
 		for i = 1, 4 do
 			local h = 1.2 + rng() * 1.4
 			lib.part(m, "Weed", Vector3.new(0.12, h, 0.4), CFrame.new(tx - 3 + i * 1.4, 3.8 + h / 2, tz + 0.5) * CFrame.Angles(0, rng(), (rng() - 0.5) * 0.3), rgb(70, 150, 80), Enum.Material.SmoothPlastic, DECOR)
 		end
-		local fish = { Vector3.new(tx - 2, 5.2, tz - 0.3), Vector3.new(tx - 0.4, 4.6, tz + 0.2), Vector3.new(tx + 1.3, 5.6, tz - 0.4), Vector3.new(tx + 2.4, 4.9, tz) }
-		for i, p in fish do
-			local cf = CFrame.new(p) * CFrame.Angles(0, (i % 2) * math.pi, 0)
-			lib.ellipsoid(m, "Fish", Vector3.new(0.5, 0.26, 0.14), cf, rgb(250, 140, 40), Enum.Material.SmoothPlastic)
-			lib.part(m, "Tail", Vector3.new(0.18, 0.2, 0.04), cf * CFrame.new(0.3, 0, 0), rgb(250, 160, 60), Enum.Material.SmoothPlastic, DECOR)
+		-- alle fiskene flyter med magen opp
+		for i, dx in { -2.2, -0.6, 0.9, 2.3 } do
+			local cf = CFrame.new(tx + dx, 6.15, tz + (i % 2 - 0.5) * 0.8) * CFrame.Angles(math.pi, i * 0.7, 0)
+			lib.ellipsoid(m, "Fish", Vector3.new(0.5, 0.26, 0.14), cf, rgb(210, 170, 140), Enum.Material.SmoothPlastic)
 		end
-		-- og én som flyter med magen opp
-		local deadCf = CFrame.new(tx + 0.6, 6.5, tz + 0.4) * CFrame.Angles(math.pi, 0.4, 0)
-		lib.ellipsoid(m, "Fish", Vector3.new(0.5, 0.26, 0.14), deadCf, rgb(236, 200, 170), Enum.Material.SmoothPlastic)
 	end
 
 	-- stoler langs sørveggen, mellom døra og akvariet / automaten
@@ -950,12 +1087,12 @@ return function(parent: any, spawnLocation: any)
 		local canvas = lib.part(m, "Canvas", Vector3.new(w, h, 0.04), base * CFrame.new(0, 0, -0.02), CREAM_PAPER, Enum.Material.SmoothPlastic, DECOR)
 		local g = gui(canvas, nil, 1)
 		if kind == "lake" then
-			frame(g, 0.5, 0.2, 1, 0.4, rgb(244, 200, 150))
-			frame(g, 0.5, 0.45, 1, 0.12, rgb(236, 170, 130))
+			frame(g, 0.5, 0.2, 1, 0.4, rgb(170, 140, 110))
+			frame(g, 0.5, 0.45, 1, 0.12, rgb(150, 110, 90))
 			local sun = frame(g, 0.62, 0.42, 0.16, 0.16 * w / h, rgb(250, 236, 200))
 			lib.new("UICorner", { CornerRadius = lib.UDim.new(0.5, 0) }, sun)
 			frame(g, 0.5, 0.56, 1, 0.08, rgb(52, 82, 60))
-			frame(g, 0.5, 0.8, 1, 0.4, rgb(96, 140, 160))
+			frame(g, 0.5, 0.8, 1, 0.4, rgb(70, 90, 96))
 			frame(g, 0.62, 0.68, 0.1, 0.012, rgb(250, 236, 200))
 			frame(g, 0.62, 0.73, 0.14, 0.012, rgb(240, 220, 190))
 			frame(g, 0.62, 0.78, 0.08, 0.012, rgb(230, 210, 180))
@@ -979,6 +1116,174 @@ return function(parent: any, spawnLocation: any)
 	painting(Vector3.new(15, 9.6, z1 - 0.1), Vector3.new(0, 0, -1), 7, 4.4, "fields", 2.5)
 	painting(Vector3.new(x0 + 0.1, 9.4, -175.5), Vector3.new(1, 0, 0), 5, 6, "blocks")
 	painting(Vector3.new(x1 - 0.1, 9.4, -172), Vector3.new(-1, 0, 0), 4.2, 5.2, "lake")
+
+	------------------------------------------------------------------
+	-- Forfall: spikret inngang, blod, papirer og ting folk har latt stå igjen
+	------------------------------------------------------------------
+	local decor = lib.new("Folder", { Name = "Decay" }, lobby)
+	local PLANK = rgb(110, 84, 58)
+	-- planker spikret over inngangsdørene, med sperrebånd
+	do
+		local planks = { { 1.6, 0.06 }, { 3.6, -0.04 }, { 6.2, 0.05 }, { 8.6, -0.07 } }
+		for _, pl in planks do
+			local cf = CFrame.new(0, pl[1], z1 - 0.18) * CFrame.Angles(0, 0, pl[2])
+			lib.part(decor, "Plank", Vector3.new(15.4, 0.9, 0.25), cf, PLANK, Enum.Material.WoodPlanks)
+			for _, nx in { -7.1, 7.1 } do
+				lib.part(decor, "Nail", Vector3.new(0.12, 0.12, 0.1), cf * CFrame.new(nx, 0, -0.15), rgb(60, 60, 60), Enum.Material.Metal, DECOR)
+			end
+		end
+		lib.part(decor, "Plank", Vector3.new(16.5, 0.9, 0.25), CFrame.new(0, 5, z1 - 0.42) * CFrame.Angles(0, 0, math.rad(32)), PLANK, Enum.Material.WoodPlanks)
+		for _, a in { 18, -18 } do
+			local tape = lib.part(decor, "Tape", Vector3.new(15.6, 0.5, 0.04), CFrame.new(0, 4.4, z1 - 0.6) * CFrame.Angles(0, 0, math.rad(a)), rgb(230, 190, 40), Enum.Material.SmoothPlastic, DECOR)
+			lib.sign(tape, "DO NOT ENTER   •   DO NOT ENTER   •   DO NOT ENTER", { Color = rgb(20, 20, 20), Font = Enum.Font.GothamBold, LightInfluence = 1 })
+		end
+		-- "NO WAY OUT" i blod over plankene
+		local canvas = Blood.canvas(decor, "Writing", lib.lookAt(Vector3.new(0, 7.6, z1 - 0.7), Vector3.new(0, 7.6, z1 - 5)), 14, 4, "Front", 32)
+		local words = "NO WAY OUT"
+		local px = 1.25 * canvas.pps
+		local x = -(#words * 0.62) / 2
+		for i = 1, #words do
+			local ch = string.sub(words, i, i)
+			if ch ~= " " then
+				local gx, gy = canvas:px(x + 0.31, 0.5 + (rng() - 0.5) * 0.15)
+				lib.new("TextLabel", {
+					AnchorPoint = lib.Vector2.new(0.5, 0.5),
+					Position = UDim2.new(0, gx, 0, gy),
+					Size = UDim2.new(0, px * 1.2, 0, px * 1.3),
+					Rotation = (rng() - 0.5) * 16,
+					BackgroundTransparency = 1,
+					Text = ch,
+					TextSize = math.floor(px),
+					TextColor3 = if rng() < 0.5 then rgb(110, 8, 10) else rgb(84, 4, 6),
+					TextTransparency = 0.05 + rng() * 0.15,
+					FontFace = lib.Font.fromEnum(Enum.Font.PermanentMarker),
+					ZIndex = 3,
+				}, canvas.gui)
+				if rng() < 0.6 then
+					canvas:drip(x + 0.31 + (rng() - 0.5) * 0.2, -0.05, 0.4 + rng() * 1.2, 0.05 + rng() * 0.04, Blood.FRESH)
+				end
+			end
+			x += if ch == " " then 0.4 else 0.62
+		end
+	end
+	-- slepespor fra midten av rommet inn i heis 3, og en pytt ved stolene
+	do
+		local drag = Blood.canvas(decor, "Blood", CFrame.new(11, 0.06, -211) * CFrame.Angles(0, math.pi / 2, 0), 26, 4, "Top", 32)
+		drag:pool(-9.5, 0, 1.1, Blood.DRIED, rng, { drops = 8 })
+		drag:drag(-8.6, 0, 17, 1.0, Blood.DRIED, rng)
+		local pool = Blood.canvas(decor, "Blood", CFrame.new(-6, 0.06, -186) * CFrame.Angles(0, 0.7, 0), 6, 6, "Top", 32)
+		pool:pool(0, 0, 1.2, Blood.DRIED, rng, { drops = 10 })
+		-- bare fotspor ut av heis 1, bort mot resepsjonen
+		local steps = Blood.canvas(decor, "Blood", CFrame.new(-36, 0.06, -214) * CFrame.Angles(0, math.rad(-58), 0), 14, 3, "Top", 32)
+		steps:footprints(-6, 0, 12, Blood.DRIED, rng)
+		-- håndavtrykk ved siden av heis 2
+		local hand = Blood.canvas(decor, "Blood", lib.lookAt(Vector3.new(-17.2, 6.2, z0 + 0.14), Vector3.new(-17.2, 6.2, z0 + 5)), 3, 5, "Front", 32)
+		hand:hand(-0.3, 0.8, math.rad(10), 1.4, Blood.FRESH, rng)
+		hand:hand(0.6, -0.6, math.rad(-15), 0.8, Blood.FRESH, rng)
+	end
+	-- fuktskjolder og skitt nedover veggene under taket
+	do
+		local stains = {
+			{ Vector3.new(-30, 17, z1 - 0.13), Vector3.new(0, 0, -1) },
+			{ Vector3.new(24, 16.5, z1 - 0.13), Vector3.new(0, 0, -1) },
+			{ Vector3.new(x0 + 0.13, 17, -205), Vector3.new(1, 0, 0) },
+			{ Vector3.new(x1 - 0.13, 17, -210), Vector3.new(-1, 0, 0) },
+			{ Vector3.new(-44, 17.4, z0 + 0.13), Vector3.new(0, 0, 1) },
+		}
+		for _, st in stains do
+			local c = Blood.canvas(decor, "Stain", lib.lookAt(st[1], st[1] + st[2]), 8, 6, "Front", 16)
+			for _ = 1, 9 do
+				local w = 1 + rng() * 3
+				c:blob((rng() - 0.5) * 5, 1.6 - rng() * 2.2, w, w * (0.6 + rng() * 0.6), rng() * 3, rgb(84, 70, 44), 0.72 + rng() * 0.18, 1)
+			end
+			for _ = 1, 4 do
+				local len = 1 + rng() * 3
+				c:blob((rng() - 0.5) * 5, 1 - len / 2, len, 0.12 + rng() * 0.15, -math.pi / 2, rgb(70, 58, 38), 0.6, 1)
+			end
+		end
+	end
+	-- papirer strødd utover gulvet
+	for _ = 1, 46 do
+		local x = x0 + 3 + rng() * (x1 - x0 - 16)
+		local z = z0 + 4 + rng() * (z1 - z0 - 8)
+		if math.abs(x) < 6 and z > -184 then
+			continue
+		end
+		lib.part(decor, "Paper", Vector3.new(0.85, 0.02, 1.1), CFrame.new(x, 0.06 + rng() * 0.02, z) * CFrame.Angles((rng() - 0.5) * 0.06, rng() * 6, (rng() - 0.5) * 0.06), if rng() < 0.2 then rgb(196, 186, 150) else rgb(220, 214, 196), Enum.Material.SmoothPlastic, DECOR)
+	end
+	-- rullestol, båre, dryppstativ, vaskebøtte og et "WET FLOOR"-skilt
+	do
+		local wc = CFrame.new(-26, 0, -219) * CFrame.Angles(0, 2.3, 0)
+		local m = lib.new("Model", { Name = "Wheelchair" }, decor)
+		lib.part(m, "Seat", Vector3.new(1.8, 0.2, 1.8), wc * CFrame.new(0, 1.8, 0), rgb(40, 40, 44), Enum.Material.Leather)
+		lib.part(m, "Back", Vector3.new(1.8, 1.8, 0.15), wc * CFrame.new(0, 2.8, 0.9), rgb(40, 40, 44), Enum.Material.Leather)
+		for _, sx in { -1, 1 } do
+			lib.part(m, "Wheel", Vector3.new(0.15, 2.4, 2.4), wc * CFrame.new(sx * 1.05, 1.2, 0.3), DARK_METAL, Enum.Material.Metal, { Shape = Enum.PartType.Cylinder })
+			lib.part(m, "Handle", Vector3.new(0.12, 0.12, 0.7), wc * CFrame.new(sx * 0.8, 3.6, 1.2), DARK_METAL, Enum.Material.Metal, DECOR)
+		end
+		lib.part(m, "Footrest", Vector3.new(1.4, 0.1, 0.5), wc * CFrame.new(0, 0.5, -1.1), DARK_METAL, Enum.Material.Metal, DECOR)
+	end
+	do
+		local g = CFrame.new(-44.2, 0, -208) * CFrame.Angles(0, 0.06, 0)
+		local m = lib.new("Model", { Name = "Gurney" }, decor)
+		lib.part(m, "Mattress", Vector3.new(2.6, 0.5, 6.4), g * CFrame.new(0, 2.6, 0), rgb(150, 156, 150), Enum.Material.Fabric)
+		lib.part(m, "Sheet", Vector3.new(2.7, 0.08, 4.8), g * CFrame.new(0, 2.9, 0.6) * CFrame.Angles(0, 0, 0.02), rgb(214, 214, 204), Enum.Material.Fabric, DECOR)
+		lib.part(m, "Frame", Vector3.new(2.4, 0.2, 6.2), g * CFrame.new(0, 2.2, 0), DARK_METAL, Enum.Material.Metal)
+		for _, lx in { -1.1, 1.1 } do
+			for _, lz in { -2.9, 2.9 } do
+				lib.part(m, "Leg", Vector3.new(0.15, 2.0, 0.15), g * CFrame.new(lx, 1.1, lz), DARK_METAL, Enum.Material.Metal, DECOR)
+				lib.part(m, "Wheel", Vector3.new(0.15, 0.4, 0.4), g * CFrame.new(lx, 0.2, lz), rgb(30, 30, 30), Enum.Material.Rubber, { Shape = Enum.PartType.Cylinder, CanCollide = false })
+			end
+		end
+		local stain = Blood.canvas(m, "Stain", g * CFrame.new(0, 2.96, 0.8), 2.4, 3.6, "Top", 32)
+		stain:pool(0.1, 0.3, 0.6, Blood.DRIED, rng, { drops = 6 })
+		local iv = Vector3.new(-41.8, 0, -206.4)
+		lib.cylinderY(decor, "IVBase", 1.4, 0.15, CFrame.new(iv + Vector3.new(0, 0.1, 0)), DARK_METAL, Enum.Material.Metal)
+		lib.cylinderY(decor, "IVPole", 0.12, 6.2, CFrame.new(iv + Vector3.new(0, 3.2, 0)), CHROME, Enum.Material.Metal)
+		lib.part(decor, "IVHook", Vector3.new(1.2, 0.08, 0.08), CFrame.new(iv + Vector3.new(0, 6.25, 0)), CHROME, Enum.Material.Metal, DECOR)
+		lib.part(decor, "IVBag", Vector3.new(0.6, 0.9, 0.2), CFrame.new(iv + Vector3.new(0.45, 5.65, 0)), rgb(110, 20, 20), Enum.Material.Glass, { Transparency = 0.25, CanCollide = false, CanQuery = false })
+	end
+	do
+		local wf = Vector3.new(6.5, 0, -214)
+		local m = lib.new("Model", { Name = "WetFloor" }, decor)
+		for _, sgn in { -1, 1 } do
+			local cf = CFrame.new(wf + Vector3.new(0, 1.3, sgn * 0.35)) * CFrame.Angles(sgn * 0.27, 0, 0)
+			local panel = lib.part(m, "Panel", Vector3.new(1.4, 2.6, 0.08), cf, rgb(240, 196, 40), Enum.Material.SmoothPlastic)
+			lib.sign(panel, "CAUTION\n\nWET\nFLOOR", { Color = rgb(20, 20, 20), Font = Enum.Font.GothamBold, Face = if sgn < 0 then Enum.NormalId.Front else Enum.NormalId.Back, LightInfluence = 1 })
+		end
+		local bucket = Vector3.new(-34, 0, -173.5)
+		lib.cylinderY(decor, "Bucket", 1.6, 1.4, CFrame.new(bucket + Vector3.new(0, 0.7, 0)), rgb(70, 90, 140), Enum.Material.SmoothPlastic)
+		lib.cylinderY(decor, "Water", 1.4, 0.05, CFrame.new(bucket + Vector3.new(0, 1.3, 0)), rgb(60, 50, 34), Enum.Material.Glass, DECOR)
+		lib.part(decor, "Mop", Vector3.new(0.12, 5, 0.12), CFrame.new(bucket + Vector3.new(0.6, 2.6, 0.5)) * CFrame.Angles(0.3, 0, -0.2), rgb(110, 84, 58), Enum.Material.Wood, DECOR)
+	end
+	-- pappesker ved resepsjonen
+	for i, b in { { -44.6, -181.5, 0.1 }, { -42.3, -181.3, -0.2 }, { -43.6, -181.4, 0.4 } } do
+		local h = if i == 3 then 4.1 else 1.4
+		lib.part(decor, "Box", Vector3.new(2, 1.4, 2), CFrame.new(b[1], h - 0.7, b[2]) * CFrame.Angles(0, b[3], 0), rgb(150, 116, 76), Enum.Material.Cardboard)
+	end
+	-- to stoler som har veltet ved stolradene
+	for _, c in { { -8.6, -203, 1.2 }, { 33.4, -199, -0.6 } } do
+		local cf = CFrame.new(c[1], 0, c[2]) * CFrame.Angles(0, c[3], 0)
+		local m = lib.new("Model", { Name = "FallenChair" }, decor)
+		lib.part(m, "Seat", Vector3.new(2.1, 1.9, 0.45), cf * CFrame.new(0, 0.95, 0), SEAT, Enum.Material.Leather)
+		lib.part(m, "Back", Vector3.new(2.1, 0.35, 2.2), cf * CFrame.new(0, 0.2, 1.3), SEAT, Enum.Material.Leather)
+		lib.part(m, "Leg", Vector3.new(0.2, 0.2, 1.4), cf * CFrame.new(-0.8, 1.5, -0.8), CHROME, Enum.Material.Metal, DECOR)
+		lib.part(m, "Leg", Vector3.new(0.2, 0.2, 1.4), cf * CFrame.new(0.8, 1.5, -0.8), CHROME, Enum.Material.Metal, DECOR)
+	end
+	-- lys ved toppliste-tavla: små lys på en hylle (som et minnested)
+	do
+		local sx = x1 - 0.7
+		box(decor, "CandleShelf", sx - 0.4, 4.0, -225, x1, 4.2, -211.6, WALNUT, Enum.Material.Wood)
+		for k = 0, 5 do
+			local z = -224 + k * 2.4 + rng() * 0.6
+			local h = 0.5 + rng() * 0.6
+			lib.cylinderY(decor, "Candle", 0.35, h, CFrame.new(sx - 0.1, 4.2 + h / 2, z), rgb(226, 214, 186), Enum.Material.SmoothPlastic, DECOR)
+			local flame = ball(decor, "Flame", 0.18, Vector3.new(sx - 0.1, 4.32 + h, z), rgb(255, 170, 70), Enum.Material.Neon, DECOR)
+			if k % 2 == 0 then
+				lib.new("PointLight", { Range = 6, Brightness = 0.7, Color = rgb(255, 160, 70) }, flame)
+			end
+		end
+	end
 
 	------------------------------------------------------------------
 	-- Spawn: dørmatte innenfor inngangen

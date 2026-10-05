@@ -11,6 +11,7 @@ local Util = require(script.Parent:WaitForChild("Util"))
 local Remotes = ReplicatedStorage:WaitForChild("Remotes")
 local NotifyRemote = Remotes:WaitForChild("Notify") :: RemoteEvent
 local TransitionRemote = Remotes:WaitForChild("Transition") :: RemoteEvent
+local ElevatorRemote = Remotes:WaitForChild("Elevator") :: RemoteEvent
 
 local TICK = 0.2
 local GREEN = Color3.fromRGB(80, 220, 100)
@@ -41,6 +42,8 @@ type Elevator = {
 	needleUp: number,
 	needleDown: number,
 	needleAngle: NumberValue?,
+	maxPlayers: number, -- verten (den første som gikk inn) kan sette 1–4
+	startNow: boolean,
 }
 
 local Lobby = {}
@@ -78,7 +81,7 @@ end
 
 local function updateSign(e: Elevator)
 	local count = #e.order
-	local max = Config.MaxPlayersPerElevator
+	local max = e.maxPlayers
 	local nightmare = e.mode == "Nightmare"
 	if e.modeLabel then
 		e.modeLabel.Text = if nightmare then "NIGHTMARE" else "NORMAL"
@@ -124,6 +127,9 @@ local function depart(e: Elevator, startMatch: ({ Player }, string) -> ())
 	local mode = e.mode
 	local group = table.clone(e.order)
 	e.order = {}
+	for _, player in group do
+		player:SetAttribute("Elevator", nil)
+	end
 	e.countdown = nil
 	updateSign(e)
 	setDoors(e, false)
@@ -180,22 +186,37 @@ local function step(e: Elevator, startMatch: ({ Player }, string) -> ())
 	for player in inside do
 		table.insert(order, player)
 	end
-	-- Maks 4: de siste som kom inn blir dyttet ut
-	while #order > Config.MaxPlayersPerElevator do
+	-- For mange: de siste som kom inn blir dyttet ut
+	while #order > e.maxPlayers do
 		local extra = table.remove(order) :: Player
 		Util.placeCharacter(extra, e.exitPoint.CFrame, false)
-		NotifyRemote:FireClient(extra, "Elevator " .. e.index .. " is full (" .. Config.MaxPlayersPerElevator .. "/" .. Config.MaxPlayersPerElevator .. "). Pick another elevator.", "bad")
+		NotifyRemote:FireClient(extra, "Elevator " .. e.index .. " is full (" .. e.maxPlayers .. "/" .. e.maxPlayers .. "). Pick another elevator.", "bad")
+	end
+	-- hvem som er i heisen (klienten viser menyen når attributtet Elevator er satt)
+	for _, p in e.order do
+		if not table.find(order, p) and p:GetAttribute("Elevator") == e.index then
+			p:SetAttribute("Elevator", nil)
+		end
+	end
+	for _, p in order do
+		p:SetAttribute("Elevator", e.index)
 	end
 	e.order = order
 
 	if #order == 0 then
 		e.countdown = nil
 		e.waitingForRoom = false
+		e.startNow = false
 		e.mode = "Normal" -- tom heis går tilbake til vanlig modus
+		e.maxPlayers = Config.MaxPlayersPerElevator
 	else
 		e.countdown = (e.countdown or Config.ElevatorCountdown) - TICK
-		if #order >= Config.MaxPlayersPerElevator then
+		if #order >= e.maxPlayers then
 			e.countdown = math.min(e.countdown :: number, Config.ElevatorFullCountdown)
+		end
+		if e.startNow then
+			e.startNow = false
+			e.countdown = 0
 		end
 		if (e.countdown :: number) <= 0 then
 			-- alle sykehusene er i bruk: vent til en runde er ferdig
@@ -214,6 +235,66 @@ local function step(e: Elevator, startMatch: ({ Player }, string) -> ())
 		end
 	end
 	updateSign(e)
+end
+
+-- Menyen i heisen: verten (den første som gikk inn) styrer modus, antall plasser og start
+local function publish(e: Elevator)
+	local model = e.model
+	local names = {}
+	for _, p in e.order do
+		table.insert(names, p.DisplayName)
+	end
+	model:SetAttribute("Mode", e.mode)
+	model:SetAttribute("MaxPlayers", e.maxPlayers)
+	model:SetAttribute("Players", table.concat(names, "\n"))
+	model:SetAttribute("Host", if e.order[1] then e.order[1].UserId else 0)
+	model:SetAttribute("Countdown", if e.countdown then math.max(0, math.ceil(e.countdown)) else -1)
+	model:SetAttribute("Status", if e.departing then "departing" elseif e.waitingForRoom then "busy" else "waiting")
+end
+
+local function setMode(e: Elevator, mode: string)
+	if e.mode == mode then
+		return
+	end
+	e.mode = mode
+	for _, p in e.order do
+		if mode == "Nightmare" then
+			NotifyRemote:FireClient(p, "NIGHTMARE: 1 life, a faster monster, darker halls and fewer lockers. Double coins.", "bad")
+		else
+			NotifyRemote:FireClient(p, "Difficulty set to NORMAL.", "good")
+		end
+	end
+	updateSign(e)
+	publish(e)
+end
+
+local function onMenu(player: Player, action: any, value: any)
+	local e: Elevator? = nil
+	for _, el in elevators do
+		if table.find(el.order, player) then
+			e = el
+		end
+	end
+	if not e or e.departing or typeof(action) ~= "string" then
+		return
+	end
+	if action == "leave" then
+		Util.placeCharacter(player, e.exitPoint.CFrame, false)
+		return
+	end
+	if e.order[1] ~= player then
+		NotifyRemote:FireClient(player, "Only " .. e.order[1].DisplayName .. " (first in) can change this.", "info")
+		return
+	end
+	if action == "mode" and (value == "Normal" or value == "Nightmare") then
+		setMode(e, value)
+	elseif action == "max" and typeof(value) == "number" then
+		e.maxPlayers = math.clamp(math.floor(value), math.max(1, #e.order), Config.MaxPlayersPerElevator)
+	elseif action == "start" then
+		e.startNow = true
+	end
+	updateSign(e)
+	publish(e)
 end
 
 function Lobby.init(startMatch: ({ Player }, string) -> (), canStartFn: (() -> boolean)?)
@@ -263,6 +344,8 @@ function Lobby.init(startMatch: ({ Player }, string) -> (), canStartFn: (() -> b
 			needleUp = 0,
 			needleDown = 0,
 			needleAngle = nil,
+			maxPlayers = Config.MaxPlayersPerElevator,
+			startNow = false,
 		}
 		-- viseren dreier rundt et punkt (Pivot) i flaten til uret
 		local needle = model:FindFirstChild("Needle") :: BasePart?
@@ -294,15 +377,7 @@ function Lobby.init(startMatch: ({ Player }, string) -> (), canStartFn: (() -> b
 						NotifyRemote:FireClient(player, "Step into the elevator to change the difficulty.", "info")
 						return
 					end
-					e.mode = if e.mode == "Nightmare" then "Normal" else "Nightmare"
-					for _, p in e.order do
-						if e.mode == "Nightmare" then
-							NotifyRemote:FireClient(p, "NIGHTMARE: 1 life, a faster monster, darker halls and fewer lockers. Double coins.", "bad")
-						else
-							NotifyRemote:FireClient(p, "Difficulty set to NORMAL.", "good")
-						end
-					end
-					updateSign(e)
+					onMenu(player, "mode", if e.mode == "Nightmare" then "Normal" else "Nightmare")
 				end)
 			end
 		end
@@ -313,11 +388,22 @@ function Lobby.init(startMatch: ({ Player }, string) -> (), canStartFn: (() -> b
 		return a.index < b.index
 	end)
 
+	ElevatorRemote.OnServerEvent:Connect(onMenu)
+	Players.PlayerRemoving:Connect(function(player)
+		for _, e in elevators do
+			local i = table.find(e.order, player)
+			if i then
+				table.remove(e.order, i)
+			end
+		end
+	end)
+
 	task.spawn(function()
 		while true do
 			task.wait(TICK)
 			for _, e in elevators do
 				step(e, startMatch)
+				publish(e)
 			end
 		end
 	end)

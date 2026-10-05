@@ -4,15 +4,19 @@ Et analog-horror-spill i Roblox for 1–4 spillere per gruppe. Alt i spillet er 
 
 ## Slik fungerer spillet
 
-- Alle spawner i **lobbyen**: sykehusets venterom slik det var før alt gikk galt. Rene,
-  rutete fliser, grønne fliser på veggene, varmt lys, stolrader, resepsjon med en
-  **NOW SERVING 0413**-skjerm, regeltavle, akvarium, brusautomat, klokka som stoppet 03:13 og
-  en låst hovedinngang. Litt for rolig.
+- Alle spawner i **lobbyen**: venterommet i det samme forlatte sykehuset som i spillet
+  (grønne fliser, gulnet puss, mørkt tak og de samme lysrørene), bare bygd som en ordentlig
+  lobby. Det er hull i taket med plater som henger ned, papirer på gulvet, veltede stoler,
+  en rullestol, en båre, blodspor inn i heis 3 og "NO WAY OUT" over den spikrede
+  hovedinngangen. Resepsjonen har en **NOW SERVING 0413**-skjerm, og klokka stoppet 03:13.
 - Langs nordveggen står **4 gamle sykehusheiser** med messingramme, et viserur over døra
   (L, B1, B2, B3) og en lampe ved siden av døra: **grønn** = gå inn, **gul** = noen venter,
   **rød** = full eller på vei ned. Skiltet over døra viser heisnummer, modus, antall spillere
   og nedtellingen. Når heisen går, svinger viseren ned til B3. Maks 4 spillere per heis.
   Gå inn i en heis, så starter en nedtelling (15 sek, eller 5 sek hvis heisen er full).
+- **Heismenyen**: står du i en heis, kommer det opp en meny med hvem som er med. Den første
+  som gikk inn er **verten** og kan velge **NORMAL/NIGHTMARE**, hvor mange som får bli med
+  (**1–4**, f.eks. 1 for å spille alene) og trykke **START NOW**. Alle kan trykke **LEAVE**.
 - **HALL OF SURVIVORS**: topplista på østveggen viser **raskeste flukt** og **flest flukter**
   (topp 10 fra alle servere, oppdateres hvert minutt).
 - Gruppa havner i et mørkt, forlatt **sykehus** med mange små rom og korridorer, og **tre store
@@ -40,13 +44,14 @@ Et analog-horror-spill i Roblox for 1–4 spillere per gruppe. Alt i spillet er 
   resepsjonen med 1 liv) eller **SPECTATE**. Har alle mistet alle liv, kan hver spiller
   velge **REVIVE**, **Try again** (ny runde fra starten) eller **To lobby**.
 - Monsteret blir **raskere for hver nøkkel** som settes inn.
-- **Nightmare-modus**: trykk E på panelet inne i heisen for å bytte mellom NORMAL og NIGHTMARE.
+- **Nightmare-modus**: verten velger den i heismenyen (eller trykker E på panelet inne i heisen).
   Nightmare har 1 liv, et raskere monster, mørkere ganger, færre skap og dobbelt så mange
   mynter.
 - **Mynter og kosmetikk**: du får mynter for å finne nøkler, sette dem inn, hjelpe venner opp,
   spille en runde og komme deg ut (dobbelt i Nightmare). Bruk dem i **GIFT SHOP** i lobbyen
-  (markise, hyller med lysende lommelykter, glassdisk, ballonger) på lommelyktfarger og titler
-  som vises over hodet ditt. Alt lagres.
+  (neonskilt, lyspærer under markisen og en vegg med lommelykter som lyser i sine farger) på
+  **8 lommelykter** og **8 titler** som vises over hodet ditt. I butikkvinduet ser du hver
+  lommelykt i 3D med lyset den sender ut. Alt lagres.
 - Etter **3 nøkler** begynner strømmen å svikte: hvert 30.–50. sekund dempes lyset sakte ned i
   10–16 sekunder (bare noen svake, røde nødlys står igjen) før det sakte kommer tilbake. Da
   trenger du lommelykta.

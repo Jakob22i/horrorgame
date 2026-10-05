@@ -23,6 +23,7 @@ local Ending = require(script:WaitForChild("Ending"))
 local Scares = require(script:WaitForChild("Scares"))
 local CosmeticsUI = require(script:WaitForChild("CosmeticsUI"))
 local ExitGuide = require(script:WaitForChild("ExitGuide"))
+local ElevatorUI = require(script:WaitForChild("ElevatorUI"))
 
 local player = Players.LocalPlayer
 
@@ -35,6 +36,7 @@ Ending.init(UI, Effects, Controls)
 Scares.init(UI, Effects, Ending.isPlaying)
 CosmeticsUI.init()
 ExitGuide.init(Effects, Ending.isPlaying)
+ElevatorUI.init(UI)
 
 -- Ingen "Reset character" i et skrekkspill
 task.spawn(function()
