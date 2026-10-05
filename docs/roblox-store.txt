@@ -1,4 +1,5 @@
 KJØP SOM SKAL LAGES PÅ create.roblox.com -> spillet -> Monetization
+(ID-ene er lagt inn i Config: Push 2005881609, Revive 3716745286, Jumpscare 3716745563)
 (bildene ligger i thumbnails/store/, ID-ene skrives inn i src/shared/Config.luau)
 
 =====================================================================

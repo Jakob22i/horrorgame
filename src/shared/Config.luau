@@ -88,9 +88,9 @@ local Config = {
 	-- Kjøp med Robux. Opprett produktene på create.roblox.com etter at spillet er publisert,
 	-- og lim inn ID-ene her. Står en ID på 0, er kjøpet gratis i Studio (for testing).
 	Shop = {
-		ReviveProductId = 0, -- Developer Product: Revive (39 Robux)
-		PushGamePassId = 0, -- Game Pass: Push (49 Robux)
-		JumpscareProductId = 0, -- Developer Product: Jumpscare everyone (49 Robux)
+		ReviveProductId = 3716745286, -- Developer Product: Revive (39 Robux)
+		PushGamePassId = 2005881609, -- Game Pass: Push (49 Robux)
+		JumpscareProductId = 3716745563, -- Developer Product: Jumpscare everyone (49 Robux)
 		RevivePrice = 39, -- prisene som vises i spillet
 		PushPrice = 49,
 		JumpscarePrice = 49,
