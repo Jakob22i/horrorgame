@@ -48,7 +48,7 @@ Et analog-horror-spill i Roblox for 1–4 spillere per gruppe. Alt i spillet er 
   døde** med 1 liv, og monsteret flyttes langt unna) eller **SPECTATE**. Har alle mistet alle liv, kan hver spiller
   velge **REVIVE**, **Try again** (ny runde fra starten) eller **To lobby**.
 - Monsteret blir **raskere for hver nøkkel** som settes inn.
-- **Nightmare-modus**: verten velger den i heismenyen (eller trykker E på panelet inne i heisen).
+- **Nightmare-modus**: verten velger den i heismenyen.
   Nightmare har 1 liv, et raskere monster, mørkere ganger, færre skap og dobbelt så mange
   mynter.
 - **Mynter og kosmetikk**: du får mynter for å finne nøkler, sette dem inn, hjelpe venner opp,
@@ -87,8 +87,11 @@ Et analog-horror-spill i Roblox for 1–4 spillere per gruppe. Alt i spillet er 
 **Mobil:** styrespaken til venstre og hoppeknappen til høyre er Roblox sine egne. Knappene
 FLASHLIGHT, PUSH, JUMPSCARE og RUN ligger nede til høyre, rett ved hoppeknappen. RUN slår
 løping av og på (så du slipper å holde den inne). Trykk på knappene som dukker opp ved skap,
-nøkler og dører. Menyene krymper så de får plass på små skjermer, og skyggene er slått av på
-mobil så spillet går jevnere.
+nøkler og dører. På små skjermer blir HUD-en, meldingene og EXIT-markøren mindre, mens knappene
+du trykker på holder en god størrelse. Alt holder seg innenfor de trygge kantene (Roblox-topplinja,
+hakket i skjermen og hjem-streken), og heismenyen, butikken og YOU DIED-menyen blir så store som
+det er plass til under topplinja. Klokka nede til venstre vises ikke på mobil (der er styrespaken),
+og skyggene er slått av på mobil så spillet går jevnere.
 
 ## Flere runder i samme server (og venner)
 
@@ -165,7 +168,7 @@ Last dem opp på create.roblox.com → spillet ditt → **Places** → **Configu
 | Nøkkelen | `ServerStorage/Key` |
 | Innstillinger | `ReplicatedStorage/Shared/Config` |
 | Serverscript | `ServerScriptService/GameServer` (+ modulene Lobby, Match, Monster, Shop, Leaderboard, Util) |
-| Klientscript | `StarterPlayer/StarterPlayerScripts/ClientMain` (+ UI, Effects, Controls, Jumpscare, MonsterAnimator, Ending, Scares, CosmeticsUI) |
+| Klientscript | `StarterPlayer/StarterPlayerScripts/ClientMain` (+ Screen, UI, Effects, Controls, Jumpscare, MonsterAnimator, Ending, Scares, CosmeticsUI, ExitGuide, ElevatorUI) |
 | Loading screen | `ReplicatedFirst/LoadingScreen` |
 
 Sykehuset ligger i `ServerStorage` og klones inn i `Workspace/Matches` for hver gruppe.
@@ -177,7 +180,8 @@ det tilbake. Mappene i kartet styrer spillet:
 - `SpawnPoints`: startpunktene i resepsjonen
 - `PatrolPoints`: punktene monsteret vandrer mellom
 - `Lamps`: taklampene. Serveren velger tilfeldig om de er på, svake (`dim`) eller av.
-  Klienten styrer lysnivået mykt (`Effects`).
+  Klienten styrer lysnivået mykt (`Effects`). Rommene har lamper i et jevnt rutenett, og
+  lysstyrken følger hvor tett de står, så rommene er omtrent like lyse som gangene (ikke lysere).
 
 ## Justere spillet
 

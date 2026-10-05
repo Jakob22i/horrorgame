@@ -28,7 +28,6 @@ type Elevator = {
 	timer: TextLabel?,
 	modeLabel: TextLabel?,
 	panelLabel: TextLabel?,
-	prompt: ProximityPrompt?,
 	mode: string,
 	indicator: BasePart?,
 	doorSound: Sound?,
@@ -90,9 +89,6 @@ local function updateSign(e: Elevator)
 	if e.panelLabel then
 		e.panelLabel.Text = if nightmare then "NIGHTMARE\n1 LIFE" else "NORMAL\n3 LIVES"
 		e.panelLabel.TextColor3 = if nightmare then NIGHTMARE else NORMAL
-	end
-	if e.prompt then
-		e.prompt.ObjectText = if nightmare then "Mode: Nightmare" else "Mode: Normal"
 	end
 	if e.status then
 		e.status.Text = count .. "/" .. max .. " PLAYERS"
@@ -342,7 +338,6 @@ function Lobby.init(startMatch: ({ Player }, string) -> (), canStartFn: (() -> b
 			timer = gui and gui:FindFirstChild("Timer") :: TextLabel?,
 			modeLabel = gui and gui:FindFirstChild("Mode") :: TextLabel?,
 			panelLabel = nil,
-			prompt = nil,
 			mode = "Normal",
 			indicator = model:FindFirstChild("Indicator") :: BasePart?,
 			doorSound = sign and sign:FindFirstChild("DoorSound") :: Sound?,
@@ -375,22 +370,11 @@ function Lobby.init(startMatch: ({ Player }, string) -> (), canStartFn: (() -> b
 			end)
 			e.needleAngle = value
 		end
-		-- Bryter inne i heisen: Normal / Nightmare
+		-- Skiltet inne i heisen viser modus (Normal / Nightmare); den endres i heismenyen
 		local panel = model:FindFirstChild("ModePanel")
 		if panel then
 			local panelGui = panel:FindFirstChild("SignGui")
 			e.panelLabel = panelGui and panelGui:FindFirstChild("Text") :: TextLabel?
-			local prompt = panel:FindFirstChildOfClass("ProximityPrompt")
-			e.prompt = prompt
-			if prompt then
-				prompt.Triggered:Connect(function(player)
-					if e.departing or not table.find(e.order, player) then
-						NotifyRemote:FireClient(player, "Step into the elevator to change the difficulty.", "info")
-						return
-					end
-					onMenu(player, "mode", if e.mode == "Nightmare" then "Normal" else "Nightmare")
-				end)
-			end
 		end
 		table.insert(elevators, e)
 		updateSign(e)

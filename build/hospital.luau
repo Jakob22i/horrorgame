@@ -694,44 +694,40 @@ return function(parent: any)
 	------------------------------------------------------------------
 	-- Lys i taket
 	------------------------------------------------------------------
-	local function lamp(x: number, y: number, offset: any?)
-		local c = cellCenter(x, y, WALL_H) + (offset or Vector3.new(0, 0, 0))
+	local LAMP_BRIGHTNESS = 1.15
+	local function lamp(c: any, brightness: number?)
 		local m = lib.new("Model", { Name = "Lamp", Tags = { "Lamp" }, Attributes = { Mode = "on" } }, folders.Lamps)
 		lib.part(m, "Housing", Vector3.new(3.6, 0.2, 1.6), CFrame.new(c - Vector3.new(0, 0.1, 0)), COLORS.darkMetal, Enum.Material.Metal, { CanQuery = false, CastShadow = false })
 		local panel = lib.part(m, "Panel", Vector3.new(3.2, 0.12, 1.2), CFrame.new(c - Vector3.new(0, 0.26, 0)), rgb(255, 238, 190), Enum.Material.Neon, { CanQuery = false, CastShadow = false })
 		-- bare noen lamper kaster skygge (mye raskere med et stort kart)
-		lib.new("PointLight", { Name = "Light", Range = 18, Brightness = 1.15, Color = rgb(255, 226, 160), Shadows = rng() < 0.2 }, panel)
+		lib.new("PointLight", { Name = "Light", Range = 18, Brightness = brightness or LAMP_BRIGHTNESS, Color = rgb(255, 226, 160), Shadows = rng() < 0.13 }, panel)
 	end
 
+	-- Rommene får lamper i et jevnt rutenett (omtrent én per 4,5 ruter hver vei), og lysstyrken
+	-- følger hvor tett lampene står, så rommene blir like lyse som gangene, men ikke lysere.
+	local ROOM_LAMP_SPACING = 4.5
+	local ROOM_LAMP_AREA = 26 -- ruter per lampe som gir full lysstyrke
 	for _, r in rooms do
 		local x1, y1, x2, y2 = r[3], r[4], r[5], r[6]
 		local w, h = x2 - x1 + 1, y2 - y1 + 1
-		if w * h >= 150 then
-			-- store haller: lamper i et rutenett
-			for ly = y1 + 2, y2 - 1, 5 do
-				for lx = x1 + 2, x2 - 1, 5 do
-					lamp(lx, ly)
-				end
+		local nx = math.max(1, math.floor(w / ROOM_LAMP_SPACING + 0.5))
+		local ny = math.max(1, math.floor(h / ROOM_LAMP_SPACING + 0.5))
+		local brightness = LAMP_BRIGHTNESS * math.min(1, w * h / (nx * ny) / ROOM_LAMP_AREA)
+		for j = 0, ny - 1 do
+			for i = 0, nx - 1 do
+				lamp(Vector3.new((x1 + (i + 0.5) * w / nx) * CELL, WALL_H, (y1 + (j + 0.5) * h / ny) * CELL), brightness)
 			end
-		elseif w >= 12 then
-			lamp(x1 + math.floor(w / 4), y1 + math.floor(h / 2))
-			lamp(x2 - math.floor(w / 4), y1 + math.floor(h / 2))
-		elseif h >= 9 then
-			lamp(x1 + math.floor(w / 2), y1 + math.floor(h / 4))
-			lamp(x1 + math.floor(w / 2), y2 - math.floor(h / 4))
-		else
-			lamp(x1 + math.floor(w / 2), y1 + math.floor(h / 2))
 		end
 	end
 	for _, c in corridors do
 		local x1, y1, x2, y2 = c[1], c[2], c[3], c[4]
 		if x2 - x1 > y2 - y1 then
 			for x = x1 + 2, x2 - 1, 7 do
-				lamp(x, y1 + 1)
+				lamp(cellCenter(x, y1 + 1, WALL_H))
 			end
 		else
 			for y = y1 + 2, y2 - 1, 5 do
-				lamp(x1 + 1, y)
+				lamp(cellCenter(x1 + 1, y, WALL_H))
 			end
 		end
 	end

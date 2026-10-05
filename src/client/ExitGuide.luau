@@ -4,6 +4,8 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 
+local Screen = require(script.Parent:WaitForChild("Screen"))
+
 local player = Players.LocalPlayer
 
 local ExitGuide = {}
@@ -84,7 +86,7 @@ function ExitGuide.init(effects: any, blocked: (() -> boolean)?)
 
 	title = Instance.new("TextLabel")
 	title.BackgroundTransparency = 1
-	title.Size = UDim2.new(1, 0, 0, 30)
+	title.Size = UDim2.fromScale(1, 30 / 92)
 	title.Font = Enum.Font.SpecialElite
 	title.TextScaled = true
 	title.TextColor3 = GREEN
@@ -94,8 +96,8 @@ function ExitGuide.init(effects: any, blocked: (() -> boolean)?)
 
 	distance = Instance.new("TextLabel")
 	distance.BackgroundTransparency = 1
-	distance.Position = UDim2.new(0, 0, 0, 30)
-	distance.Size = UDim2.new(1, 0, 0, 22)
+	distance.Position = UDim2.fromScale(0, 30 / 92)
+	distance.Size = UDim2.fromScale(1, 22 / 92)
 	distance.Font = Enum.Font.RobotoMono
 	distance.TextScaled = true
 	distance.TextColor3 = Color3.fromRGB(220, 255, 225)
@@ -105,8 +107,8 @@ function ExitGuide.init(effects: any, blocked: (() -> boolean)?)
 
 	arrow = Instance.new("TextLabel")
 	arrow.BackgroundTransparency = 1
-	arrow.Position = UDim2.new(0, 0, 0, 52)
-	arrow.Size = UDim2.new(1, 0, 0, 40)
+	arrow.Position = UDim2.fromScale(0, 52 / 92)
+	arrow.Size = UDim2.fromScale(1, 40 / 92)
 	arrow.Font = Enum.Font.GothamBold
 	arrow.TextScaled = true
 	arrow.TextColor3 = GREEN
@@ -137,13 +139,16 @@ function ExitGuide.init(effects: any, blocked: (() -> boolean)?)
 			return
 		end
 		marker.Adornee = part
+		-- mindre på små skjermer (mobil)
+		local s = Screen.area().scale
+		marker.Size = UDim2.fromOffset(220 * s, 92 * s)
 		local camera = workspace.CurrentCamera
 		local dist = (camera.CFrame.Position - part.Position).Magnitude
 		distance.Text = string.format("%d m", math.floor(dist * 0.28 + 0.5)) -- ca. 0,28 m per stud
 		title.Text = if open then "EXIT — RUN!" else "EMERGENCY EXIT"
 		-- pulser litt så den er lett å få øye på
 		local pulse = 0.5 + 0.5 * math.sin(os.clock() * 4)
-		arrow.Position = UDim2.new(0, 0, 0, 52 + pulse * 6)
+		arrow.Position = UDim2.fromScale(0, (52 + pulse * 6) / 92)
 		-- tones inn det første halve sekundet og ut de siste 1,5 sekundene
 		local fade = 0
 		if not open then

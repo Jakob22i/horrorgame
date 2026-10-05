@@ -9,6 +9,7 @@ local SocialService = game:GetService("SocialService")
 local UserInputService = game:GetService("UserInputService")
 
 local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"))
+local Screen = require(script.Parent:WaitForChild("Screen"))
 local CosmeticsRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Cosmetics") :: RemoteEvent
 
 local player = Players.LocalPlayer
@@ -23,7 +24,10 @@ local PANEL = Color3.fromRGB(14, 12, 10)
 local gui: ScreenGui
 local coinHud: Frame
 local coinHudLabel: TextLabel
+local coinScale: UIScale
 local inviteButton: TextButton
+local inviteScale: UIScale
+local closeButton: TextButton
 local window: Frame
 local windowCoins: TextLabel
 local grid: ScrollingFrame
@@ -501,6 +505,7 @@ local function build()
 		BorderSizePixel = 0,
 	}, gui)
 	make("UICorner", { CornerRadius = UDim.new(0, 8) }, coinHud)
+	coinScale = make("UIScale", {}, coinHud)
 	coin(coinHud, 20, UDim2.new(0, 10, 0.5, 0))
 	coinHudLabel = label(coinHud, {
 		Size = UDim2.new(1, -44, 0.75, 0),
@@ -524,6 +529,7 @@ local function build()
 		AutoButtonColor = true,
 	}, gui)
 	make("UICorner", { CornerRadius = UDim.new(0, 8) }, inviteButton)
+	inviteScale = make("UIScale", {}, inviteButton)
 	make("UIStroke", { Color = Color3.fromRGB(140, 230, 160), Thickness = 1.5, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, inviteButton)
 	label(inviteButton, {
 		Size = UDim2.new(1, -16, 0.62, 0),
@@ -590,6 +596,7 @@ local function build()
 	}, window)
 	make("UICorner", { CornerRadius = UDim.new(0, 6) }, close)
 	close.Activated:Connect(CosmeticsUI.close)
+	closeButton = close
 
 	for i, name in { "Flashlights", "Titles" } do
 		local tab = make("TextButton", {
@@ -665,9 +672,22 @@ function CosmeticsUI.init()
 	end)
 	-- lukk butikken hvis du går bort fra disken eller en runde starter
 	RunService.Heartbeat:Connect(function()
-		local camera = workspace.CurrentCamera
-		local view = camera and camera.ViewportSize or Vector2.new(1280, 720)
-		scale.Scale = math.clamp(math.min(view.X / 880, view.Y / 560), 0.45, 1.2)
+		-- butikken midt i det trygge området (under topplinja), så stor som det er plass til
+		local area = Screen.area()
+		local s = area.scale
+		local fit = math.min(area.width * 0.96 / 820, (area.height - 12) / 500)
+		scale.Scale = math.clamp(math.min(area.view.X / 880, area.view.Y / 560, fit), 0.45, 1.2)
+		window.Position = UDim2.fromOffset(area.left + area.width / 2, area.top + area.height / 2)
+		-- større lukkeknapp på mobil
+		closeButton.Size = if area.touch then UDim2.fromOffset(40, 40) else UDim2.fromOffset(32, 32)
+		-- myntene og INVITE FRIENDS øverst til høyre, under CH-teksten (litt større på mobil,
+		-- så knappen er lett å trykke på)
+		local hudScale = if area.touch then math.max(s, 0.8) else s
+		local top = area.top + 6 + 40 * s
+		coinScale.Scale = hudScale
+		coinHud.Position = UDim2.new(1, -(area.right + 24 * s), 0, top)
+		inviteScale.Scale = hudScale
+		inviteButton.Position = UDim2.new(1, -(area.right + 24 * s), 0, top + 42 * hudScale)
 		if not window.Visible then
 			return
 		end

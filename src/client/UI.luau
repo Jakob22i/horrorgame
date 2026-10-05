@@ -6,17 +6,14 @@ local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
 
 local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"))
+local Screen = require(script.Parent:WaitForChild("Screen"))
 
 local player = Players.LocalPlayer
 
 local UI = {}
 
-local UserInputService = game:GetService("UserInputService")
-
 -- Mobil/nettbrett: berøringsskjerm uten tastatur
-function UI.isTouch(): boolean
-	return UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
-end
+UI.isTouch = Screen.isTouch
 
 local FONT_VHS = Enum.Font.RobotoMono
 local FONT_TEXT = Enum.Font.SpecialElite
@@ -33,18 +30,23 @@ local recLabel: TextLabel
 local channelLabel: TextLabel
 local timeLabel: TextLabel
 local hud: Frame
+local statusBox: Frame
+local statusScale: UIScale
 local livesLabel: TextLabel
 local keysLabel: TextLabel
 local exitLabel: TextLabel
 local keyPips: { Frame } = {}
 local staminaBack: Frame
 local staminaFill: Frame
+local staminaScale: UIScale
 local breathBack: Frame
+local breathScale: UIScale
 local breathFill: Frame
 local breathLabel: TextLabel
 local downedFrame: Frame
 local downedLabel: TextLabel
 local hintLabel: TextLabel
+local leaveScale: UIScale
 local spectateLabel: TextLabel
 local finaleLabel: TextLabel
 local captionLabel: TextLabel
@@ -52,6 +54,9 @@ local titleCard: Frame
 local titleMain: TextLabel
 local titleSub: TextLabel
 local notifyList: Frame
+local notifyLayout: UIListLayout
+local notifyHeight = 30
+local notifyMax = 4
 local fadeFrame: Frame
 local fadeLabel: TextLabel
 local panelDim: Frame
@@ -224,13 +229,15 @@ local function buildHud()
 	local box = make("Frame", {
 		Name = "Status",
 		AnchorPoint = Vector2.new(1, 0),
-		Position = UDim2.new(1, -24, 0, 104),
+		Position = UDim2.new(1, -24, 0, 46),
 		Size = UDim2.new(0, 230, 0, 132),
 		BackgroundColor3 = Color3.new(0, 0, 0),
 		BackgroundTransparency = 0.55,
 		BorderSizePixel = 0,
 	}, hud)
 	make("UICorner", { CornerRadius = UDim.new(0, 6) }, box)
+	statusBox = box
+	statusScale = make("UIScale", {}, box)
 	livesLabel = text(box, {
 		Position = UDim2.new(0, 12, 0, 6),
 		Size = UDim2.new(1, -24, 0, 34),
@@ -291,6 +298,7 @@ local function buildHud()
 		Visible = false,
 	}, hud)
 	make("UICorner", { CornerRadius = UDim.new(1, 0) }, staminaBack)
+	staminaScale = make("UIScale", {}, staminaBack)
 	staminaFill = make("Frame", {
 		Size = UDim2.fromScale(1, 1),
 		BackgroundColor3 = Color3.fromRGB(220, 220, 210),
@@ -339,6 +347,7 @@ local function buildHud()
 		Visible = false,
 	}, hud)
 	make("UICorner", { CornerRadius = UDim.new(1, 0) }, breathBack)
+	breathScale = make("UIScale", {}, breathBack)
 	breathFill = make("Frame", {
 		Size = UDim2.fromScale(1, 1),
 		BackgroundColor3 = Color3.fromRGB(150, 200, 235),
@@ -379,6 +388,7 @@ local function buildHud()
 	make("UICorner", { CornerRadius = UDim.new(0, 6) }, leaveButton)
 	make("UIStroke", { Color = Color3.fromRGB(150, 140, 100), Thickness = 1.5 }, leaveButton)
 	make("UIPadding", { PaddingTop = UDim.new(0, 10), PaddingBottom = UDim.new(0, 10) }, leaveButton)
+	leaveScale = make("UIScale", {}, leaveButton)
 	leaveButton.Activated:Connect(function()
 		if leaveCallback then
 			leaveCallback()
@@ -415,7 +425,7 @@ local function buildHud()
 		BackgroundTransparency = 1,
 		ZIndex = 4,
 	}, gui)
-	make("UIListLayout", {
+	notifyLayout = make("UIListLayout", {
 		SortOrder = Enum.SortOrder.LayoutOrder,
 		HorizontalAlignment = Enum.HorizontalAlignment.Center,
 		Padding = UDim.new(0, 4),
@@ -1006,7 +1016,7 @@ local KIND_COLORS = {
 
 function UI.notify(message: string, kind: string?)
 	local label = text(notifyList, {
-		Size = UDim2.new(1, 0, 0, 30),
+		Size = UDim2.new(1, 0, 0, notifyHeight),
 		Text = message,
 		TextColor3 = KIND_COLORS[kind or "info"] or KIND_COLORS.info,
 		LayoutOrder = math.floor(os.clock() * 100),
@@ -1019,12 +1029,14 @@ function UI.notify(message: string, kind: string?)
 			count += 1
 		end
 	end
-	if count > 4 then
-		for _, c in children do
-			if c:IsA("TextLabel") and c ~= label then
-				c:Destroy()
-				break
-			end
+	-- de eldste forsvinner når det er for mange
+	for _, c in children do
+		if count <= notifyMax then
+			break
+		end
+		if c:IsA("TextLabel") and c ~= label then
+			c:Destroy()
+			count -= 1
 		end
 	end
 	task.delay(3.5, function()
@@ -1131,6 +1143,21 @@ local function refreshRevive()
 	end
 end
 
+-- Menyene (YOU DIED osv.) midt i det trygge området, så store som det er plass til
+local function layoutPanel()
+	local scale = panel:FindFirstChild("Scale")
+	if not (scale and scale:IsA("UIScale")) then
+		return
+	end
+	local area = Screen.area()
+	local natural = if scale.Scale > 0 then panel.AbsoluteSize.Y / scale.Scale else 0
+	if natural < 50 then
+		natural = 320
+	end
+	scale.Scale = math.clamp(math.min(area.width * 0.92 / 470, (area.height - 24) / natural), 0.6, 1.2)
+	panel.Position = UDim2.fromOffset(area.left + area.width / 2, area.top + area.height / 2)
+end
+
 local function showPanel(title: string, body: string, titleColor: Color3?)
 	panelDim.Visible = true
 	panel.Visible = true
@@ -1142,6 +1169,7 @@ local function showPanel(title: string, body: string, titleColor: Color3?)
 	clearButtons()
 	reviveButton.Visible = false
 	reviveCallback = nil
+	layoutPanel()
 end
 
 function UI.setRevive(credits: number, price: number)
@@ -1268,28 +1296,110 @@ function UI.startCooldown(name: string, seconds: number)
 end
 
 local touchLayout: boolean? = nil
+local layoutKey = ""
 
--- Mobil: knappene nede til høyre, rett ved siden av Roblox sin hoppeknapp (der tommelen er),
--- litt større, og uten tastene (1, 2, 3, SHIFT) på knappene
-local function applyTouchLayout(touch: boolean, view: Vector2)
+-- Plasserer og skalerer HUD-en etter skjermen. På PC er alt som før; på mobil blir det mindre og
+-- holder seg innenfor de trygge kantene (topplinja, hakket og hjem-streken). Knappene nederst står
+-- på mobil rett til venstre for Roblox sin hoppeknapp (der tommelen er), uten tastene på.
+local function layoutHud()
+	local area = Screen.area()
+	local s = area.scale
+	local touch = area.touch
+	local view = area.view
+	local barScale = math.clamp(view.Y / 720, if touch then 0.9 else 0.75, 1.25)
+
+	-- avstand fra høyre og nederste trygge kant til knappene nederst
+	local barRight, barBottom = 0, 24
 	if touch then
-		local minAxis = math.min(view.X, view.Y)
-		local jumpSize = if minAxis <= 500 then 70 else 120
-		local jumpLeft = jumpSize * 1.5 - 10 -- avstand fra høyre kant til venstre side av hoppeknappen
+		local jump = Screen.jumpButton()
+		if jump then
+			local p = jump.AbsolutePosition - area.origin
+			barRight = (view.X - area.right) - p.X + 14
+			barBottom = math.max(6, (view.Y - area.bottom) - (p.Y + jump.AbsoluteSize.Y) - 10)
+		else
+			-- samme plass som Roblox gir hoppeknappen
+			local jumpSize = if math.min(view.X, view.Y) <= 500 then 70 else 120
+			barRight = jumpSize * 1.5 - 10 + 14
+			barBottom = if jumpSize == 70 then 10 else jumpSize * 0.75 - 10
+		end
+	end
+
+	local key = table.concat({ view.X, view.Y, area.left, area.top, area.right, area.bottom, s, barScale, barRight, barBottom, tostring(touch) }, ",")
+	if key == layoutKey then
+		return
+	end
+	layoutKey = key
+	local L, T, R, B = area.left, area.top, area.right, area.bottom
+
+	-- HUD-en fyller det trygge området (det røde skjæret når du ligger nede dekker hele skjermen)
+	hud.Position = UDim2.fromOffset(L, T)
+	hud.Size = UDim2.new(1, -(L + R), 1, -(T + B))
+	downedFrame.Position = UDim2.fromOffset(-L, -T)
+	downedFrame.Size = UDim2.new(1, L + R, 1, T + B)
+	downedLabel.Size = UDim2.new(0.6, 0, 0, 64 * s)
+
+	-- VHS-teksten i hjørnene
+	local margin = 28 * s
+	recLabel.Position = UDim2.fromOffset(L + margin, T + 6)
+	recLabel.Size = UDim2.fromOffset(200 * s, 32 * s)
+	channelLabel.Position = UDim2.new(1, -(R + margin), 0, T + 6)
+	channelLabel.Size = UDim2.fromOffset(200 * s, 32 * s)
+	-- klokka nede til venstre (ikke på mobil: der er styrespaken, og det er lite plass)
+	timeLabel.Visible = not touch
+	timeLabel.Size = UDim2.fromOffset(360 * s, 30 * s)
+	timeLabel.Position = UDim2.new(0, L + margin, 1, -(B + 22 * s))
+
+	-- liv og nøkler øverst til høyre, under CAM-teksten
+	statusScale.Scale = s
+	statusBox.Position = UDim2.new(1, -24 * s, 0, 6 + 40 * s)
+
+	-- tekst øverst på midten skal ikke gå inn i statusboksen
+	local sideRoom = (230 + 24) * s + 8
+	local wide = math.max(160, area.width - 2 * sideRoom)
+	local centerX = (L - R) / 2
+	spectateLabel.Size = UDim2.fromOffset(math.min(area.width * 0.6, wide), 34 * s)
+	spectateLabel.Position = UDim2.new(0.5, centerX, 0, T + 12 * s)
+	finaleLabel.Size = UDim2.fromOffset(math.min(area.width * 0.6, wide), 34 * s)
+	finaleLabel.Position = UDim2.new(0.5, centerX, 0, T + 50 * s)
+	notifyHeight = math.floor(30 * s + 0.5)
+	notifyLayout.Padding = UDim.new(0, math.floor(4 * s + 0.5))
+	notifyList.Size = UDim2.fromOffset(math.min(area.width * 0.7, wide), 200)
+	notifyList.Position = UDim2.new(0.5, centerX, 0, T + 88 * s)
+	captionLabel.Size = UDim2.new(0.7, 0, 0, 36 * s)
+	captionLabel.Position = UDim2.new(0.5, centerX, 1, -(B + 90 * s))
+
+	-- knappene nederst, og over dem: utholdenhet, hint, pust og LEAVE LOCKER
+	actionScale.Scale = barScale
+	if touch then
 		actionBar.AnchorPoint = Vector2.new(1, 1)
-		actionBar.Position = UDim2.new(1, -(jumpLeft + 14), 1, -10)
+		actionBar.Position = UDim2.new(1, -barRight, 1, -barBottom)
 	else
 		actionBar.AnchorPoint = Vector2.new(0.5, 1)
-		actionBar.Position = UDim2.new(0.5, 0, 1, -24)
+		actionBar.Position = UDim2.new(0.5, 0, 1, -barBottom)
 	end
+	local base = barBottom + 92 * barScale + 6
+	staminaScale.Scale = s
+	staminaBack.Position = UDim2.new(0.5, 0, 1, -base)
+	hintLabel.Size = UDim2.new(0.6, 0, 0, 30 * s)
+	hintLabel.Position = UDim2.new(0.5, 0, 1, -(base + 14 * s))
+	breathScale.Scale = s
+	breathBack.Position = UDim2.new(0.5, 0, 1, -(base + 52 * s))
+	-- knappen må være lett å treffe med tommelen
+	leaveScale.Scale = if touch then math.max(s, 0.85) else s
+	leaveButton.Position = UDim2.new(0.5, 0, 1, -(base + 96 * s))
+	-- bare så mange beskjeder samtidig som det er plass til over LEAVE LOCKER
+	local room = (area.height - (base + 96 * s + 52 * leaveScale.Scale)) - 88 * s
+	local pad = math.floor(4 * s + 0.5)
+	notifyMax = math.clamp(math.floor((room + pad) / (notifyHeight + pad)), 2, 4)
+
 	if touchLayout ~= touch then
 		touchLayout = touch
 		local layout = actionBar:FindFirstChildOfClass("UIListLayout")
 		if layout then
 			layout.HorizontalAlignment = if touch then Enum.HorizontalAlignment.Right else Enum.HorizontalAlignment.Center
 		end
-		for _, s in slots do
-			local keyLabel = s.button:FindFirstChild("Key")
+		for _, slot in slots do
+			local keyLabel = slot.button:FindFirstChild("Key")
 			if keyLabel and keyLabel:IsA("TextLabel") then
 				keyLabel.Visible = not touch
 			end
@@ -1299,18 +1409,9 @@ local function applyTouchLayout(touch: boolean, view: Vector2)
 end
 
 function UI.updateActionBar()
-	local cam = workspace.CurrentCamera
-	if cam then
-		local view = cam.ViewportSize
-		local touch = UI.isTouch()
-		local minScale = if touch then 0.9 else 0.75
-		actionScale.Scale = math.clamp(view.Y / 720, minScale, 1.25)
-		applyTouchLayout(touch, view)
-		-- menyene (YOU DIED osv.) krympes så de får plass på små mobilskjermer
-		local panelScale = panel:FindFirstChild("Scale")
-		if panelScale and panelScale:IsA("UIScale") then
-			panelScale.Scale = math.clamp(math.min(view.X / 560, view.Y / 500), 0.6, 1.2)
-		end
+	layoutHud()
+	if panel.Visible then
+		layoutPanel()
 	end
 	local now = os.clock()
 	for _, s in slots do

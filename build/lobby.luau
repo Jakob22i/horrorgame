@@ -346,20 +346,11 @@ return function(parent: any, spawnLocation: any)
 				lib.new("PointLight", { Range = 3, Brightness = 0.5, Color = rgb(255, 150, 70) }, b)
 			end
 		end
-		-- Bryter for vanskelighetsgrad på den andre veggen
+		-- Skilt med vanskelighetsgraden på den andre veggen (endres i menyen som dukker opp)
 		local mp = Vector3.new(cx - 5.88, 5.2, z0 - 4.5)
 		facing(m, "ModeFrame", Vector3.new(3, 2.4, 0.08), mp - Vector3.new(0.04, 0, 0), Vector3.new(1, 0, 0), BRASS, Enum.Material.Metal, DECOR)
 		local modePanel = facing(m, "ModePanel", Vector3.new(2.6, 2, 0.12), mp + Vector3.new(0.03, 0, 0), Vector3.new(1, 0, 0), GLASS_BLACK, Enum.Material.SmoothPlastic)
 		lib.sign(modePanel, "NORMAL\n3 LIVES", { Color = rgb(200, 220, 200), Font = Enum.Font.SpecialElite, Brightness = 1.6 })
-		lib.new("ProximityPrompt", {
-			Name = "ModePrompt",
-			ActionText = "Change difficulty",
-			ObjectText = "Mode: Normal",
-			HoldDuration = 0,
-			MaxActivationDistance = 8,
-			RequiresLineOfSight = false,
-			KeyboardKeyCode = Enum.KeyCode.E,
-		}, modePanel)
 
 		-- Dører i børstet stål (står åpne i fila; serveren lukker dem når heisen går)
 		local doorL = box(m, "DoorL", cx - 10, 0, z0 - 1.25, cx - 5, 12, z0 - 0.75, STEEL, Enum.Material.Metal, { Reflectance = 0.06 })

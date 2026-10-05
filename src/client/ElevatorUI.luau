@@ -10,6 +10,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
 local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"))
+local Screen = require(script.Parent:WaitForChild("Screen"))
 local ElevatorRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Elevator") :: RemoteEvent
 
 local player = Players.LocalPlayer
@@ -215,9 +216,13 @@ local function update()
 	if not model then
 		return
 	end
-	local camera = workspace.CurrentCamera
-	local view = camera and camera.ViewportSize or Vector2.new(1280, 720)
-	scale.Scale = math.clamp(math.min(view.X / 1100, view.Y / 620), 0.55, 1.1)
+	-- midt i det trygge området (under topplinja); på mobil så stor som det er plass til,
+	-- så knappene er lette å trykke på
+	local area = Screen.area()
+	local fit = math.min(area.width * 0.9 / 300, (area.height - 16) / 352)
+	local wanted = if area.touch then fit else math.min(area.view.X / 1100, area.view.Y / 620, fit)
+	scale.Scale = math.clamp(wanted, 0.55, 1.1)
+	panel.Position = UDim2.fromOffset(area.left + area.width / 2, area.top + area.height / 2)
 
 	local index = model:GetAttribute("Index") or 1
 	local mode = model:GetAttribute("Mode") or "Normal"

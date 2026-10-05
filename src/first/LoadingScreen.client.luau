@@ -2,6 +2,7 @@
 -- Ligger i ReplicatedFirst, så den vises før alt annet.
 
 local ContentProvider = game:GetService("ContentProvider")
+local GuiService = game:GetService("GuiService")
 local Players = game:GetService("Players")
 local ReplicatedFirst = game:GetService("ReplicatedFirst")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -201,7 +202,7 @@ local osdPlay = label({
 	Text = "▶ PLAY",
 	TextXAlignment = Enum.TextXAlignment.Left,
 }, root)
-label({
+local osdChannel = label({
 	AnchorPoint = Vector2.new(1, 0),
 	Position = UDim2.new(1, -28, 0, 22),
 	Size = UDim2.new(0.25, 0, 0, 30),
@@ -216,6 +217,21 @@ local counter = label({
 	TextXAlignment = Enum.TextXAlignment.Left,
 }, root)
 
+-- VHS-teksten i hjørnene: under Roblox-topplinja, og mindre på små skjermer (mobil)
+local function layoutOsd()
+	local camera = workspace.CurrentCamera
+	local view = if camera then camera.ViewportSize else Vector2.new(1280, 720)
+	local s = math.clamp(math.min(view.X / 1280, view.Y / 720), 0.62, 1)
+	local top = GuiService:GetGuiInset().Y + 6
+	osdPlay.Position = UDim2.new(0, 28 * s, 0, top)
+	osdPlay.Size = UDim2.new(0.25, 0, 0, 30 * s)
+	osdChannel.Position = UDim2.new(1, -28 * s, 0, top)
+	osdChannel.Size = UDim2.new(0.25, 0, 0, 30 * s)
+	counter.Position = UDim2.new(0, 28 * s, 1, -22 * s)
+	counter.Size = UDim2.new(0.3, 0, 0, 28 * s)
+end
+layoutOsd()
+
 ------------------------------------------------------------------
 -- Animasjon
 ------------------------------------------------------------------
@@ -224,6 +240,7 @@ local shown = 0
 local burst = 0
 local conn = RunService.RenderStepped:Connect(function(dt)
 	local t = os.clock() - startTime
+	layoutOsd()
 	shown += (target - shown) * math.min(1, dt * 4)
 	local filled = math.floor(shown * SEGMENTS + 0.5)
 	for i, seg in segments do
