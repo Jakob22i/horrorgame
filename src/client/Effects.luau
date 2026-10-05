@@ -432,6 +432,43 @@ local function updateKeys()
 	end
 end
 
+-- Varsellampene ved nødutgangen spinner under nedtellingen og til døra er passert
+local beaconBase: { [BasePart]: CFrame } = {}
+local beaconAngle = 0
+local function updateBeacons(dt: number)
+	local folder = currentMatchFolder()
+	local active = mode == "match" and folder ~= nil and typeof(folder:GetAttribute("FinaleEnd")) == "number"
+	if active then
+		beaconAngle = (beaconAngle + dt * 7) % (math.pi * 2)
+	end
+	for _, part in CollectionService:GetTagged("ExitBeacon") do
+		if not part:IsA("BasePart") then
+			continue
+		end
+		local mine = folder ~= nil and part:IsDescendantOf(folder)
+		local base = beaconBase[part]
+		if not base then
+			base = part.CFrame
+			beaconBase[part] = base
+		end
+		local beam = part:FindFirstChildOfClass("SpotLight")
+		local on = active and mine
+		if beam then
+			beam.Enabled = on
+		end
+		if on then
+			part.CFrame = base * CFrame.Angles(0, beaconAngle, 0)
+		elseif part.CFrame ~= base then
+			part.CFrame = base
+		end
+	end
+	for part in beaconBase do
+		if not part.Parent then
+			beaconBase[part] = nil
+		end
+	end
+end
+
 function Effects._step(dt: number)
 	lampRefresh -= dt
 	if lampRefresh <= 0 then
@@ -467,6 +504,7 @@ function Effects._step(dt: number)
 
 	updateLamps(dt, monsterPos)
 	updateKeys()
+	updateBeacons(dt)
 
 	-- Nightmare: mørkere og tettere tåke
 	if mode == "match" then

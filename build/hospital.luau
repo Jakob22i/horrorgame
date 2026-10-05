@@ -1071,24 +1071,214 @@ return function(parent: any)
 	local doorW = (doorX2 - doorX1) / 2
 	local doorCX = (doorX1 + doorX2) / 2
 	lib.part(exitModel, "Header", Vector3.new(doorX2 - doorX1, WALL_H - DOOR_H, CELL), CFrame.new(doorCX, DOOR_H + (WALL_H - DOOR_H) / 2, doorZ), COLORS.wallHigh, Enum.Material.Plaster)
-	lib.part(exitModel, "DoorL", Vector3.new(doorW, DOOR_H, 1), CFrame.new(doorX1 + doorW / 2, DOOR_H / 2, doorZ), rgb(70, 74, 78), Enum.Material.DiamondPlate)
-	lib.part(exitModel, "DoorR", Vector3.new(doorW, DOOR_H, 1), CFrame.new(doorX2 - doorW / 2, DOOR_H / 2, doorZ), rgb(70, 74, 78), Enum.Material.DiamondPlate)
-	lib.part(exitModel, "Chain", Vector3.new(2.5, 3, 0.4), CFrame.new(doorCX, 5, doorZ - 0.7), rgb(60, 58, 55), Enum.Material.CorrodedMetal)
-	-- 5 låselys over døra
-	for i = 1, 5 do
-		local lx = doorCX + (i - 3) * 2.2
-		lib.part(exitModel, "Lock" .. i, Vector3.new(1.2, 1.2, 0.2), CFrame.new(lx, DOOR_H + 0.9, doorZ - CELL / 2 - 0.1), rgb(170, 20, 20), Enum.Material.Neon, { CanQuery = false })
+	-- Tunge ståldører med fareskilting, lenker og hengelås. Pyntedelene på dørene har
+	-- attributtet Slide ("L"/"R") og glir til siden sammen med dørene (Match:_openExit).
+	local F = doorZ - CELL / 2 -- veggflaten mot rommet
+	local STEEL = rgb(62, 66, 70)
+	local STEEL_DARK = rgb(40, 42, 46)
+	local HAZARD_Y = rgb(236, 186, 40)
+	local NOHIT = { CanCollide = false, CanQuery = false, CanTouch = false }
+	-- Gule og svarte skråstriper (SurfaceGui klipper stripene i kanten av delen)
+	local function hazard(part: any, studsW: number, studsH: number)
+		local g = lib.new("SurfaceGui", {
+			Name = "Hazard",
+			Face = Enum.NormalId.Front,
+			SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud,
+			PixelsPerStud = 40,
+			LightInfluence = 1,
+		}, part)
+		lib.new("Frame", { BorderSizePixel = 0, BackgroundColor3 = HAZARD_Y, Size = lib.UDim2.fromScale(1, 1) }, g)
+		local vertical = studsH > studsW
+		local long = (if vertical then studsW else studsH) * 40 * 1.6 + 20
+		local length = (if vertical then studsH else studsW) * 40
+		for k = -2, math.ceil(length / 40) + 2 do
+			lib.new("Frame", {
+				BorderSizePixel = 0,
+				BackgroundColor3 = rgb(24, 24, 24),
+				AnchorPoint = lib.Vector2.new(0.5, 0.5),
+				Position = if vertical then lib.UDim2.new(0.5, 0, 0, k * 40) else lib.UDim2.new(0, k * 40, 0.5, 0),
+				Size = lib.UDim2.fromOffset(15, long),
+				Rotation = 45,
+				ZIndex = 2,
+			}, g)
+		end
+		return g
 	end
-	local signPos = Vector3.new(doorCX, WALL_H - 0.8, doorZ - 6)
-	lib.part(exitModel, "SignRod", Vector3.new(0.15, 0.6, 0.15), CFrame.new(signPos + Vector3.new(0, 0.55, 0)), COLORS.darkMetal, Enum.Material.Metal, { CanQuery = false })
-	local exitSign = lib.part(exitModel, "ExitSign", Vector3.new(6, 1.2, 0.3), lib.lookAt(signPos, signPos - Vector3.new(0, 0, 1)), rgb(20, 110, 50), Enum.Material.Neon, { CanQuery = false })
-	lib.sign(exitSign, "EXIT", { Color = rgb(235, 255, 235), Font = Enum.Font.GothamBold, Brightness = 1 })
-	lib.new("PointLight", { Range = 10, Brightness = 0.7, Color = rgb(60, 255, 110) }, exitSign)
-	-- Låsepanel ved siden av døra
-	local panelPos = Vector3.new(doorX1 - 1.6, 4.2, doorZ - CELL / 2 - 0.35)
-	local panel = lib.part(exitModel, "LockPanel", Vector3.new(2.2, 2.8, 0.5), lib.lookAt(panelPos, panelPos - Vector3.new(0, 0, 1)), rgb(40, 42, 44), Enum.Material.Metal)
-	local _, panelLabel = lib.sign(panel, "0/5", { Color = rgb(255, 80, 70), Font = Enum.Font.Code, Brightness = 2 })
-	panelLabel.Name = "Counter"
+	local function slide(part: any, side: string)
+		part:SetAttribute("Slide", side)
+		return part
+	end
+
+	for _, side in { "L", "R" } do
+		local x1 = if side == "L" then doorX1 else doorX2 - doorW
+		local cx = x1 + doorW / 2
+		local door = lib.part(exitModel, "Door" .. side, Vector3.new(doorW, DOOR_H, 1), CFrame.new(cx, DOOR_H / 2, doorZ), STEEL, Enum.Material.Metal)
+		local fz = doorZ - 0.5 -- dørens forside
+		-- forsenkede felt og nagler
+		for k, panel in { { 1.1, 4.4 }, { 6.3, 8.5 } } do
+			local plate = slide(lib.part(exitModel, "DoorDeco", Vector3.new(doorW - 1.6, panel[2] - panel[1], 0.08), CFrame.new(cx, (panel[1] + panel[2]) / 2, fz - 0.04), STEEL_DARK, Enum.Material.Metal, NOHIT), side)
+			if k == 2 then
+				-- sjablongtekst: EMERGENCY | EXIT (DoorL står til høyre sett fra rommet)
+				local g = lib.new("SurfaceGui", { Name = "Stencil", Face = Enum.NormalId.Front, SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud, PixelsPerStud = 40, LightInfluence = 1 }, plate)
+				lib.new("TextLabel", {
+					Name = "Text",
+					BackgroundTransparency = 1,
+					Position = lib.UDim2.fromScale(0.05, 0.1),
+					Size = lib.UDim2.fromScale(0.9, 0.52),
+					Text = if side == "R" then "EMERGENCY" else "EXIT",
+					TextScaled = true,
+					TextColor3 = rgb(232, 228, 214),
+					TextTransparency = 0.05,
+					FontFace = lib.Font.fromEnum(Enum.Font.SpecialElite),
+				}, g)
+				lib.new("TextLabel", {
+					Name = "Warning",
+					BackgroundTransparency = 1,
+					Position = lib.UDim2.fromScale(0.1, 0.68),
+					Size = lib.UDim2.fromScale(0.8, 0.2),
+					Text = if side == "R" then "KEEP CLOSED" else "ALARM WILL SOUND",
+					TextScaled = true,
+					TextColor3 = rgb(225, 60, 48),
+					FontFace = lib.Font.fromEnum(Enum.Font.SpecialElite),
+				}, g)
+			end
+		end
+		for _, ry in { 0.6, 11.4 } do
+			for k = 0, 6 do
+				local rx = x1 + 0.6 + k * (doorW - 1.2) / 6
+				slide(lib.part(exitModel, "DoorDeco", Vector3.new(0.08, 0.22, 0.22), CFrame.new(rx, ry, fz - 0.04) * CFrame.Angles(0, math.pi / 2, 0), rgb(120, 124, 128), Enum.Material.Metal, { Shape = Enum.PartType.Cylinder, CanCollide = false, CanQuery = false, CanTouch = false }), side)
+			end
+		end
+		-- vindu med trådglass (svakt lys bak)
+		local wx = if side == "L" then doorX1 + doorW - 2.2 else doorX2 - doorW + 2.2
+		slide(lib.part(exitModel, "DoorDeco", Vector3.new(2, 2.3, 0.1), CFrame.new(wx, 10.1, fz - 0.05), rgb(120, 124, 128), Enum.Material.Metal, NOHIT), side)
+		local glass = slide(lib.part(exitModel, "DoorDeco", Vector3.new(1.5, 1.8, 0.12), CFrame.new(wx, 10.1, fz - 0.07), rgb(200, 210, 200), Enum.Material.Glass, { Transparency = 0.35, CanCollide = false, CanQuery = false, CanTouch = false }), side)
+		local wg = lib.new("SurfaceGui", { Name = "Wire", Face = Enum.NormalId.Front, SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud, PixelsPerStud = 40, LightInfluence = 1 }, glass)
+		for k = 1, 4 do
+			lib.new("Frame", { BorderSizePixel = 0, BackgroundColor3 = rgb(70, 74, 72), Position = lib.UDim2.new(k / 5, -1, 0, 0), Size = lib.UDim2.new(0, 2, 1, 0) }, wg)
+		end
+		for k = 1, 6 do
+			lib.new("Frame", { BorderSizePixel = 0, BackgroundColor3 = rgb(70, 74, 72), Position = lib.UDim2.new(0, 0, k / 7, -1), Size = lib.UDim2.new(1, 0, 0, 2) }, wg)
+		end
+		-- panikkstang
+		local barX1 = x1 + 0.9
+		local barX2 = x1 + doorW - 0.9
+		slide(lib.part(exitModel, "DoorDeco", Vector3.new(barX2 - barX1, 0.45, 0.35), CFrame.new((barX1 + barX2) / 2, 5.4, fz - 0.42), rgb(176, 34, 30), Enum.Material.SmoothPlastic, NOHIT), side)
+		for _, bx in { barX1 + 0.3, barX2 - 0.3 } do
+			slide(lib.part(exitModel, "DoorDeco", Vector3.new(0.5, 0.8, 0.3), CFrame.new(bx, 5.4, fz - 0.15), rgb(120, 124, 128), Enum.Material.Metal, NOHIT), side)
+		end
+		-- sparkeplate med striper nederst
+		local kick = slide(lib.part(exitModel, "DoorDeco", Vector3.new(doorW - 0.4, 1.4, 0.06), CFrame.new(cx, 0.85, fz - 0.03), HAZARD_Y, Enum.Material.SmoothPlastic, NOHIT), side)
+		hazard(kick, doorW - 0.4, 1.4)
+	end
+
+	-- Stålramme med fareskilting rundt åpningen
+	local postW = 1.4
+	for _, px in { doorX1 - postW / 2, doorX2 + postW / 2 } do
+		local post = lib.part(exitModel, "FramePost", Vector3.new(postW, DOOR_H, 0.3), CFrame.new(px, DOOR_H / 2, F - 0.15), HAZARD_Y, Enum.Material.SmoothPlastic)
+		hazard(post, postW, DOOR_H)
+		lib.part(exitModel, "FrameEdge", Vector3.new(0.16, DOOR_H, 0.4), CFrame.new(px + (if px < doorCX then postW / 2 else -postW / 2), DOOR_H / 2, F - 0.2), STEEL_DARK, Enum.Material.Metal)
+	end
+	local lintel = lib.part(exitModel, "FrameTop", Vector3.new(doorX2 - doorX1 + postW * 2, 0.7, 0.3), CFrame.new(doorCX, DOOR_H + 0.35, F - 0.15), HAZARD_Y, Enum.Material.SmoothPlastic)
+	hazard(lintel, doorX2 - doorX1 + postW * 2, 0.7)
+	-- innsiden av åpningen kledd i stål
+	for _, rx in { doorX1 + 0.08, doorX2 - 0.08 } do
+		lib.part(exitModel, "Reveal", Vector3.new(0.16, DOOR_H, 1.5), CFrame.new(rx, DOOR_H / 2, F + 0.75), STEEL_DARK, Enum.Material.Metal)
+	end
+	lib.part(exitModel, "Reveal", Vector3.new(doorX2 - doorX1, 0.16, 1.5), CFrame.new(doorCX, DOOR_H - 0.08, F + 0.75), STEEL_DARK, Enum.Material.Metal)
+	lib.part(exitModel, "Threshold", Vector3.new(doorX2 - doorX1, 0.08, 1.6), CFrame.new(doorCX, 0.04, F + 0.8), rgb(120, 124, 128), Enum.Material.DiamondPlate, { CanCollide = false })
+
+	-- 5 låselamper over døra (blir grønne når en nøkkel settes inn)
+	lib.part(exitModel, "LockPlate", Vector3.new(14, 1.1, 0.25), CFrame.new(doorCX, DOOR_H + 1.3, F - 0.125), STEEL_DARK, Enum.Material.Metal)
+	for i = 1, 5 do
+		local lx = doorCX + (i - 3) * 2.4
+		lib.part(exitModel, "LockBezel", Vector3.new(0.1, 1.0, 1.0), lib.lookAt(Vector3.new(lx, DOOR_H + 1.3, F - 0.28), Vector3.new(lx, DOOR_H + 1.3, F - 5)) * CFrame.Angles(0, math.pi / 2, 0), rgb(120, 124, 128), Enum.Material.Metal, { Shape = Enum.PartType.Cylinder, CanQuery = false })
+		lib.part(exitModel, "Lock" .. i, Vector3.new(0.12, 0.76, 0.76), lib.lookAt(Vector3.new(lx, DOOR_H + 1.3, F - 0.33), Vector3.new(lx, DOOR_H + 1.3, F - 5)) * CFrame.Angles(0, math.pi / 2, 0), rgb(170, 20, 20), Enum.Material.Neon, { Shape = Enum.PartType.Cylinder, CanQuery = false })
+	end
+
+	-- Varsellamper som spinner under nedtellingen (Effects på klienten)
+	for _, bx in { doorX1 - postW / 2, doorX2 + postW / 2 } do
+		local base = Vector3.new(bx, DOOR_H + 0.7, F - 0.5)
+		lib.cylinderY(exitModel, "BeaconBase", 0.95, 0.22, CFrame.new(base + Vector3.new(0, 0.11, 0)), STEEL_DARK, Enum.Material.Metal)
+		lib.cylinderY(exitModel, "BeaconDome", 0.72, 0.5, CFrame.new(base + Vector3.new(0, 0.47, 0)), rgb(255, 120, 40), Enum.Material.Glass, { Transparency = 0.25, CanQuery = false })
+		local spin = lib.part(exitModel, "BeaconSpin", Vector3.new(0.4, 0.3, 0.12), CFrame.new(base + Vector3.new(0, 0.45, 0)), rgb(255, 150, 60), Enum.Material.Neon, { CanCollide = false, CanQuery = false, CanTouch = false, CastShadow = false, Tags = { "ExitBeacon" } })
+		lib.new("SpotLight", { Name = "Beam", Face = Enum.NormalId.Front, Angle = 40, Range = 26, Brightness = 6, Color = rgb(255, 110, 40), Enabled = false, Shadows = false }, spin)
+	end
+
+	-- Kjettinger i kryss over døra, med hengelås (fjernes når døra åpnes)
+	local chain = lib.new("Model", { Name = "Chain" }, exitModel)
+	local chainZ = F - 0.45
+	local ends = {
+		{ Vector3.new(doorX1 - postW / 2, 10.6, chainZ), Vector3.new(doorX2 + postW / 2, 1.8, chainZ) },
+		{ Vector3.new(doorX2 + postW / 2, 10.6, chainZ), Vector3.new(doorX1 - postW / 2, 1.8, chainZ) },
+	}
+	for _, e in ends do
+		local a, b = e[1], e[2]
+		for _, endPos in { a, b } do
+			lib.part(chain, "ChainBolt", Vector3.new(0.2, 0.6, 0.6), CFrame.new(endPos.X, endPos.Y, F - 0.35) * CFrame.Angles(0, math.pi / 2, 0), rgb(120, 124, 128), Enum.Material.Metal, { Shape = Enum.PartType.Cylinder, CanCollide = false, CanQuery = false })
+		end
+		local length = (b - a).Magnitude
+		local count = math.floor(length / 0.6)
+		local function at(t: number)
+			return a:Lerp(b, t) + Vector3.new(0, -1.2 * 4 * t * (1 - t), 0)
+		end
+		for k = 0, count - 1 do
+			local t0, t1 = k / count, (k + 1) / count
+			local p0, p1 = at(t0), at(t1)
+			local mid = (p0 + p1) / 2
+			local cf = lib.lookAt(mid, p1)
+			if k % 2 == 1 then
+				cf = cf * CFrame.Angles(0, 0, math.pi / 2)
+			end
+			lib.part(chain, "ChainLink", Vector3.new(0.44, 0.14, 0.76), cf, rgb(150, 150, 154), Enum.Material.Metal, { CanCollide = false, CanQuery = false, CanTouch = false })
+		end
+	end
+	do
+		local lp = Vector3.new(doorCX, 4.3, chainZ - 0.35)
+		lib.part(chain, "ChainLock", Vector3.new(1.3, 1.5, 0.55), CFrame.new(lp), rgb(150, 120, 60), Enum.Material.Metal, { CanCollide = false, CanQuery = false })
+		lib.part(chain, "ChainLock", Vector3.new(0.18, 0.9, 0.18), CFrame.new(lp + Vector3.new(-0.45, 1.1, 0)), rgb(170, 172, 176), Enum.Material.Metal, { CanCollide = false, CanQuery = false })
+		lib.part(chain, "ChainLock", Vector3.new(0.18, 0.9, 0.18), CFrame.new(lp + Vector3.new(0.45, 1.1, 0)), rgb(170, 172, 176), Enum.Material.Metal, { CanCollide = false, CanQuery = false })
+		lib.part(chain, "ChainLock", Vector3.new(1.08, 0.18, 0.18), CFrame.new(lp + Vector3.new(0, 1.5, 0)), rgb(170, 172, 176), Enum.Material.Metal, { CanCollide = false, CanQuery = false })
+		lib.part(chain, "ChainLock", Vector3.new(0.08, 0.3, 0.3), CFrame.new(lp + Vector3.new(0, -0.2, -0.28)) * CFrame.Angles(0, math.pi / 2, 0), rgb(30, 26, 20), Enum.Material.SmoothPlastic, { Shape = Enum.PartType.Cylinder, CanCollide = false, CanQuery = false })
+	end
+
+	-- Lysende skilt i taket foran døra
+	local signPos = Vector3.new(doorCX, WALL_H - 1.1, doorZ - 6)
+	for _, sx in { -2.6, 2.6 } do
+		lib.part(exitModel, "SignRod", Vector3.new(0.12, 0.5, 0.12), CFrame.new(signPos + Vector3.new(sx, 0.95, 0)), COLORS.darkMetal, Enum.Material.Metal, { CanQuery = false })
+	end
+	lib.part(exitModel, "SignHousing", Vector3.new(7, 1.8, 0.5), CFrame.new(signPos), rgb(230, 230, 222), Enum.Material.SmoothPlastic, { CanQuery = false })
+	local exitSign = lib.part(exitModel, "ExitSign", Vector3.new(6.6, 1.45, 0.1), lib.lookAt(signPos - Vector3.new(0, 0, 0.27), signPos - Vector3.new(0, 0, 5)), rgb(20, 130, 60), Enum.Material.Neon, { CanQuery = false })
+	local sg = lib.new("SurfaceGui", { Name = "SignGui", Face = Enum.NormalId.Front, SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud, PixelsPerStud = 40, LightInfluence = 0, Brightness = 1.2 }, exitSign)
+	lib.new("TextLabel", { Name = "Text", BackgroundTransparency = 1, Position = lib.UDim2.fromScale(0.04, 0.08), Size = lib.UDim2.fromScale(0.92, 0.6), Text = "EXIT", TextScaled = true, TextColor3 = rgb(240, 255, 240), FontFace = lib.Font.fromEnum(Enum.Font.GothamBold) }, sg)
+	lib.new("TextLabel", { Name = "Sub", BackgroundTransparency = 1, Position = lib.UDim2.fromScale(0.04, 0.68), Size = lib.UDim2.fromScale(0.92, 0.24), Text = "▼  EMERGENCY  ▼", TextScaled = true, TextColor3 = rgb(220, 255, 225), FontFace = lib.Font.fromEnum(Enum.Font.GothamBold) }, sg)
+	lib.new("PointLight", { Range = 12, Brightness = 0.8, Color = rgb(60, 255, 110) }, exitSign)
+
+	-- "KEEP CLEAR" malt på gulvet foran døra
+	local mark = lib.part(exitModel, "FloorMark", Vector3.new(doorX2 - doorX1 + 2, 0.02, 5.5), CFrame.new(doorCX, 0.012, F - 3) * CFrame.Angles(0, math.pi, 0), rgb(0, 0, 0), Enum.Material.SmoothPlastic, { Transparency = 1, CanCollide = false, CanQuery = false, CanTouch = false })
+	local mg = lib.new("SurfaceGui", { Name = "Paint", Face = Enum.NormalId.Top, SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud, PixelsPerStud = 30, LightInfluence = 1 }, mark)
+	for _, f in {
+		{ 0, 0, 1, 0.07 },
+		{ 0, 0.93, 1, 0.07 },
+		{ 0, 0, 0.035, 1 },
+		{ 0.965, 0, 0.035, 1 },
+	} do
+		lib.new("Frame", { BorderSizePixel = 0, BackgroundColor3 = HAZARD_Y, BackgroundTransparency = 0.15, Position = lib.UDim2.fromScale(f[1], f[2]), Size = lib.UDim2.fromScale(f[3], f[4]) }, mg)
+	end
+	lib.new("TextLabel", { Name = "Text", BackgroundTransparency = 1, Position = lib.UDim2.fromScale(0.1, 0.25), Size = lib.UDim2.fromScale(0.8, 0.5), Text = "KEEP CLEAR", TextScaled = true, TextColor3 = HAZARD_Y, TextTransparency = 0.15, FontFace = lib.Font.fromEnum(Enum.Font.SpecialElite) }, mg)
+
+	-- Låsepanel ved siden av døra (med stripet bakplate og rør opp til låselampene)
+	local panelPos = Vector3.new(doorX1 - 3.4, 4.6, F - 0.3)
+	local back = lib.part(exitModel, "PanelBack", Vector3.new(3.1, 3.9, 0.06), lib.lookAt(panelPos + Vector3.new(0, 0, 0.27), panelPos + Vector3.new(0, 0, -5)), HAZARD_Y, Enum.Material.SmoothPlastic, { CanQuery = false })
+	hazard(back, 3.1, 3.9)
+	local panel = lib.part(exitModel, "LockPanel", Vector3.new(2.5, 3.3, 0.5), lib.lookAt(panelPos, panelPos - Vector3.new(0, 0, 1)), rgb(40, 42, 44), Enum.Material.Metal)
+	local pg = lib.new("SurfaceGui", { Name = "SignGui", Face = Enum.NormalId.Front, SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud, PixelsPerStud = 40, LightInfluence = 0, Brightness = 2 }, panel)
+	lib.new("TextLabel", { Name = "Head", BackgroundTransparency = 1, Position = lib.UDim2.fromScale(0.08, 0.06), Size = lib.UDim2.fromScale(0.84, 0.14), Text = "INSERT KEYS", TextScaled = true, TextColor3 = HAZARD_Y, FontFace = lib.Font.fromEnum(Enum.Font.GothamBold) }, pg)
+	lib.new("Frame", { BorderSizePixel = 0, BackgroundColor3 = rgb(12, 12, 12), Position = lib.UDim2.fromScale(0.1, 0.26), Size = lib.UDim2.fromScale(0.8, 0.42) }, pg)
+	lib.new("TextLabel", { Name = "Counter", BackgroundTransparency = 1, Position = lib.UDim2.fromScale(0.12, 0.28), Size = lib.UDim2.fromScale(0.76, 0.38), Text = "0/5", TextScaled = true, TextColor3 = rgb(255, 80, 70), FontFace = lib.Font.fromEnum(Enum.Font.Code), ZIndex = 2 }, pg)
+	lib.new("TextLabel", { Name = "Foot", BackgroundTransparency = 1, Position = lib.UDim2.fromScale(0.08, 0.76), Size = lib.UDim2.fromScale(0.84, 0.16), Text = "LOCKDOWN OVERRIDE", TextScaled = true, TextColor3 = rgb(200, 200, 190), FontFace = lib.Font.fromEnum(Enum.Font.Code) }, pg)
+	lib.part(exitModel, "Conduit", Vector3.new(0.3, 13.75 - (panelPos.Y + 1.65), 0.3), CFrame.new(panelPos.X, (13.75 + panelPos.Y + 1.65) / 2, F - 0.2), rgb(120, 124, 128), Enum.Material.Metal, { CanQuery = false })
+	lib.part(exitModel, "Conduit", Vector3.new(doorCX - 7 - panelPos.X + 0.15, 0.3, 0.3), CFrame.new((panelPos.X + doorCX - 7) / 2, 13.75, F - 0.2), rgb(120, 124, 128), Enum.Material.Metal, { CanQuery = false })
 	lib.new("ProximityPrompt", {
 		Name = "InsertPrompt",
 		ActionText = "Insert keys",

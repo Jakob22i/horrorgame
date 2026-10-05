@@ -298,7 +298,7 @@ local function build()
 		Size = UDim2.new(0.6, 0, 0, 40),
 		Position = UDim2.new(0, 20, 0, 14),
 		TextXAlignment = Enum.TextXAlignment.Left,
-		Text = "FLASHLIGHTS & TITLES",
+		Text = "GIFT SHOP",
 		TextColor3 = GOLD,
 	})
 	coin(window, 22, UDim2.new(1, -212, 0, 34))

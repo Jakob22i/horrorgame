@@ -73,7 +73,7 @@ local Config = {
 	},
 
 	-- Finalen: når alle nøklene er satt inn må dere overleve til døra åpner seg
-	FinaleTime = 30,
+	FinaleTime = 40,
 
 	-- Kjøp med Robux. Opprett produktene på create.roblox.com etter at spillet er publisert,
 	-- og lim inn ID-ene her. Står en ID på 0, er kjøpet gratis i Studio (for testing).

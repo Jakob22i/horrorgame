@@ -4,13 +4,24 @@ Et analog-horror-spill i Roblox for 1–4 spillere per gruppe. Alt i spillet er 
 
 ## Slik fungerer spillet
 
-- Alle spawner i **lobbyen**. Langs veggen står **4 heiser** med plass til maks 4 spillere hver.
+- Alle spawner i **lobbyen**: sykehusets venterom slik det var før alt gikk galt. Rene,
+  rutete fliser, grønne fliser på veggene, varmt lys, stolrader, resepsjon med en
+  **NOW SERVING 0413**-skjerm, regeltavle, akvarium, brusautomat, klokka som stoppet 03:13 og
+  en låst hovedinngang. Litt for rolig.
+- Langs nordveggen står **4 gamle sykehusheiser** med messingramme, et viserur over døra
+  (L, B1, B2, B3) og en lampe ved siden av døra: **grønn** = gå inn, **gul** = noen venter,
+  **rød** = full eller på vei ned. Skiltet over døra viser heisnummer, modus, antall spillere
+  og nedtellingen. Når heisen går, svinger viseren ned til B3. Maks 4 spillere per heis.
   Gå inn i en heis, så starter en nedtelling (15 sek, eller 5 sek hvis heisen er full).
+- **HALL OF SURVIVORS**: topplista på østveggen viser **raskeste flukt** og **flest flukter**
+  (topp 10 fra alle servere, oppdateres hvert minutt).
 - Gruppa havner i et mørkt, forlatt **sykehus** med mange små rom og korridorer, og **tre store
   haller** spredt utover kartet: treningssalen i nordvest, atriet med fontene i sør og
   auditoriet i øst. Hallene er fulle av søyler, langbord og benker du kan løpe rundt, og har
   flere dører, så du kan løpe runder unna monsteret. Målet er å finne **5 nøkler** som ligger tilfeldig plassert rundt i kartet, og
-  sette dem inn ved **nødutgangen** på lasterampen (LOADING DOCK) i sørøst. Hver gang du finner
+  sette dem inn ved **nødutgangen** på lasterampen (LOADING DOCK) i sørøst: tunge ståldører med
+  gul-svart fareskilting, kjettinger i kryss med hengelås, 5 låselamper som blir grønne og et
+  låsepanel med teller. Hver gang du finner
   en nøkkel, vises en grønn **EXIT-markør** gjennom veggene i 12 sekunder, med avstanden dit.
   Når døra er åpen, står markøren fast.
 - **Patient #0413** jakter på dere: en høy, utmagret pasient med et altfor bredt, sydd glis,
@@ -33,8 +44,9 @@ Et analog-horror-spill i Roblox for 1–4 spillere per gruppe. Alt i spillet er 
   Nightmare har 1 liv, et raskere monster, mørkere ganger, færre skap og dobbelt så mange
   mynter.
 - **Mynter og kosmetikk**: du får mynter for å finne nøkler, sette dem inn, hjelpe venner opp,
-  spille en runde og komme deg ut (dobbelt i Nightmare). Bruk dem i butikken **FLASHLIGHTS &
-  TITLES** i lobbyen på lommelyktfarger og titler som vises over hodet ditt. Alt lagres.
+  spille en runde og komme deg ut (dobbelt i Nightmare). Bruk dem i **GIFT SHOP** i lobbyen
+  (markise, hyller med lysende lommelykter, glassdisk, ballonger) på lommelyktfarger og titler
+  som vises over hodet ditt. Alt lagres.
 - Etter **3 nøkler** begynner strømmen å svikte: hvert 30.–50. sekund dempes lyset sakte ned i
   10–16 sekunder (bare noen svake, røde nødlys står igjen) før det sakte kommer tilbake. Da
   trenger du lommelykta.
@@ -51,7 +63,8 @@ Et analog-horror-spill i Roblox for 1–4 spillere per gruppe. Alt i spillet er 
   brune flekker, slepespor, bare fotspor som går ut av en pytt, sprut og renner på veggene og
   flekkete håndavtrykk.
 - Når alle 5 nøklene er satt inn, starter **LOCKDOWN**: alarmen går, alle lamper blinker rødt,
-  monsteret jakter på nærmeste spiller, og døra åpner seg først etter **30 sekunder**.
+  monsteret jakter på nærmeste spiller, varsellampene ved døra spinner, og døra åpner seg
+  først etter **40 sekunder** (kjettingene faller av og dørene glir til siden).
   Overlev, og løp ut når den åpner seg: bak døra er det hvitt, glødende lys.
 - Kommer noen seg ut, spilles **sluttscenen** for alle i runden: dere er ute... men noe står i
   døråpningen bak dere. Den slutter med en cliffhanger og **PART 2 – COMING SOON**, og så går
@@ -101,6 +114,14 @@ Så lenge en ID er `0`, er kjøpet gratis i Studio, slik at du kan teste. Kjøpt
 jumpscares som ikke ble brukt med en gang, lagres og blir gratis neste gang (krever at
 **Enable Studio Access to API Services** er på hvis du vil teste lagringen i Studio).
 
+## Topplista (HALL OF SURVIVORS)
+
+Tavla i lobbyen viser topp 10 for **raskeste flukt** (tid fra runden startet til dere kom
+dere ut) og **flest flukter**. Den lagres i to OrderedDataStores (`HorrorFastest_v1` og
+`HorrorEscapes_v1`), så den gjelder alle servere, og oppdateres hvert minutt. Bare spillere
+som fortsatt var med (ikke tilskuere) får flukten registrert. I Studio uten
+**Enable Studio Access to API Services** viser den bare spillerne på serveren.
+
 ## Thumbnails og ikon
 
 Ferdige bilder til spillsiden ligger i `thumbnails/`:
@@ -134,7 +155,7 @@ Last dem opp på create.roblox.com → spillet ditt → **Places** → **Configu
 | Monsteret (Patient #0413) | `ServerStorage/Monster` |
 | Nøkkelen | `ServerStorage/Key` |
 | Innstillinger | `ReplicatedStorage/Shared/Config` |
-| Serverscript | `ServerScriptService/GameServer` (+ modulene Lobby, Match, Monster, Shop, Util) |
+| Serverscript | `ServerScriptService/GameServer` (+ modulene Lobby, Match, Monster, Shop, Leaderboard, Util) |
 | Klientscript | `StarterPlayer/StarterPlayerScripts/ClientMain` (+ UI, Effects, Controls, Jumpscare, MonsterAnimator, Ending, Scares, CosmeticsUI) |
 | Loading screen | `ReplicatedFirst/LoadingScreen` |
 

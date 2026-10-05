@@ -27,6 +27,8 @@ type Data = {
 	owned: { [string]: boolean },
 	flash: string,
 	title: string,
+	escapes: number,
+	best: number, -- raskeste flukt i sekunder (0 = ingen ennå)
 }
 
 -- Finn en kosmetikk-ting i katalogen ("Flashlights" eller "Titles")
@@ -120,13 +122,15 @@ local function save(player: Player): boolean
 			owned = owned,
 			flash = d.flash,
 			title = d.title,
+			escapes = d.escapes,
+			best = d.best,
 		})
 	end)
 	return ok
 end
 
 local function load(player: Player)
-	local d: Data = { revive = 0, jumpscare = 0, coins = 0, owned = { warm = true, none = true }, flash = "warm", title = "none" }
+	local d: Data = { revive = 0, jumpscare = 0, coins = 0, owned = { warm = true, none = true }, flash = "warm", title = "none", escapes = 0, best = 0 }
 	if store then
 		local ok, value = pcall(function()
 			return (store :: DataStore):GetAsync(key(player))
@@ -135,6 +139,8 @@ local function load(player: Player)
 			d.revive = tonumber(value.revive) or 0
 			d.jumpscare = tonumber(value.jumpscare) or 0
 			d.coins = math.max(0, math.floor(tonumber(value.coins) or 0))
+			d.escapes = math.max(0, math.floor(tonumber(value.escapes) or 0))
+			d.best = math.max(0, math.floor(tonumber(value.best) or 0))
 			if type(value.owned) == "table" then
 				for _, id in value.owned do
 					if type(id) == "string" and findItem(id) then
@@ -289,6 +295,28 @@ function Shop.addCoins(player: Player, amount: number)
 		d.coins += math.floor(amount)
 		sync(player)
 	end
+end
+
+-- En vellykket flukt (til topplista). Returnerer antall flukter og beste tid.
+function Shop.recordEscape(player: Player, seconds: number): (number, number)
+	local d = data[player]
+	if not d then
+		return 0, 0
+	end
+	d.escapes += 1
+	local s = math.max(1, math.floor(seconds + 0.5))
+	if d.best == 0 or s < d.best then
+		d.best = s
+	end
+	return d.escapes, d.best
+end
+
+function Shop.getStats(player: Player): (number, number)
+	local d = data[player]
+	if not d then
+		return 0, 0
+	end
+	return d.escapes, d.best
 end
 
 function Shop.save(player: Player)

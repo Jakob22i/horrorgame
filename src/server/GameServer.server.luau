@@ -8,6 +8,7 @@ local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Co
 local Lobby = require(script:WaitForChild("Lobby"))
 local Match = require(script:WaitForChild("Match"))
 local Shop = require(script:WaitForChild("Shop"))
+local Leaderboard = require(script:WaitForChild("Leaderboard"))
 
 local Remotes = ReplicatedStorage:WaitForChild("Remotes")
 local MatchStateRemote = Remotes:WaitForChild("MatchState") :: RemoteEvent
@@ -81,6 +82,15 @@ function Manager:AwardCoins(player: Player, amount: number, reason: string)
 	end
 	Shop.addCoins(player, amount)
 	NotifyRemote:FireClient(player, string.format("+%d coins (%s)", amount, reason), "good")
+end
+
+-- Noen kom seg ut: oppdater topplista (antall flukter og raskeste tid)
+function Manager:RecordEscape(player: Player, seconds: number)
+	if player.Parent ~= Players then
+		return
+	end
+	local escapes, best = Shop.recordEscape(player, seconds)
+	Leaderboard.submit(player, escapes, best)
 end
 
 function Manager:OnHelped(helper: Player)
@@ -217,6 +227,7 @@ RunService.Heartbeat:Connect(function(dt)
 end)
 
 Shop.init(Manager)
+Leaderboard.init(Shop.getStats)
 
 Lobby.init(function(group, mode)
 	Manager:StartMatch(group, mode)

@@ -35,6 +35,12 @@ type Elevator = {
 	countdown: number?,
 	departing: boolean,
 	waitingForRoom: boolean?,
+	needle: BasePart?,
+	needlePivot: CFrame,
+	needleOffset: number,
+	needleUp: number,
+	needleDown: number,
+	needleAngle: NumberValue?,
 }
 
 local Lobby = {}
@@ -60,6 +66,15 @@ end
 
 local NIGHTMARE = Color3.fromRGB(235, 50, 50)
 local NORMAL = Color3.fromRGB(200, 220, 200)
+
+-- Viseren over døra: peker på L (lobbyen) og går ned til B3 når heisen går
+local function moveNeedle(e: Elevator, angle: number, seconds: number)
+	local value = e.needleAngle
+	if not value then
+		return
+	end
+	TweenService:Create(value, TweenInfo.new(seconds, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), { Value = angle }):Play()
+end
 
 local function updateSign(e: Elevator)
 	local count = #e.order
@@ -112,6 +127,7 @@ local function depart(e: Elevator, startMatch: ({ Player }, string) -> ())
 	e.countdown = nil
 	updateSign(e)
 	setDoors(e, false)
+	moveNeedle(e, e.needleDown, 3)
 	for _, player in group do
 		TransitionRemote:FireClient(player, "Going down...")
 	end
@@ -126,6 +142,8 @@ local function depart(e: Elevator, startMatch: ({ Player }, string) -> ())
 		startMatch(stillHere, mode)
 	end
 	task.wait(1.5)
+	moveNeedle(e, e.needleUp, 2.2)
+	task.wait(1)
 	setDoors(e, true)
 	task.wait(1.2)
 	e.departing = false
@@ -239,7 +257,30 @@ function Lobby.init(startMatch: ({ Player }, string) -> (), canStartFn: (() -> b
 			order = {},
 			countdown = nil,
 			departing = false,
+			needle = nil,
+			needlePivot = CFrame.identity,
+			needleOffset = 0,
+			needleUp = 0,
+			needleDown = 0,
+			needleAngle = nil,
 		}
+		-- viseren dreier rundt et punkt (Pivot) i flaten til uret
+		local needle = model:FindFirstChild("Needle") :: BasePart?
+		local pivot = needle and needle:GetAttribute("Pivot")
+		if needle and typeof(pivot) == "Vector3" then
+			local angle = needle:GetAttribute("Angle") or 0
+			e.needle = needle
+			e.needleUp = angle
+			e.needleDown = needle:GetAttribute("Down") or angle
+			e.needleOffset = needle:GetAttribute("Offset") or needle.Size.Y / 2
+			e.needlePivot = CFrame.new(pivot) * needle.CFrame.Rotation * CFrame.Angles(0, 0, -math.rad(angle))
+			local value = Instance.new("NumberValue")
+			value.Value = angle
+			value.Changed:Connect(function(deg)
+				needle.CFrame = e.needlePivot * CFrame.Angles(0, 0, math.rad(deg)) * CFrame.new(0, e.needleOffset, 0)
+			end)
+			e.needleAngle = value
+		end
 		-- Bryter inne i heisen: Normal / Nightmare
 		local panel = model:FindFirstChild("ModePanel")
 		if panel then

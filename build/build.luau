@@ -171,7 +171,7 @@ smChild(smAssets, "MonsterJumpscare", "Model")
 -- Server
 local smSSS = smService("ServerScriptService", "ServerScriptService")
 local server, smServer = script("Script", "GameServer", "src/server/GameServer.server.luau", ServerScriptService, smSSS)
-for _, name in { "Util", "Monster", "Match", "Lobby", "Shop" } do
+for _, name in { "Util", "Monster", "Match", "Lobby", "Shop", "Leaderboard" } do
 	script("ModuleScript", name, "src/server/" .. name .. ".luau", server, smServer)
 end
 

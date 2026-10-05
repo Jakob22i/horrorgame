@@ -518,11 +518,21 @@ function Match:_openExit()
 		glow.Brightness = 0
 		TweenService:Create(glow, info, { Brightness = 5 }):Play()
 	end
+	local offsets: { [string]: Vector3 } = {}
 	for _, name in { "DoorL", "DoorR" } do
 		local door = exit:FindFirstChild(name) :: BasePart?
 		if door then
 			local dir = name == "DoorL" and -1 or 1
+			offsets[string.sub(name, 5)] = door.CFrame:VectorToWorldSpace(Vector3.new(dir * door.Size.X, 0, 0))
 			TweenService:Create(door, info, { CFrame = door.CFrame * CFrame.new(dir * door.Size.X, 0, 0) }):Play()
+		end
+	end
+	-- pynten på dørene (nagler, vinduer, panikkstenger) glir med
+	for _, part in exit:GetChildren() do
+		local side = part:GetAttribute("Slide")
+		local offset = typeof(side) == "string" and offsets[side]
+		if offset and part:IsA("BasePart") then
+			TweenService:Create(part, info, { CFrame = part.CFrame + offset }):Play()
 		end
 	end
 	self.folder:SetAttribute("ExitOpen", true)
@@ -866,6 +876,9 @@ function Match:Win(escaper: Player)
 			self:Unhide(player, true)
 		end
 		self.manager:AwardCoins(player, Config.Coins.Escape, "escaped")
+		if not st.out then
+			self.manager:RecordEscape(player, os.clock() - (self.startedAt or os.clock()))
+		end
 		MatchStateRemote:FireClient(player, "won", {
 			escaper = escaper.DisplayName,
 			seconds = Config.WinReturnTime,
