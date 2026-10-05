@@ -11,6 +11,18 @@ local lib = require("./lib")
 local buildHospital = require("./hospital")
 local buildPatient = require("./patient")
 local buildKey = require("./key")
+local KEY_COLORS = { lib.rgb(235, 64, 58), lib.rgb(70, 140, 255), lib.rgb(70, 215, 110), lib.rgb(255, 208, 60), lib.rgb(185, 100, 255) }
+-- farger en nøkkel slik serveren gjør det (Match.paintKey)
+local function paintKey(key: any, i: number)
+	local c = KEY_COLORS[i]
+	for _, d in key:GetDescendants() do
+		if d.ClassName == "Part" and (d.Name == "Bow" or d.Name == "Shaft" or d.Name == "Tooth1" or d.Name == "Tooth2") then
+			d.Color = c
+		elseif d.ClassName == "PointLight" then
+			d.Color = c:Lerp(lib.rgb(255, 255, 255), 0.3)
+		end
+	end
+end
 local buildLobby = require("./lobby")
 
 local scene = process.args[1] or "patient"
@@ -52,6 +64,12 @@ local function exportPart(p: any)
 		shape = p.ClassName == "WedgePart" and "Wedge" or (p.ClassName == "Part" and p.Shape.Name or "Block"),
 		shadow = p.CastShadow,
 	}
+	-- Highlight (hvit kant) på modellen delen ligger i
+	local model = p:FindFirstAncestorOfClass("Model")
+	local hl = model and model:FindFirstChildOfClass("Highlight")
+	if hl and hl.OutlineTransparency < 1 then
+		entry.hl = colorArray(hl.OutlineColor)
+	end
 	local mesh = p:FindFirstChildOfClass("SpecialMesh")
 	if mesh then
 		entry.mesh = mesh.MeshType.Name
@@ -180,6 +198,29 @@ if scene == "patient" or scene == "patient-chase" then
 	extra.monsterPivot = cfArray(m.PrimaryPart.CFrame)
 elseif scene == "hospital" then
 	buildHospital(container)
+	-- åpne noen av fargelåsene på nødutgangen (som Match:_updateExitVisuals), f.eks. "1,3"
+	local exit = container:FindFirstChild("ExitDoor", true)
+	for _, n in string.split(process.args[4] or "", ",") do
+		local i = tonumber(n)
+		if i and exit then
+			local lamp = exit:FindFirstChild("Lock" .. i)
+			if lamp then
+				lamp.Color = KEY_COLORS[i]
+				lamp.Material = roblox.Enum.Material.Neon
+			end
+			local pad = exit:FindFirstChild("Padlock" .. i, true)
+			if pad then
+				for _, d in pad:GetDescendants() do
+					if d.Name == "Body" then
+						d.Material = roblox.Enum.Material.Neon
+						d:FindFirstChildOfClass("PointLight").Enabled = true
+					elseif d.Name == "Shackle" then
+						d.CFrame = d.CFrame + roblox.Vector3.new(0, 0.45, 0)
+					end
+				end
+			end
+		end
+	end
 	local m = buildPatient(container, "Monster")
 	-- plassering: "x,z,yawGrader"
 	local px, pz, yaw = 0, 0, 0
@@ -223,6 +264,29 @@ elseif scene == "blood" then
 	hands:hand(0.9, -0.6, math.rad(-18), 0, Blood.FRESH, rng)
 	hands:drip(-0.2, 1.4, 1.6, 0.08, Blood.FRESH)
 	hands:drip(1.4, 0.3, 0.9, 0.06, Blood.FRESH)
+elseif scene == "keyset" then
+	-- alle fem nøklene på et langbord (som et produktbilde)
+	local V3, CF = roblox.Vector3, roblox.CFrame
+	local rgb = lib.rgb
+	lib.part(container, "Floor", V3.new(40, 1, 30), CF.new(0, -0.5, 0), rgb(140, 146, 136), roblox.Enum.Material.CeramicTiles)
+	lib.part(container, "Wall", V3.new(40, 14, 1), CF.new(0, 7, -6.5), rgb(186, 174, 132), roblox.Enum.Material.Plaster)
+	lib.part(container, "WallLow", V3.new(40, 4, 1.1), CF.new(0, 2, -6.5), rgb(84, 110, 96), roblox.Enum.Material.CeramicTiles)
+	lib.part(container, "Table", V3.new(14, 0.3, 3.4), CF.new(0, 3.05, 0), rgb(92, 70, 52), roblox.Enum.Material.Wood)
+	for _, lx in { -6.6, 6.6 } do
+		for _, lz in { -1.5, 1.5 } do
+			lib.part(container, "Leg", V3.new(0.3, 2.9, 0.3), CF.new(lx, 1.45, lz), rgb(60, 46, 34), roblox.Enum.Material.Wood)
+		end
+	end
+	for i = 1, 5 do
+		local key = buildKey(container)
+		paintKey(key, i)
+		local T = CF.new((i - 3) * 2.4, 3.3, 0.2) * CF.Angles(0, math.rad(-10 + (i % 2) * 20), 0)
+		for _, d in key:GetDescendants() do
+			if d.ClassName == "Part" then
+				d.CFrame = T * d.CFrame
+			end
+		end
+	end
 elseif scene == "keyroom" then
 	-- en nøkkel som ligger på et skap i et mørkt pasientrom (lampene der er av)
 	buildHospital(container)
@@ -235,6 +299,7 @@ elseif scene == "keyroom" then
 	end
 	local base = spot.CFrame.Position
 	local key = buildKey(container)
+	paintKey(key, tonumber(process.args[4]) or 1)
 	local T = spot.CFrame
 	for _, d in key:GetDescendants() do
 		if d.ClassName == "Part" then

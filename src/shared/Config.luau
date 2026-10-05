@@ -11,6 +11,15 @@ local Config = {
 	-- Spillregler
 	Lives = 3,
 	KeysToEscape = 5,
+	-- De fem nøklene har hver sin farge, og nødutgangen har én hengelås i hver farge
+	-- (samme farger står også i build/hospital.luau for låsene på døra)
+	KeyColors = {
+		{ name = "RED", color = Color3.fromRGB(235, 64, 58) },
+		{ name = "BLUE", color = Color3.fromRGB(70, 140, 255) },
+		{ name = "GREEN", color = Color3.fromRGB(70, 215, 110) },
+		{ name = "YELLOW", color = Color3.fromRGB(255, 208, 60) },
+		{ name = "PURPLE", color = Color3.fromRGB(185, 100, 255) },
+	},
 	RespawnDelay = 4, -- sekunder med svart skjerm etter at du blir tatt
 	RespawnProtection = 4, -- sekunder monsteret ignorerer deg etter respawn
 	GameOverChoiceTime = 25, -- sekunder til å velge "prøv igjen" eller "lobby"

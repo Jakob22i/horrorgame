@@ -1,8 +1,11 @@
 -- Alt brukergrensesnitt: VHS-filter, HUD, beskjeder, overganger og menyer.
 
 local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
+
+local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"))
 
 local player = Players.LocalPlayer
 
@@ -33,6 +36,7 @@ local hud: Frame
 local livesLabel: TextLabel
 local keysLabel: TextLabel
 local exitLabel: TextLabel
+local keyPips: { Frame } = {}
 local staminaBack: Frame
 local staminaFill: Frame
 local breathBack: Frame
@@ -221,7 +225,7 @@ local function buildHud()
 		Name = "Status",
 		AnchorPoint = Vector2.new(1, 0),
 		Position = UDim2.new(1, -24, 0, 104),
-		Size = UDim2.new(0, 230, 0, 104),
+		Size = UDim2.new(0, 230, 0, 132),
 		BackgroundColor3 = Color3.new(0, 0, 0),
 		BackgroundTransparency = 0.55,
 		BorderSizePixel = 0,
@@ -243,8 +247,33 @@ local function buildHud()
 		TextColor3 = Color3.fromRGB(255, 214, 110),
 		Text = "KEYS: 0",
 	})
+	-- én rute per nøkkelfarge: svak = ikke funnet, fylt med hvit kant = du bærer den,
+	-- fylt med hake = låsen på nødutgangen er åpen
+	for i, entry in Config.KeyColors do
+		local pip = make("Frame", {
+			Name = "Key" .. i,
+			Position = UDim2.new(0, 12 + (i - 1) * 42, 0, 72),
+			Size = UDim2.fromOffset(34, 22),
+			BackgroundColor3 = entry.color,
+			BackgroundTransparency = 0.85,
+			BorderSizePixel = 0,
+		}, box)
+		make("UICorner", { CornerRadius = UDim.new(0, 5) }, pip)
+		make("UIStroke", { Name = "Stroke", Color = entry.color, Thickness = 1.5, Transparency = 0.3 }, pip)
+		text(pip, {
+			Name = "Check",
+			Size = UDim2.fromScale(1, 0.9),
+			Position = UDim2.fromScale(0.5, 0.5),
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Font = Enum.Font.GothamBold,
+			TextColor3 = Color3.new(1, 1, 1),
+			Text = "✓",
+			Visible = false,
+		})
+		keyPips[i] = pip
+	end
 	exitLabel = text(box, {
-		Position = UDim2.new(0, 12, 0, 70),
+		Position = UDim2.new(0, 12, 0, 100),
 		Size = UDim2.new(1, -24, 0, 24),
 		TextXAlignment = Enum.TextXAlignment.Left,
 		TextColor3 = Color3.fromRGB(150, 230, 160),
@@ -837,9 +866,34 @@ function UI.setLives(lives: number, max: number)
 	livesLabel.Text = table.concat(parts, " ")
 end
 
-function UI.setKeys(carried: number, inserted: number, total: number)
-	keysLabel.Text = "KEYS CARRIED: " .. carried
-	exitLabel.Text = "EXIT: " .. inserted .. "/" .. total
+function UI.setKeys(carried: { number }, unlocked: { [number]: boolean }, inserted: number)
+	keysLabel.Text = "KEYS CARRIED: " .. #carried
+	exitLabel.Text = "EXIT: " .. inserted .. "/" .. #Config.KeyColors
+	local held = {}
+	for _, n in carried do
+		held[n] = true
+	end
+	for i, pip in keyPips do
+		local stroke = pip:FindFirstChild("Stroke") :: UIStroke
+		local check = pip:FindFirstChild("Check") :: TextLabel
+		local color = Config.KeyColors[i].color
+		if unlocked[i] then
+			pip.BackgroundTransparency = 0.05
+			stroke.Color = color
+			stroke.Transparency = 0
+			check.Visible = true
+		elseif held[i] then
+			pip.BackgroundTransparency = 0
+			stroke.Color = Color3.new(1, 1, 1)
+			stroke.Transparency = 0
+			check.Visible = false
+		else
+			pip.BackgroundTransparency = 0.85
+			stroke.Color = color
+			stroke.Transparency = 0.45
+			check.Visible = false
+		end
+	end
 end
 
 function UI.setStamina(fraction: number, visible: boolean)

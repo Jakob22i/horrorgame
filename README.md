@@ -25,8 +25,11 @@ Et analog-horror-spill i Roblox for 1–4 spillere per gruppe. Alt i spillet er 
   auditoriet i øst. Hallene er fulle av søyler, langbord og benker du kan løpe rundt, og har
   flere dører, så du kan løpe runder unna monsteret. Målet er å finne **5 nøkler** som ligger tilfeldig plassert rundt i kartet, og
   sette dem inn ved **nødutgangen** på lasterampen (LOADING DOCK) i sørøst: tunge ståldører med
-  gul-svart fareskilting, kjettinger i kryss med hengelås, 5 låselamper som blir grønne og et
-  låsepanel med teller. Hver gang du finner
+  gul-svart fareskilting, kjettinger i kryss, en låsestang med **fem hengelåser i nøkkelfargene**
+  og et låsepanel med teller. Nøklene er **rød, blå, grønn, gul og lilla**, og hver nøkkel åpner
+  låsen i sin egen farge: låsen spretter opp og lyser, og lampa i samme farge over døra tennes.
+  Øverst til høyre på skjermen ser du fem små ruter, én per farge: svak = ikke funnet, fylt med
+  hvit kant = du bærer den, hake = låst opp. Hver gang du finner
   en nøkkel, vises en grønn **EXIT-markør** gjennom veggene i 12 sekunder, med avstanden dit.
   Når døra er åpen, står markøren fast.
 - **Patient #0413** jakter på dere: en høy, utmagret pasient med et altfor bredt, sydd glis,
@@ -63,8 +66,8 @@ Et analog-horror-spill i Roblox for 1–4 spillere per gruppe. Alt i spillet er 
   - en mørk skikkelse med lysende øyne som står langt borte og ser på deg, og forsvinner med et
     støyglimt når du ser rett på den
   - lampene slukner én etter én med et «klonk» bortover gangen mot deg, og kommer tilbake etterpå
-- **Nøklene skinner**: de ligger på nattbordene (eller på gulvet der noen døde), lyser varmt
-  gult og pulserer, har en gyllen glød rundt kanten, glitrer og klinger, så de er lette å finne.
+- **Nøklene skinner**: de ligger på nattbordene (eller på gulvet der noen døde), lyser i sin egen
+  farge og pulserer, har en tynn hvit kant (så du ser at de kan plukkes opp), glitrer og klinger.
 - **Blodet** er tegnet med myke, organiske former: mørke, våte pytter som har rent ut, inntørkede
   brune flekker, slepespor, bare fotspor som går ut av en pytt, sprut og renner på veggene og
   flekkete håndavtrykk.

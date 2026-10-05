@@ -1188,12 +1188,18 @@ return function(parent: any)
 	lib.part(exitModel, "Reveal", Vector3.new(doorX2 - doorX1, 0.16, 1.5), CFrame.new(doorCX, DOOR_H - 0.08, F + 0.75), STEEL_DARK, Enum.Material.Metal)
 	lib.part(exitModel, "Threshold", Vector3.new(doorX2 - doorX1, 0.08, 1.6), CFrame.new(doorCX, 0.04, F + 0.8), rgb(120, 124, 128), Enum.Material.DiamondPlate, { CanCollide = false })
 
-	-- 5 låselamper over døra (blir grønne når en nøkkel settes inn)
+	-- De fem nøkkelfargene (samme som Config.KeyColors): én lås og én lampe per farge
+	local KEY_COLORS = { rgb(235, 64, 58), rgb(70, 140, 255), rgb(70, 215, 110), rgb(255, 208, 60), rgb(185, 100, 255) }
+	local function dim(c: any)
+		return rgb(math.floor(c.R * 255 * 0.4), math.floor(c.G * 255 * 0.4), math.floor(c.B * 255 * 0.4))
+	end
+
+	-- 5 låselamper over døra i hver sin farge (lyser når låsen i den fargen er åpen)
 	lib.part(exitModel, "LockPlate", Vector3.new(14, 1.1, 0.25), CFrame.new(doorCX, DOOR_H + 1.3, F - 0.125), STEEL_DARK, Enum.Material.Metal)
 	for i = 1, 5 do
-		local lx = doorCX + (i - 3) * 2.4
+		local lx = doorCX - (i - 3) * 2.4 -- rød lengst til venstre sett fra rommet
 		lib.part(exitModel, "LockBezel", Vector3.new(0.1, 1.0, 1.0), lib.lookAt(Vector3.new(lx, DOOR_H + 1.3, F - 0.28), Vector3.new(lx, DOOR_H + 1.3, F - 5)) * CFrame.Angles(0, math.pi / 2, 0), rgb(120, 124, 128), Enum.Material.Metal, { Shape = Enum.PartType.Cylinder, CanQuery = false })
-		lib.part(exitModel, "Lock" .. i, Vector3.new(0.12, 0.76, 0.76), lib.lookAt(Vector3.new(lx, DOOR_H + 1.3, F - 0.33), Vector3.new(lx, DOOR_H + 1.3, F - 5)) * CFrame.Angles(0, math.pi / 2, 0), rgb(170, 20, 20), Enum.Material.Neon, { Shape = Enum.PartType.Cylinder, CanQuery = false })
+		lib.part(exitModel, "Lock" .. i, Vector3.new(0.12, 0.76, 0.76), lib.lookAt(Vector3.new(lx, DOOR_H + 1.3, F - 0.33), Vector3.new(lx, DOOR_H + 1.3, F - 5)) * CFrame.Angles(0, math.pi / 2, 0), dim(KEY_COLORS[i]), Enum.Material.SmoothPlastic, { Shape = Enum.PartType.Cylinder, CanQuery = false })
 	end
 
 	-- Varsellamper som spinner under nedtellingen (Effects på klienten)
@@ -1205,7 +1211,7 @@ return function(parent: any)
 		lib.new("SpotLight", { Name = "Beam", Face = Enum.NormalId.Front, Angle = 40, Range = 26, Brightness = 6, Color = rgb(255, 110, 40), Enabled = false, Shadows = false }, spin)
 	end
 
-	-- Kjettinger i kryss over døra, med hengelås (fjernes når døra åpnes)
+	-- Kjettinger i kryss over døra og fem fargede hengelåser (alt fjernes når døra åpnes)
 	local chain = lib.new("Model", { Name = "Chain" }, exitModel)
 	local chainZ = F - 0.45
 	local ends = {
@@ -1233,13 +1239,31 @@ return function(parent: any)
 			lib.part(chain, "ChainLink", Vector3.new(0.44, 0.14, 0.76), cf, rgb(150, 150, 154), Enum.Material.Metal, { CanCollide = false, CanQuery = false, CanTouch = false })
 		end
 	end
+	-- Låsestang over dørene med fem hengelåser, én i hver nøkkelfarge. Når du setter inn en
+	-- nøkkel, spretter låsen i samme farge opp og lyser (Match:_updateExitVisuals).
 	do
-		local lp = Vector3.new(doorCX, 4.3, chainZ - 0.35)
-		lib.part(chain, "ChainLock", Vector3.new(1.3, 1.5, 0.55), CFrame.new(lp), rgb(150, 120, 60), Enum.Material.Metal, { CanCollide = false, CanQuery = false })
-		lib.part(chain, "ChainLock", Vector3.new(0.18, 0.9, 0.18), CFrame.new(lp + Vector3.new(-0.45, 1.1, 0)), rgb(170, 172, 176), Enum.Material.Metal, { CanCollide = false, CanQuery = false })
-		lib.part(chain, "ChainLock", Vector3.new(0.18, 0.9, 0.18), CFrame.new(lp + Vector3.new(0.45, 1.1, 0)), rgb(170, 172, 176), Enum.Material.Metal, { CanCollide = false, CanQuery = false })
-		lib.part(chain, "ChainLock", Vector3.new(1.08, 0.18, 0.18), CFrame.new(lp + Vector3.new(0, 1.5, 0)), rgb(170, 172, 176), Enum.Material.Metal, { CanCollide = false, CanQuery = false })
-		lib.part(chain, "ChainLock", Vector3.new(0.08, 0.3, 0.3), CFrame.new(lp + Vector3.new(0, -0.2, -0.28)) * CFrame.Angles(0, math.pi / 2, 0), rgb(30, 26, 20), Enum.Material.SmoothPlastic, { Shape = Enum.PartType.Cylinder, CanCollide = false, CanQuery = false })
+		local barY = 5.95
+		local barZ = F - 0.78
+		lib.part(chain, "LockBar", Vector3.new(doorX2 - doorX1 + postW * 1.6, 0.34, 0.24), CFrame.new(doorCX, barY, barZ), rgb(70, 72, 76), Enum.Material.Metal, { CanCollide = false, CanQuery = false })
+		for _, bx in { doorX1 - postW / 2, doorX2 + postW / 2 } do
+			lib.part(chain, "LockBarBracket", Vector3.new(0.7, 0.8, 0.5), CFrame.new(bx, barY, F - 0.55), rgb(50, 52, 56), Enum.Material.Metal, { CanCollide = false, CanQuery = false })
+		end
+		local CHROME = rgb(196, 198, 202)
+		for i, color in KEY_COLORS do
+			local x = doorCX - (i - 3) * 3.2 -- samme rekkefølge som lampene
+			local pad = lib.new("Model", { Name = "Padlock" .. i, Attributes = { KeyColor = i } }, chain)
+			local top = barY - 0.32 -- toppen av låsekroppen
+			local body = lib.part(pad, "Body", Vector3.new(1.15, 1.3, 0.5), CFrame.new(x, top - 0.65, barZ), color, Enum.Material.Metal, { CanCollide = false, CanQuery = false, Reflectance = 0.08 })
+			lib.new("PointLight", { Range = 7, Brightness = 1.6, Color = color, Enabled = false, Shadows = false }, body)
+			lib.part(pad, "Rim", Vector3.new(1.23, 0.12, 0.54), CFrame.new(x, top - 0.06, barZ), dim(color), Enum.Material.Metal, { CanCollide = false, CanQuery = false })
+			lib.part(pad, "Keyhole", Vector3.new(0.04, 0.26, 0.26), CFrame.new(x, top - 0.55, barZ - 0.27) * CFrame.Angles(0, math.pi / 2, 0), rgb(20, 18, 16), Enum.Material.SmoothPlastic, { Shape = Enum.PartType.Cylinder, CanCollide = false, CanQuery = false })
+			lib.part(pad, "KeySlot", Vector3.new(0.09, 0.3, 0.04), CFrame.new(x, top - 0.78, barZ - 0.27), rgb(20, 18, 16), Enum.Material.SmoothPlastic, { CanCollide = false, CanQuery = false })
+			-- bøylen rundt stanga (glir opp når låsen åpnes)
+			for _, sx in { -0.34, 0.34 } do
+				lib.part(pad, "Shackle", Vector3.new(0.15, 0.82, 0.15), CFrame.new(x + sx, top + 0.41, barZ), CHROME, Enum.Material.Metal, { CanCollide = false, CanQuery = false })
+			end
+			lib.part(pad, "Shackle", Vector3.new(0.83, 0.15, 0.15), CFrame.new(x, top + 0.82, barZ), CHROME, Enum.Material.Metal, { CanCollide = false, CanQuery = false })
+		end
 	end
 
 	-- Lysende skilt i taket foran døra

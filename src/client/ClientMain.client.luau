@@ -62,11 +62,29 @@ local function insertedKeys(): number
 	return folder and folder:GetAttribute("KeysInserted") or 0
 end
 
+-- "1,4" -> { 1, 4 } (fargene på nøklene, se Config.KeyColors)
+local function colorList(text: any): { number }
+	local list = {}
+	if typeof(text) == "string" then
+		for _, part in string.split(text, ",") do
+			local n = tonumber(part)
+			if n then
+				table.insert(list, n)
+			end
+		end
+	end
+	return list
+end
+
 local function refreshHud()
 	local folder = Effects.currentMatchFolder()
 	local maxLives = if folder and folder:GetAttribute("Mode") == "Nightmare" then Config.Nightmare.Lives else Config.Lives
 	UI.setLives(player:GetAttribute("Lives") or 0, maxLives)
-	UI.setKeys(player:GetAttribute("Keys") or 0, insertedKeys(), Config.KeysToEscape)
+	local unlocked = {}
+	for _, n in colorList(folder and folder:GetAttribute("Unlocked")) do
+		unlocked[n] = true
+	end
+	UI.setKeys(colorList(player:GetAttribute("KeyColors")), unlocked, insertedKeys())
 end
 
 local function watchMatchFolder()
@@ -84,7 +102,7 @@ local function watchMatchFolder()
 			task.wait(0.25)
 		end
 		if folder then
-			insertedConn = folder:GetAttributeChangedSignal("KeysInserted"):Connect(refreshHud)
+			insertedConn = folder:GetAttributeChangedSignal("Unlocked"):Connect(refreshHud)
 		end
 		refreshHud()
 	end)
@@ -107,6 +125,7 @@ player:GetAttributeChangedSignal("InMatch"):Connect(refreshMode)
 player:GetAttributeChangedSignal("MatchId"):Connect(watchMatchFolder)
 player:GetAttributeChangedSignal("Lives"):Connect(refreshHud)
 player:GetAttributeChangedSignal("Keys"):Connect(refreshHud)
+player:GetAttributeChangedSignal("KeyColors"):Connect(refreshHud)
 player:GetAttributeChangedSignal("Out"):Connect(Controls.onOutChanged)
 
 -- Knappene nederst og kjøp

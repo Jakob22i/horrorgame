@@ -1,5 +1,5 @@
 -- Nøkkelen spillerne skal finne. Den ligger flatt på bordet (eller gulvet) og skinner:
--- varmt lys som pulserer, glitter, en gyllen glød rundt kanten og en klingende lyd.
+-- lys som pulserer, glitter, en tynn hvit kant og en klingende lyd. Serveren farger den.
 
 local roblox = require("@lune/roblox")
 local lib = require("./lib")
@@ -21,13 +21,13 @@ return function(parent: any)
 	keyPart("Tooth2", Vector3.new(0.35, 0.18, 0.2), CFrame.new(0.25, 0, -0.65))
 	-- Nøkkelen skinner: varmt lys rundt seg, glitter og en svak, klingende lyd (hjelper deg å finne den)
 	lib.new("PointLight", { Name = "Glow", Range = 15, Brightness = 2.8, Color = rgb(255, 200, 100), Shadows = false }, bow)
-	-- gyllen kant og fyll, så nøkkelen synes godt på bordet (bare når du har den i synsfeltet)
+	-- tynn hvit kant rundt nøkkelen, så den ser ut som noe du kan plukke opp
+	-- (fargen settes per nøkkel av serveren: rød, blå, grønn, gul eller lilla)
 	lib.new("Highlight", {
 		Name = "Shine",
-		FillColor = rgb(255, 210, 110),
-		FillTransparency = 0.6,
-		OutlineColor = rgb(255, 236, 170),
-		OutlineTransparency = 0.25,
+		FillTransparency = 1,
+		OutlineColor = rgb(255, 255, 255),
+		OutlineTransparency = 0.1,
 		DepthMode = Enum.HighlightDepthMode.Occluded,
 	}, key)
 	lib.new("ParticleEmitter", {

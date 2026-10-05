@@ -37,6 +37,7 @@ type PlayerState = {
 	downedGui: BillboardGui?,
 	lastPush: number?,
 	deathPos: Vector3?, -- der du sist ble tatt (revive starter deg her)
+	keyColors: { number }, -- fargene (1–5) på nøklene du bærer
 }
 
 local Match = {}
@@ -54,6 +55,7 @@ function Match.new(manager: any, id: number, slot: number, players: { Player }, 
 	self.state = "starting" -- starting | playing | won | over | ended
 	self.players = {} :: { [Player]: PlayerState }
 	self.keysInserted = 0
+	self.unlocked = {} :: { [number]: boolean } -- hvilke fargelåser på nødutgangen som er åpne
 	self.exitOpen = false
 	self.closetOccupant = {} :: { [Model]: Player }
 	self.connections = {} :: { RBXScriptConnection }
@@ -107,6 +109,7 @@ function Match.new(manager: any, id: number, slot: number, players: { Player }, 
 			index = i,
 			lives = startLives,
 			keys = 0,
+			keyColors = {},
 			out = false,
 			busy = false,
 			protectedUntil = 0,
@@ -174,6 +177,7 @@ function Match:_setPlayerAttributes(player: Player)
 	player:SetAttribute("MatchId", self.id)
 	player:SetAttribute("Lives", st.lives)
 	player:SetAttribute("Keys", st.keys)
+	player:SetAttribute("KeyColors", table.concat(st.keyColors, ","))
 	player:SetAttribute("Hidden", false)
 	player:SetAttribute("Out", st.out)
 	player:SetAttribute("Flashlight", true)
@@ -330,16 +334,37 @@ function Match:_setupKeys()
 		table.insert(byRoom[room], spot :: BasePart)
 	end
 	Util.shuffle(rooms)
+	-- én nøkkel i hver farge, i hvert sitt rom
 	for i = 1, math.min(Config.KeysToEscape, #rooms) do
 		local spots = byRoom[rooms[i]]
-		self:_spawnKey(spots[math.random(1, #spots)].CFrame)
+		self:_spawnKey(spots[math.random(1, #spots)].CFrame, false, i)
 	end
 end
 
-function Match:_spawnKey(cframe: CFrame, dropped: boolean?)
+-- Farger nøkkelen: selve nøkkelen, lyset og glitteret får nøkkelens farge
+local KEY_PARTS = { Bow = true, Shaft = true, Tooth1 = true, Tooth2 = true }
+local function paintKey(key: Model, colorIndex: number)
+	local entry = Config.KeyColors[colorIndex] or Config.KeyColors[1]
+	local color = entry.color
+	key:SetAttribute("KeyColor", colorIndex)
+	for _, d in key:GetDescendants() do
+		if d:IsA("BasePart") and KEY_PARTS[d.Name] then
+			d.Color = color
+		elseif d:IsA("PointLight") then
+			d.Color = color:Lerp(Color3.new(1, 1, 1), 0.3)
+		elseif d:IsA("ParticleEmitter") then
+			d.Color = ColorSequence.new(color:Lerp(Color3.new(1, 1, 1), 0.45))
+		elseif d:IsA("ProximityPrompt") then
+			d.ObjectText = string.sub(entry.name, 1, 1) .. string.lower(string.sub(entry.name, 2)) .. " key"
+		end
+	end
+end
+
+function Match:_spawnKey(cframe: CFrame, dropped: boolean?, colorIndex: number?)
 	local key = (ServerStorage:WaitForChild("Key") :: Model):Clone()
 	key:PivotTo(cframe)
 	key:SetAttribute("Dropped", dropped == true)
+	paintKey(key, colorIndex or 1)
 	key.Parent = self.keysFolder
 	local prompt = key:FindFirstChildWhichIsA("ProximityPrompt", true)
 	if prompt then
@@ -358,11 +383,15 @@ function Match:_pickupKey(player: Player, key: Model)
 	if not root or (root.Position - key:GetPivot().Position).Magnitude > 12 then
 		return
 	end
+	local colorIndex = key:GetAttribute("KeyColor") or 1
 	key:Destroy()
-	st.keys += 1
+	table.insert(st.keyColors, colorIndex)
+	st.keys = #st.keyColors
 	player:SetAttribute("Keys", st.keys)
+	player:SetAttribute("KeyColors", table.concat(st.keyColors, ","))
 	Util.playSound(root, Config.Sounds.KeyPickup, 0.9, 40)
-	NotifyRemote:FireClient(player, "You found a key! Follow the green EXIT marker to the emergency exit.", "good")
+	local colorName = (Config.KeyColors[colorIndex] or Config.KeyColors[1]).name
+	NotifyRemote:FireClient(player, "You found the " .. colorName .. " key! Bring it to the emergency exit.", "good")
 	if key:GetAttribute("Dropped") ~= true then
 		self.manager:AwardCoins(player, Config.Coins.KeyFound, "key found")
 	end
@@ -370,12 +399,13 @@ function Match:_pickupKey(player: Player, key: Model)
 end
 
 -- Legger nøkler på gulvet der en spiller døde eller forsvant
-function Match:_dropKeys(count: number, position: Vector3)
-	for i = 1, count do
+function Match:_dropKeys(colors: { number }, position: Vector3)
+	local count = #colors
+	for i, colorIndex in colors do
 		local angle = (i / count) * math.pi * 2
 		local offset = count > 1 and Vector3.new(math.cos(angle), 0, math.sin(angle)) * 1.5 or Vector3.zero
 		local pos = Vector3.new(position.X, self.floorY + 0.12, position.Z) + offset
-		self:_spawnKey(CFrame.new(pos) * CFrame.Angles(0, math.random() * math.pi * 2, 0), true)
+		self:_spawnKey(CFrame.new(pos) * CFrame.Angles(0, math.random() * math.pi * 2, 0), true, colorIndex)
 	end
 end
 
@@ -405,10 +435,29 @@ end
 
 function Match:_updateExitVisuals()
 	local exit = self.exit
+	local chain = exit:FindFirstChild("Chain")
 	for i = 1, Config.KeysToEscape do
-		local lock = exit:FindFirstChild("Lock" .. i) :: BasePart?
-		if lock and i <= self.keysInserted then
-			lock.Color = LOCK_ON
+		local open = self.unlocked[i] == true
+		local color = (Config.KeyColors[i] or Config.KeyColors[1]).color
+		-- lampa over døra lyser i låsens farge når den er åpen
+		local lamp = exit:FindFirstChild("Lock" .. i) :: BasePart?
+		if lamp then
+			lamp.Color = if open then color else color:Lerp(Color3.new(0, 0, 0), 0.6)
+			lamp.Material = if open then Enum.Material.Neon else Enum.Material.SmoothPlastic
+		end
+		-- hengelåsen spretter opp og lyser
+		local padlock = chain and chain:FindFirstChild("Padlock" .. i)
+		if padlock and open and padlock:GetAttribute("Open") ~= true then
+			padlock:SetAttribute("Open", true)
+			for _, d in padlock:GetDescendants() do
+				if d:IsA("BasePart") and d.Name == "Body" then
+					d.Material = Enum.Material.Neon
+				elseif d:IsA("BasePart") and d.Name == "Shackle" then
+					TweenService:Create(d, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { CFrame = d.CFrame + Vector3.new(0, 0.45, 0) }):Play()
+				elseif d:IsA("PointLight") then
+					d.Enabled = true
+				end
+			end
 		end
 	end
 	local panel = exit:FindFirstChild("LockPanel")
@@ -424,6 +473,14 @@ function Match:_updateExitVisuals()
 		end
 	end
 	self.folder:SetAttribute("KeysInserted", self.keysInserted)
+	-- hvilke farger som er låst opp (til nøkkel-ikonene på skjermen)
+	local open = {}
+	for i = 1, Config.KeysToEscape do
+		if self.unlocked[i] then
+			table.insert(open, tostring(i))
+		end
+	end
+	self.folder:SetAttribute("Unlocked", table.concat(open, ","))
 end
 
 function Match:_insertKeys(player: Player)
@@ -435,17 +492,34 @@ function Match:_insertKeys(player: Player)
 		NotifyRemote:FireClient(player, "You have no keys. Search the hospital!", "bad")
 		return
 	end
-	local count = st.keys
+	-- hver nøkkel åpner hengelåsen i sin egen farge
+	local names = {}
+	for _, colorIndex in st.keyColors do
+		if not self.unlocked[colorIndex] then
+			self.unlocked[colorIndex] = true
+			table.insert(names, (Config.KeyColors[colorIndex] or Config.KeyColors[1]).name)
+		end
+	end
+	local count = #names
+	st.keyColors = {}
 	st.keys = 0
 	player:SetAttribute("Keys", 0)
-	self.keysInserted = math.min(Config.KeysToEscape, self.keysInserted + count)
+	player:SetAttribute("KeyColors", "")
+	local opened = 0
+	for _ in self.unlocked do
+		opened += 1
+	end
+	self.keysInserted = math.min(Config.KeysToEscape, opened)
 	self:_updateExitVisuals()
+	if count == 0 then
+		return
+	end
 	local panel = self.exit:FindFirstChild("LockPanel")
 	if panel then
 		Util.playSound(panel, Config.Sounds.KeyInsert, 1, 60)
 	end
-	local word = count == 1 and "key" or "keys"
-	self:Notify(player.DisplayName .. " inserted " .. count .. " " .. word .. " (" .. self.keysInserted .. "/" .. Config.KeysToEscape .. ")", "good")
+	local word = count == 1 and "lock" or "locks"
+	self:Notify(player.DisplayName .. " opened the " .. table.concat(names, " + ") .. " " .. word .. " (" .. self.keysInserted .. "/" .. Config.KeysToEscape .. ")", "good")
 	self.manager:AwardCoins(player, Config.Coins.KeyInserted * count, "keys inserted")
 	if self.keysInserted >= Config.Blackout.AfterKeys then
 		self:_startBlackouts()
@@ -764,9 +838,11 @@ function Match:_loseLife(player: Player, pos: Vector3?, withScare: boolean)
 	end
 	st.busy = true
 	if st.keys > 0 and pos then
-		self:_dropKeys(st.keys, pos)
+		self:_dropKeys(st.keyColors, pos)
+		st.keyColors = {}
 		st.keys = 0
 		player:SetAttribute("Keys", 0)
+		player:SetAttribute("KeyColors", "")
 	end
 	st.lives -= 1
 	st.deathPos = pos
@@ -931,6 +1007,7 @@ function Match:Revive(player: Player): boolean
 	st.closet = nil
 	st.lives = 1
 	st.keys = 0
+	st.keyColors = {}
 	st.protectedUntil = os.clock() + Config.ReviveProtection
 	self:_setPlayerAttributes(player)
 	-- du kommer tilbake der du døde (nøklene du mistet ligger der), og monsteret flyttes langt unna
@@ -1084,7 +1161,7 @@ function Match:RemovePlayer(player: Player)
 	end
 	local root = Util.getRoot(player)
 	if st.keys > 0 and root and self.state == "playing" then
-		self:_dropKeys(st.keys, root.Position)
+		self:_dropKeys(st.keyColors, root.Position)
 	end
 	self.players[player] = nil
 	self.choices[player] = nil

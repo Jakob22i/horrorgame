@@ -428,7 +428,7 @@ local function updateKeys()
 			end
 			local shine = model:FindFirstChild("Shine")
 			if shine and shine:IsA("Highlight") then
-				shine.FillTransparency = 0.72 - pulse * 0.22
+				shine.OutlineTransparency = 0.05 + (1 - pulse) * 0.3
 			end
 		end
 	end
