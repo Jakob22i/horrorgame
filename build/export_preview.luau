@@ -200,7 +200,15 @@ elseif scene == "hospital" then
 	buildHospital(container)
 	-- åpne noen av fargelåsene på nødutgangen (som Match:_updateExitVisuals), f.eks. "1,3"
 	local exit = container:FindFirstChild("ExitDoor", true)
-	for _, n in string.split(process.args[4] or "", ",") do
+	local opened = string.split(process.args[4] or "", ",")
+	if exit and #opened >= 5 then
+		local counter = exit:FindFirstChild("Counter", true)
+		if counter then
+			counter.Text = "5/5"
+			counter.TextColor3 = lib.rgb(40, 230, 90)
+		end
+	end
+	for _, n in opened do
 		local i = tonumber(n)
 		if i and exit then
 			local lamp = exit:FindFirstChild("Lock" .. i)
@@ -414,6 +422,44 @@ elseif scene == "thumb" then
 	extra.monsterPivot = cfArray(m.Root.CFrame)
 elseif scene == "lobby" then
 	buildLobby(container, nil)
+elseif scene == "monsterpose" then
+	-- bare monsteret, i en positur (til traileren): "walk,<fase>,<jakt>,<kjeve>" eller en ferdig positur
+	local m = buildPatient(container, "Monster")
+	local arg = process.args[3] or "walk,0,1,0"
+	local a = string.split(arg, ",")
+	if a[1] == "walk" then
+		pose(m, 1, tonumber(a[3]) or 1, tonumber(a[2]) or 0, tonumber(a[5]) or 0, tonumber(a[4]) or 0)
+	else
+		local CF = roblox.CFrame
+		local presets = {
+			stare = { Neck = CF.Angles(0.1, 0, 0.45), Jaw = CF.Angles(-0.3, 0, 0), RShoulder = CF.Angles(0.15, 0, 0), RElbow = CF.Angles(0.2, 0, 0) },
+			scream = { Neck = CF.Angles(-0.15, 0, 0.2), Jaw = CF.Angles(-0.62, 0, 0), RShoulder = CF.Angles(1.3, 0, 0.1), RElbow = CF.Angles(0.2, 0, 0), Spine = CF.Angles(-0.25, 0, 0) },
+			peek = {
+				Spine = CF.Angles(-1.45, 0, 0.1),
+				Neck = CF.Angles(1.6, 0.12, 0.42),
+				LHip = CF.Angles(0.25, 0, 0),
+				RHip = CF.Angles(0.25, 0, 0),
+				LKnee = CF.Angles(-0.5, 0, 0),
+				RKnee = CF.Angles(-0.5, 0, 0),
+				Jaw = CF.Angles(-0.45, 0, 0),
+				RShoulder = CF.Angles(1.0, 0, 0.35),
+				RElbow = CF.Angles(1.1, 0, 0),
+				LShoulder = CF.Angles(0.9, 0, -0.3),
+				LElbow = CF.Angles(1.0, 0, 0),
+			},
+			wave = { Neck = CF.Angles(0.12, 0, 0.55), RShoulder = CF.Angles(1.2, 0, 0.6), RElbow = CF.Angles(1.0, 0, 0), Jaw = CF.Angles(-0.15, 0, 0) },
+		}
+		for name, cf in presets[a[1]] or {} do
+			local w = m.Joints:FindFirstChild(name)
+			if w then
+				w.C0 = w.C0 * cf
+			end
+		end
+		pose(m, 0, 0, 0, 0, 0)
+	end
+	extra.monsterPivot = cfArray(m.Root.CFrame)
+	local face = m:FindFirstChild("Face", true)
+	extra.face = { face.CFrame.Position.X, face.CFrame.Position.Y, face.CFrame.Position.Z }
 elseif scene == "ending" then
 	-- sluttscenen: monsteret står i nødutgangen og vinker (samme formler som Ending.luau)
 	buildHospital(container)

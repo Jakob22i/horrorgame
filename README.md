@@ -143,6 +143,20 @@ Bildene er rendret fra spillets egne modeller (monsteret, sykehuset og skapene) 
 `lune run build/export_preview.luau thumb ...` (posituren og plasseringen styres med argumentene).
 Last dem opp på create.roblox.com → spillet ditt → **Places** → **Configure Place** → *Thumbnails* og *Icon*.
 
+## Trailere
+
+Ferdige trailere ligger i `trailers/`:
+
+- `trailer_youtube.mp4`: 1920×1080, 58 sekunder (lobbyen → heisen → nøklene → skapet → jakten →
+  de fem låsene → lockdown → døra → skremsel → tittel)
+- `trailer_tiktok.mp4`: 1080×1920 (stående), 28 sekunder, til TikTok, Reels og Shorts. Den starter
+  rett på monsteret så folk ikke scroller forbi.
+- `poster_youtube.jpg` og `poster_tiktok.jpg`: stillbilder til forsidebilde eller omslag
+
+Alt er rendret fra spillets egne modeller (lobbyen, heisene, sykehuset, de fargede nøklene, de
+fem hengelåsene, nødutgangen og monsteret) i VHS-overvåkingsstil. Lydsporet (spilledåse, drønn,
+sirene, skrik) er syntetisert fra bunnen av, så det er ingen opphavsrett å tenke på.
+
 ## Åpne spillet i Roblox Studio
 
 1. Last ned `horrorgame.rbxl`.
