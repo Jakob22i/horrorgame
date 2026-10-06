@@ -147,7 +147,7 @@ Last dem opp på create.roblox.com → spillet ditt → **Places** → **Configu
 
 Ferdige trailere ligger i `trailers/`:
 
-- `trailer_youtube.mp4`: 1920×1080, 61 sekunder (DEEZIRE STUDIOS PRESENTS → lobbyen → heisen →
+- `trailer_youtube.mp4`: 1920×1080, 58,5 sekunder (DEEZIRE STUDIOS PRESENTS → lobbyen → heisen →
   nøklene → skapet → jakten → de fem låsene → lockdown → døra → skremsel → tittel)
 - `trailer_tiktok.mp4`: 1080×1920 (stående), 37 sekunder, til TikTok, Reels og Shorts. Den starter
   rett på monsteret så folk ikke scroller forbi, og DEEZIRE STUDIOS PRESENTS kommer rett før tittelen.
