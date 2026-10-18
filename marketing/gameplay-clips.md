@@ -35,7 +35,7 @@ Laget for å klippes opp, ikke som en trailer:
 |---|---|---|
 | 0:00.0–0:03.6 | ambush_door | Går i gangen – hun kaster seg ut av en dør rett foran deg (smell ca. 0:00.8) |
 | 0:03.6–0:08.6 | run_lookback | Løper og ser bakover, hun tar deg igjen |
-| 0:08.6–0:15.6 | locker_hide | I skapet: hun løper forbi, kommer tilbake og stirrer inn mellom spilene |
+| 0:08.6–0:15.6 | locker_hide | I skapet: hun løper forbi, kommer tilbake, bøyer seg ned og stirrer inn mellom spilene |
 | 0:15.6–0:25.6 | flicker_closer | "The power is failing…" – nærmere for hvert blink, jumpscare ca. 0:23.5 |
 | 0:25.6–0:28.6 | key_red | Rød nøkkel, + RED KEY |
 | 0:28.6–0:32.1 | turn_doorway | Snur deg: hun står i døråpningen |
@@ -52,7 +52,7 @@ Laget for å klippes opp, ikke som en trailer:
 | 1:21.6–1:31.2 | key_blue/green/yellow/purple | Fire nøkler på rad, HUD-en fylles opp |
 | 1:31.2–1:36.2 | alarm_sprint | LOCKDOWN-alarm, rødt blinkende lys, full sprint |
 | 1:36.2–1:42.2 | stamina_out | Staminaen går tom, du blir tregere – jumpscare → "1 life left" |
-| 1:42.2–1:48.2 | downed_revive | YOU'RE DOWN – "Player2 helped Player1 up!" – hun snur seg |
+| 1:42.2–1:48.2 | downed_revive | YOU'RE DOWN – "Leo helped Mia up!" – hun snur seg |
 | 1:48.2–1:53.2 | lecture_dash | Sprint langs midtgangen i auditoriet |
 | 1:53.2–1:58.2 | face_tease | Nærbilde av ansiktet, så gaper det (smell ca. 1:56.8) |
 | 1:58.2–2:05.2 | exit_unlock | Fem hengelåser spretter opp én etter én, EXIT 1/5 → 5/5 |
